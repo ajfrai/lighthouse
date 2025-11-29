@@ -36,6 +36,9 @@ class Game {
             return;
         }
 
+        // Preload all SVG assets
+        await svgLoader.preloadAll();
+
         // Initialize job generator
         this.jobGenerator = new JobGenerator(this.dataLoader.data.jobs);
 
@@ -73,6 +76,7 @@ class Game {
         // Initialize game state
         this.state = this.dataLoader.getInitialState();
         this.state.character = character;
+        this.state.gamePhase = 'start'; // Track story progression for Keeper dialogue
 
         // Set up player
         const startPos = this.dataLoader.getPlayerStart();
@@ -265,13 +269,20 @@ class Game {
             for (let x = 0; x < map.width; x++) {
                 const tileIndex = map.tiles[y][x];
                 const tileType = map.tileKey[tileIndex];
-                const tile = this.tiles[tileType];
 
-                this.ctx.fillStyle = tile.color;
-                this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-
-                this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-                this.ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                // Get SVG image for this tile type
+                const tileSVG = SVGAssets.tiles[tileType];
+                if (tileSVG) {
+                    const img = svgLoader.cache.get(`${tileSVG}-${tileSize}-${tileSize}`);
+                    if (img) {
+                        this.ctx.drawImage(img, x * tileSize, y * tileSize, tileSize, tileSize);
+                    } else {
+                        // Fallback to colored rect if SVG not loaded
+                        const tile = this.tiles[tileType];
+                        this.ctx.fillStyle = tile.color;
+                        this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                    }
+                }
             }
         }
     }
@@ -279,24 +290,43 @@ class Game {
     renderNPCs() {
         const tileSize = this.dataLoader.TILE_SIZE;
 
-        Object.values(this.npcs).forEach(npc => {
-            this.ctx.fillStyle = npc.color;
-            this.ctx.beginPath();
-            this.ctx.arc(
-                npc.x * tileSize + tileSize / 2,
-                npc.y * tileSize + tileSize / 2,
-                tileSize / 3,
-                0,
-                Math.PI * 2
-            );
-            this.ctx.fill();
+        Object.entries(this.npcs).forEach(([npcId, npc]) => {
+            // Get SVG for this NPC type
+            const npcSVG = SVGAssets.npcs[npcId] || SVGAssets.npcs.fisherman;
+            const img = svgLoader.cache.get(`${npcSVG}-${tileSize}-${tileSize}`);
 
+            if (img) {
+                this.ctx.drawImage(img, npc.x * tileSize, npc.y * tileSize, tileSize, tileSize);
+            } else {
+                // Fallback to colored circle
+                this.ctx.fillStyle = npc.color;
+                this.ctx.beginPath();
+                this.ctx.arc(
+                    npc.x * tileSize + tileSize / 2,
+                    npc.y * tileSize + tileSize / 2,
+                    tileSize / 3,
+                    0,
+                    Math.PI * 2
+                );
+                this.ctx.fill();
+            }
+
+            // Show interaction hint if nearby
             const isNearby = this.isAdjacent(this.player.x, this.player.y, npc.x, npc.y);
-            this.ctx.strokeStyle = isNearby ? '#ffff00' : '#fff';
-            this.ctx.lineWidth = isNearby ? 3 : 2;
-            this.ctx.stroke();
-
             if (isNearby) {
+                // Yellow glow effect
+                this.ctx.strokeStyle = '#ffff00';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.arc(
+                    npc.x * tileSize + tileSize / 2,
+                    npc.y * tileSize + tileSize / 2,
+                    tileSize / 2 + 2,
+                    0,
+                    Math.PI * 2
+                );
+                this.ctx.stroke();
+
                 this.ctx.fillStyle = '#ffff00';
                 this.ctx.font = '10px monospace';
                 this.ctx.textAlign = 'center';
@@ -309,15 +339,23 @@ class Game {
         const tileSize = this.dataLoader.TILE_SIZE;
         const char = this.player.character;
 
-        // Draw emoji character
-        this.ctx.font = `${tileSize - 4}px Arial`;
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(
-            char.emoji,
-            this.player.x * tileSize + tileSize / 2,
-            this.player.y * tileSize + tileSize / 2
-        );
+        // Get SVG for player character
+        const playerSVG = SVGAssets.player[char.id];
+        const img = svgLoader.cache.get(`${playerSVG}-${tileSize}-${tileSize}`);
+
+        if (img) {
+            this.ctx.drawImage(img, this.player.x * tileSize, this.player.y * tileSize, tileSize, tileSize);
+        } else {
+            // Fallback to emoji
+            this.ctx.font = `${tileSize - 4}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(
+                char.emoji,
+                this.player.x * tileSize + tileSize / 2,
+                this.player.y * tileSize + tileSize / 2
+            );
+        }
     }
 
     // ===== INTERACTIONS =====
@@ -414,6 +452,12 @@ class Game {
                 }
             });
             this.addCombatLog(`You caught the ${wildCreature.name}!`);
+
+            // Update game phase when catching first creature (after starter)
+            if (this.state.creatures.length === 2 && this.state.gamePhase === 'searching') {
+                this.state.gamePhase = 'metCreature';
+            }
+
             setTimeout(() => this.hideModal('combatModal'), 1500);
             this.renderCombat();
             return;
@@ -518,8 +562,15 @@ class Game {
         this.currentNPC = npcId;
         const npc = this.npcs[npcId];
 
-        // Generate a new job
-        this.currentJob = this.jobGenerator.generateJob(npc.jobType);
+        // Handle Keeper's dialogue system (story-based)
+        if (npcId === 'keeper' && npc.dialogues) {
+            this.currentJob = null; // Keeper doesn't give jobs
+        } else if (npc.jobType) {
+            // Generate a new job for NPCs that give work
+            this.currentJob = this.jobGenerator.generateJob(npc.jobType);
+        } else {
+            this.currentJob = null;
+        }
 
         this.showModal('npcModal');
         this.renderNPC();
@@ -529,29 +580,61 @@ class Game {
         const npc = this.npcs[this.currentNPC];
 
         document.getElementById('npc-name').textContent = npc.name;
-        document.getElementById('npc-dialog').innerHTML = `<p>${npc.dialog}</p>`;
 
-        const actionsDiv = document.getElementById('npc-actions');
-        actionsDiv.innerHTML = '';
+        // Handle Keeper's dialogue system
+        if (this.currentNPC === 'keeper' && npc.dialogues) {
+            const currentPhase = this.state.gamePhase || 'start';
+            const dialogue = npc.dialogues[currentPhase] || npc.dialogues.start;
 
-        if (this.currentJob) {
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'job-question';
-            questionDiv.innerHTML = `
-                <p><strong>${this.currentJob.name}</strong></p>
-                <p>${this.currentJob.question}</p>
-                <div class="answer-input">
-                    <input type="number" id="job-answer" placeholder="Your answer" autofocus>
-                    <button onclick="game.submitJobAnswer()">Submit</button>
-                </div>
-            `;
-            document.getElementById('npc-dialog').appendChild(questionDiv);
+            document.getElementById('npc-dialog').innerHTML = `<p>${dialogue.text}</p>`;
+
+            const actionsDiv = document.getElementById('npc-actions');
+            actionsDiv.innerHTML = '';
+
+            // Update game phase if needed
+            if (dialogue.nextPhase && dialogue.nextPhase !== this.state.gamePhase) {
+                const continueBtn = document.createElement('button');
+                continueBtn.textContent = 'Continue';
+                continueBtn.onclick = () => {
+                    if (this.state.gamePhase === 'start') {
+                        this.state.gamePhase = dialogue.nextPhase;
+                    }
+                    this.hideModal('npcModal');
+                };
+                actionsDiv.appendChild(continueBtn);
+            }
+
+            const leaveBtn = document.createElement('button');
+            leaveBtn.textContent = 'Leave';
+            leaveBtn.onclick = () => this.hideModal('npcModal');
+            actionsDiv.appendChild(leaveBtn);
+
+        } else {
+            // Handle regular NPCs with jobs
+            document.getElementById('npc-dialog').innerHTML = `<p>${npc.dialog}</p>`;
+
+            const actionsDiv = document.getElementById('npc-actions');
+            actionsDiv.innerHTML = '';
+
+            if (this.currentJob) {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'job-question';
+                questionDiv.innerHTML = `
+                    <p><strong>${this.currentJob.name}</strong></p>
+                    <p>${this.currentJob.question}</p>
+                    <div class="answer-input">
+                        <input type="number" id="job-answer" placeholder="Your answer" autofocus>
+                        <button onclick="game.submitJobAnswer()">Submit</button>
+                    </div>
+                `;
+                document.getElementById('npc-dialog').appendChild(questionDiv);
+            }
+
+            const leaveBtn = document.createElement('button');
+            leaveBtn.textContent = 'Leave';
+            leaveBtn.onclick = () => this.hideModal('npcModal');
+            actionsDiv.appendChild(leaveBtn);
         }
-
-        const leaveBtn = document.createElement('button');
-        leaveBtn.textContent = 'Leave';
-        leaveBtn.onclick = () => this.hideModal('npcModal');
-        actionsDiv.appendChild(leaveBtn);
     }
 
     submitJobAnswer() {
@@ -560,6 +643,12 @@ class Game {
 
         if (answer === this.currentJob.correctAnswer) {
             this.state.coins += this.currentJob.reward;
+
+            // Advance to 'working' phase after first successful job
+            if (this.state.gamePhase === 'metCreature' && !this.state.completedFirstJob) {
+                this.state.gamePhase = 'working';
+                this.state.completedFirstJob = true;
+            }
 
             document.getElementById('npc-dialog').innerHTML = `
                 <p>${this.currentJob.correctAnswerDialog}</p>

@@ -1,5 +1,34 @@
 {
   "npcs": {
+    "keeper": {
+      "name": "The Keeper",
+      "x": 4,
+      "y": 3,
+      "color": "#b8a890",
+      "dialogues": {
+        "start": {
+          "text": "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
+          "nextPhase": "searching"
+        },
+        "searching": {
+          "text": "Find anything yet? The path leads to the tall grass. Something's out there, I'm certain.",
+          "nextPhase": "searching"
+        },
+        "metCreature": {
+          "text": "You're back. What did you find? ...I see. Well, you've got a friend now. That's something. The fisherman in the village might have work if you need coin.",
+          "nextPhase": "working"
+        },
+        "working": {
+          "text": "The fisherman treats you fair? Good. Storm's coming soon—I'd estimate three days, maybe four. We'll need supplies.",
+          "nextPhase": "working"
+        },
+        "boatReady": {
+          "text": "Almost ready. Just need a few more things. The compass from the shop would help—my eyes aren't what they were.",
+          "nextPhase": "boatReady"
+        }
+      },
+      "jobType": null
+    },
     "fisherman": {
       "name": "Old Fisherman",
       "x": 14,
