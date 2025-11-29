@@ -370,6 +370,47 @@ button:disabled {
     font-size: 12px;
 }
 
+/* Character Selection */
+.character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.character-card {
+    background-color: #0f3460;
+    border: 3px solid #0f3460;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.character-card:hover {
+    border-color: #e94560;
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+}
+
+.character-card .emoji {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.character-card h3 {
+    color: #e94560;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.character-card p {
+    color: #aaa;
+    font-size: 12px;
+    margin: 0;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .game-container {

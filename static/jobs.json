@@ -1,0 +1,41 @@
+{
+  "jobTemplates": {
+    "fish_count": {
+      "name": "Count the Catch",
+      "description": "Help the fisherman calculate earnings",
+      "npcId": "fisherman",
+      "repeatable": true,
+      "problemTypes": [
+        {
+          "template": "I caught {a} silverfish and {b} redmouths. Silverfish fetch {priceA} coin each, redmouths fetch {priceB} coins each. How many coins total?",
+          "generator": {
+            "a": {"min": 5, "max": 15},
+            "b": {"min": 2, "max": 10},
+            "priceA": {"min": 1, "max": 3},
+            "priceB": {"min": 2, "max": 5}
+          },
+          "answerFormula": "a * priceA + b * priceB"
+        },
+        {
+          "template": "I need to split {total} fish equally among {people} fishermen. How many fish does each get?",
+          "generator": {
+            "people": {"min": 2, "max": 8},
+            "total": "people * (5 to 12)"
+          },
+          "answerFormula": "total / people"
+        },
+        {
+          "template": "Each crate holds {perCrate} fish. I have {crates} crates. How many fish total?",
+          "generator": {
+            "perCrate": {"min": 6, "max": 15},
+            "crates": {"min": 3, "max": 8}
+          },
+          "answerFormula": "perCrate * crates"
+        }
+      ],
+      "baseReward": 8,
+      "wrongAnswerDialog": "Hmm, let me check my math again... Try once more!",
+      "correctAnswerDialog": "That's right! You've got a good head for numbers."
+    }
+  }
+}

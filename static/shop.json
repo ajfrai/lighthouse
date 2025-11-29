@@ -1,0 +1,22 @@
+{
+  "items": {
+    "compass": {
+      "name": "Brass Compass",
+      "description": "A finely crafted compass. Always points home.",
+      "price": 50,
+      "emoji": "🧭"
+    },
+    "spyglass": {
+      "name": "Spyglass",
+      "description": "See distant shores clearly.",
+      "price": 30,
+      "emoji": "🔭"
+    },
+    "map": {
+      "name": "Sea Chart",
+      "description": "Maps of nearby waters.",
+      "price": 20,
+      "emoji": "🗺️"
+    }
+  }
+}

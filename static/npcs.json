@@ -1,0 +1,12 @@
+{
+  "npcs": {
+    "fisherman": {
+      "name": "Old Fisherman",
+      "x": 14,
+      "y": 3,
+      "color": "#ff8c42",
+      "dialog": "Ahoy there! I've got work if you're interested. I'll pay good coin for help with my catch.",
+      "jobType": "fish_count"
+    }
+  }
+}

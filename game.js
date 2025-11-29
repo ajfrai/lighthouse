@@ -1,74 +1,177 @@
-// Lighthouse - Canvas-based Game Engine
+// Lighthouse - Enhanced Game Engine with Character Selection
 
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-
-        // Set canvas size
-        this.canvas.width = GameData.map.main.width * GameData.TILE_SIZE;
-        this.canvas.height = GameData.map.main.height * GameData.TILE_SIZE;
+        this.dataLoader = gameDataLoader;
+        this.jobGenerator = null;
 
         // Game state
-        this.state = JSON.parse(JSON.stringify(GameData.initialState));
-        this.player = {
-            x: GameData.playerStart.x,
-            y: GameData.playerStart.y,
-            color: '#e94560' // Player color
-        };
+        this.state = null;
+        this.player = null;
+        this.tiles = null;
+        this.map = null;
+        this.creatures = null;
+        this.npcs = null;
+        this.shop = null;
 
-        // Input state
+        // Input state with improved handling
         this.keys = {};
         this.lastMoveTime = 0;
-        this.moveDelay = 150; // ms between moves
+        this.moveDelay = 120; // Faster, more responsive
+        this.inputQueue = [];
 
         // Combat state
         this.combatState = null;
         this.currentNPC = null;
-
-        this.init();
+        this.currentJob = null;
     }
 
-    init() {
+    async init() {
+        // Load all game data
+        const loaded = await this.dataLoader.loadAll();
+        if (!loaded) {
+            alert('Failed to load game data. Please refresh the page.');
+            return;
+        }
+
+        // Initialize job generator
+        this.jobGenerator = new JobGenerator(this.dataLoader.data.jobs);
+
+        // Load static data
+        this.tiles = this.dataLoader.getTiles();
+        this.map = this.dataLoader.getMap();
+        this.creatures = this.dataLoader.data.creatures;
+        this.npcs = this.dataLoader.data.npcs;
+        this.shop = this.dataLoader.data.shop;
+
+        // Show character selection
+        this.showCharacterSelection();
+    }
+
+    showCharacterSelection() {
+        const grid = document.getElementById('characterGrid');
+        grid.innerHTML = '';
+
+        this.dataLoader.data.characters.forEach(char => {
+            const card = document.createElement('div');
+            card.className = 'character-card';
+            card.innerHTML = `
+                <div class="emoji">${char.emoji}</div>
+                <h3>${char.name}</h3>
+                <p>${char.description}</p>
+            `;
+            card.onclick = () => this.selectCharacter(char);
+            grid.appendChild(card);
+        });
+
+        document.getElementById('characterSelect').classList.remove('hidden');
+    }
+
+    selectCharacter(character) {
+        // Initialize game state
+        this.state = this.dataLoader.getInitialState();
+        this.state.character = character;
+
+        // Set up player
+        const startPos = this.dataLoader.getPlayerStart();
+        this.player = {
+            x: startPos.x,
+            y: startPos.y,
+            character: character
+        };
+
+        // Set canvas size
+        this.canvas.width = this.map.main.width * this.dataLoader.TILE_SIZE;
+        this.canvas.height = this.map.main.height * this.dataLoader.TILE_SIZE;
+
+        // Hide character selection
+        document.getElementById('characterSelect').classList.add('hidden');
+
+        // Start game
         this.setupControls();
         this.setupMobileControls();
         this.render();
         this.gameLoop();
     }
 
-    // ===== CONTROLS =====
+    // ===== IMPROVED CONTROLS =====
 
     setupControls() {
-        // Keyboard controls
+        // Keyboard controls with better handling
         document.addEventListener('keydown', (e) => {
-            this.keys[e.key.toLowerCase()] = true;
+            const key = e.key.toLowerCase();
+            if (['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'enter'].includes(key)) {
+                e.preventDefault();
+                this.keys[key] = true;
+
+                // Add to input queue for immediate response
+                if (!this.inputQueue.includes(key)) {
+                    this.inputQueue.push(key);
+                }
+            }
         });
 
         document.addEventListener('keyup', (e) => {
-            this.keys[e.key.toLowerCase()] = false;
+            const key = e.key.toLowerCase();
+            this.keys[key] = false;
+            this.inputQueue = this.inputQueue.filter(k => k !== key);
         });
 
-        // Sidebar toggle for mobile
-        document.getElementById('sidebarToggle').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-        });
+        // Sidebar toggle
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+            });
+        }
     }
 
     setupMobileControls() {
-        // D-pad controls
+        // D-pad with better touch handling
         document.querySelectorAll('.dpad-btn').forEach(btn => {
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const direction = btn.dataset.direction;
-                this.handleMove(direction);
+            ['touchstart', 'mousedown'].forEach(event => {
+                btn.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    const direction = btn.dataset.direction;
+                    this.handleMove(direction);
+
+                    // Allow continuous movement on hold
+                    btn.dataset.holding = 'true';
+                    setTimeout(() => {
+                        if (btn.dataset.holding === 'true') {
+                            this.continuousMove(btn, direction);
+                        }
+                    }, 300);
+                });
+            });
+
+            ['touchend', 'mouseup', 'mouseleave'].forEach(event => {
+                btn.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    btn.dataset.holding = 'false';
+                });
             });
         });
 
-        // Action button (for interactions)
-        document.getElementById('actionBtn').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.handleAction();
-        });
+        // Action button
+        const actionBtn = document.getElementById('actionBtn');
+        if (actionBtn) {
+            ['touchstart', 'mousedown'].forEach(event => {
+                actionBtn.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    this.handleAction();
+                });
+            });
+        }
+    }
+
+    continuousMove(btn, direction) {
+        if (btn.dataset.holding === 'true') {
+            this.handleMove(direction);
+            setTimeout(() => this.continuousMove(btn, direction), this.moveDelay);
+        }
     }
 
     handleMove(direction) {
@@ -79,57 +182,43 @@ class Game {
         let newY = this.player.y;
 
         switch(direction) {
-            case 'up':
-            case 'w':
-            case 'arrowup':
+            case 'up': case 'w': case 'arrowup':
                 newY--;
                 break;
-            case 'down':
-            case 's':
-            case 'arrowdown':
+            case 'down': case 's': case 'arrowdown':
                 newY++;
                 break;
-            case 'left':
-            case 'a':
-            case 'arrowleft':
+            case 'left': case 'a': case 'arrowleft':
                 newX--;
                 break;
-            case 'right':
-            case 'd':
-            case 'arrowright':
+            case 'right': case 'd': case 'arrowright':
                 newX++;
                 break;
             default:
                 return;
         }
 
-        // Check if new position is valid
         if (this.canMoveTo(newX, newY)) {
             this.player.x = newX;
             this.player.y = newY;
             this.lastMoveTime = now;
-
-            // Check for encounters and interactions
             this.checkEncounter();
             this.updateLocationDisplay();
         }
     }
 
     handleAction() {
-        // Check for nearby interactions
         this.checkInteraction();
     }
 
     canMoveTo(x, y) {
-        // Check bounds
-        if (x < 0 || y < 0 || x >= GameData.map.main.width || y >= GameData.map.main.height) {
+        if (x < 0 || y < 0 || x >= this.map.main.width || y >= this.map.main.height) {
             return false;
         }
 
-        // Check tile walkability
-        const tileIndex = GameData.map.main.tiles[y][x];
-        const tileType = GameData.map.main.tileKey[tileIndex];
-        const tile = GameData.tiles[tileType];
+        const tileIndex = this.map.main.tiles[y][x];
+        const tileType = this.map.main.tileKey[tileIndex];
+        const tile = this.tiles[tileType];
 
         return tile.walkable;
     }
@@ -137,14 +226,19 @@ class Game {
     // ===== GAME LOOP =====
 
     gameLoop() {
-        // Handle keyboard input
+        // Process input queue
         const now = Date.now();
-        if (now - this.lastMoveTime >= this.moveDelay) {
-            if (this.keys['w'] || this.keys['arrowup']) this.handleMove('up');
-            else if (this.keys['s'] || this.keys['arrowdown']) this.handleMove('down');
-            else if (this.keys['a'] || this.keys['arrowleft']) this.handleMove('left');
-            else if (this.keys['d'] || this.keys['arrowright']) this.handleMove('right');
-            else if (this.keys[' '] || this.keys['enter']) this.handleAction();
+        if (now - this.lastMoveTime >= this.moveDelay && this.inputQueue.length > 0) {
+            const input = this.inputQueue[0];
+
+            if (['w', 'arrowup'].includes(input)) this.handleMove('up');
+            else if (['s', 'arrowdown'].includes(input)) this.handleMove('down');
+            else if (['a', 'arrowleft'].includes(input)) this.handleMove('left');
+            else if (['d', 'arrowright'].includes(input)) this.handleMove('right');
+            else if ([' ', 'enter'].includes(input)) {
+                this.handleAction();
+                this.inputQueue.shift(); // Remove action from queue
+            }
         }
 
         this.render();
@@ -154,37 +248,28 @@ class Game {
     // ===== RENDERING =====
 
     render() {
-        // Clear canvas
         this.ctx.fillStyle = '#0f0f1e';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Render map tiles
         this.renderMap();
-
-        // Render NPCs
         this.renderNPCs();
-
-        // Render player
         this.renderPlayer();
-
-        // Update UI
         this.updateUI();
     }
 
     renderMap() {
-        const map = GameData.map.main;
-        const tileSize = GameData.TILE_SIZE;
+        const map = this.map.main;
+        const tileSize = this.dataLoader.TILE_SIZE;
 
         for (let y = 0; y < map.height; y++) {
             for (let x = 0; x < map.width; x++) {
                 const tileIndex = map.tiles[y][x];
                 const tileType = map.tileKey[tileIndex];
-                const tile = GameData.tiles[tileType];
+                const tile = this.tiles[tileType];
 
                 this.ctx.fillStyle = tile.color;
                 this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
 
-                // Add simple border for visual clarity
                 this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
                 this.ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
             }
@@ -192,71 +277,58 @@ class Game {
     }
 
     renderNPCs() {
-        const tileSize = GameData.TILE_SIZE;
+        const tileSize = this.dataLoader.TILE_SIZE;
 
-        Object.values(GameData.npcs).forEach(npc => {
-            if (!npc.job.completed) {
-                // Draw NPC as colored circle
-                this.ctx.fillStyle = npc.color;
-                this.ctx.beginPath();
-                this.ctx.arc(
-                    npc.x * tileSize + tileSize / 2,
-                    npc.y * tileSize + tileSize / 2,
-                    tileSize / 3,
-                    0,
-                    Math.PI * 2
-                );
-                this.ctx.fill();
+        Object.values(this.npcs).forEach(npc => {
+            this.ctx.fillStyle = npc.color;
+            this.ctx.beginPath();
+            this.ctx.arc(
+                npc.x * tileSize + tileSize / 2,
+                npc.y * tileSize + tileSize / 2,
+                tileSize / 3,
+                0,
+                Math.PI * 2
+            );
+            this.ctx.fill();
 
-                // Add outline (pulsing if player is nearby)
-                const isNearby = this.isAdjacent(this.player.x, this.player.y, npc.x, npc.y);
-                this.ctx.strokeStyle = isNearby ? '#ffff00' : '#fff';
-                this.ctx.lineWidth = isNearby ? 3 : 2;
-                this.ctx.stroke();
+            const isNearby = this.isAdjacent(this.player.x, this.player.y, npc.x, npc.y);
+            this.ctx.strokeStyle = isNearby ? '#ffff00' : '#fff';
+            this.ctx.lineWidth = isNearby ? 3 : 2;
+            this.ctx.stroke();
 
-                // Show interaction hint if nearby
-                if (isNearby) {
-                    this.ctx.fillStyle = '#ffff00';
-                    this.ctx.font = '10px monospace';
-                    this.ctx.textAlign = 'center';
-                    this.ctx.fillText('Press Space/Action', npc.x * tileSize + tileSize / 2, npc.y * tileSize - 5);
-                }
+            if (isNearby) {
+                this.ctx.fillStyle = '#ffff00';
+                this.ctx.font = '10px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Press Space/Action', npc.x * tileSize + tileSize / 2, npc.y * tileSize - 5);
             }
         });
     }
 
     renderPlayer() {
-        const tileSize = GameData.TILE_SIZE;
+        const tileSize = this.dataLoader.TILE_SIZE;
+        const char = this.player.character;
 
-        // Draw player as colored circle
-        this.ctx.fillStyle = this.player.color;
-        this.ctx.beginPath();
-        this.ctx.arc(
+        // Draw emoji character
+        this.ctx.font = `${tileSize - 4}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(
+            char.emoji,
             this.player.x * tileSize + tileSize / 2,
-            this.player.y * tileSize + tileSize / 2,
-            tileSize / 3,
-            0,
-            Math.PI * 2
+            this.player.y * tileSize + tileSize / 2
         );
-        this.ctx.fill();
-
-        // Add outline
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
     }
 
     // ===== INTERACTIONS =====
 
     checkInteraction() {
-        // Check for NPC interactions
-        Object.entries(GameData.npcs).forEach(([id, npc]) => {
+        Object.entries(this.npcs).forEach(([id, npc]) => {
             if (this.isAdjacent(this.player.x, this.player.y, npc.x, npc.y)) {
                 this.talkToNPC(id);
             }
         });
 
-        // Check for shop (door at 10, 7 or nearby shop area)
         if (this.isAdjacent(this.player.x, this.player.y, 10, 7) ||
             this.isAdjacent(this.player.x, this.player.y, 10, 9)) {
             this.openShop();
@@ -264,19 +336,16 @@ class Game {
     }
 
     isAdjacent(x1, y1, x2, y2) {
-        // Allow interaction within 2 tiles distance
         return Math.abs(x1 - x2) <= 2 && Math.abs(y1 - y2) <= 2;
     }
 
     checkEncounter() {
-        // Check if player is in encounter zone
-        GameData.encounterZones.forEach(zone => {
+        this.dataLoader.getEncounterZones().forEach(zone => {
             if (this.player.x >= zone.x && this.player.x < zone.x + zone.width &&
                 this.player.y >= zone.y && this.player.y < zone.y + zone.height) {
 
-                // Random encounter check
                 if (Math.random() < zone.chance) {
-                    const encounterId = `${zone.x},${zone.y}`;
+                    const encounterId = `${zone.x},${zone.y},${Date.now()}`;
                     if (!this.state.defeatedEncounters.includes(encounterId)) {
                         this.state.defeatedEncounters.push(encounterId);
                         this.startCombat(zone.creature);
@@ -287,7 +356,6 @@ class Game {
     }
 
     updateLocationDisplay() {
-        // Simple location detection
         let location = "Exploring";
 
         if (this.player.x >= 2 && this.player.x <= 5 && this.player.y >= 2 && this.player.y <= 4) {
@@ -303,10 +371,10 @@ class Game {
         document.getElementById('location-name').textContent = location;
     }
 
-    // ===== COMBAT SYSTEM =====
+    // ===== COMBAT SYSTEM (unchanged) =====
 
     startCombat(creatureType) {
-        const wildCreature = JSON.parse(JSON.stringify(GameData.creatures[creatureType]));
+        const wildCreature = JSON.parse(JSON.stringify(this.creatures[creatureType]));
         wildCreature.stats.maxHeart = wildCreature.stats.heart;
 
         this.combatState = {
@@ -378,8 +446,9 @@ class Game {
                 this.addCombatLog("Your creature fainted! Returning to lighthouse...");
                 setTimeout(() => {
                     playerCreature.stats.heart = playerCreature.stats.maxHeart;
-                    this.player.x = GameData.playerStart.x;
-                    this.player.y = GameData.playerStart.y;
+                    const startPos = this.dataLoader.getPlayerStart();
+                    this.player.x = startPos.x;
+                    this.player.y = startPos.y;
                     this.hideModal('combatModal');
                 }, 2000);
             }
@@ -443,16 +512,21 @@ class Game {
         }
     }
 
-    // ===== NPC SYSTEM =====
+    // ===== NPC & JOB SYSTEM (with generator) =====
 
     talkToNPC(npcId) {
         this.currentNPC = npcId;
+        const npc = this.npcs[npcId];
+
+        // Generate a new job
+        this.currentJob = this.jobGenerator.generateJob(npc.jobType);
+
         this.showModal('npcModal');
         this.renderNPC();
     }
 
     renderNPC() {
-        const npc = GameData.npcs[this.currentNPC];
+        const npc = this.npcs[this.currentNPC];
 
         document.getElementById('npc-name').textContent = npc.name;
         document.getElementById('npc-dialog').innerHTML = `<p>${npc.dialog}</p>`;
@@ -460,30 +534,18 @@ class Game {
         const actionsDiv = document.getElementById('npc-actions');
         actionsDiv.innerHTML = '';
 
-        if (npc.job && !npc.job.completed) {
-            const jobId = npc.job.id;
-            const job = GameData.jobs[jobId];
-
-            if (!this.state.activeJobs.includes(jobId) && !this.state.completedJobs.includes(jobId)) {
-                const acceptBtn = document.createElement('button');
-                acceptBtn.textContent = 'Accept Job';
-                acceptBtn.onclick = () => this.offerJob(jobId);
-                actionsDiv.appendChild(acceptBtn);
-            }
-
-            if (this.state.activeJobs.includes(jobId)) {
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'job-question';
-                questionDiv.innerHTML = `
-                    <p><strong>${job.name}</strong></p>
-                    <p>${job.question}</p>
-                    <div class="answer-input">
-                        <input type="number" id="job-answer" placeholder="Your answer">
-                        <button onclick="game.submitJobAnswer('${jobId}', document.getElementById('job-answer').value)">Submit</button>
-                    </div>
-                `;
-                document.getElementById('npc-dialog').appendChild(questionDiv);
-            }
+        if (this.currentJob) {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'job-question';
+            questionDiv.innerHTML = `
+                <p><strong>${this.currentJob.name}</strong></p>
+                <p>${this.currentJob.question}</p>
+                <div class="answer-input">
+                    <input type="number" id="job-answer" placeholder="Your answer" autofocus>
+                    <button onclick="game.submitJobAnswer()">Submit</button>
+                </div>
+            `;
+            document.getElementById('npc-dialog').appendChild(questionDiv);
         }
 
         const leaveBtn = document.createElement('button');
@@ -492,34 +554,24 @@ class Game {
         actionsDiv.appendChild(leaveBtn);
     }
 
-    offerJob(jobId) {
-        if (!this.state.activeJobs.includes(jobId)) {
-            this.state.activeJobs.push(jobId);
-        }
-        this.renderNPC();
-    }
+    submitJobAnswer() {
+        const answerInput = document.getElementById('job-answer');
+        const answer = parseInt(answerInput.value);
 
-    submitJobAnswer(jobId, answer) {
-        const job = GameData.jobs[jobId];
-        const npc = GameData.npcs[this.currentNPC];
-        const answerNum = parseInt(answer);
-
-        if (answerNum === job.correctAnswer) {
-            this.state.coins += job.reward;
-            this.state.completedJobs.push(jobId);
-            this.state.activeJobs = this.state.activeJobs.filter(j => j !== jobId);
-            npc.job.completed = true;
+        if (answer === this.currentJob.correctAnswer) {
+            this.state.coins += this.currentJob.reward;
 
             document.getElementById('npc-dialog').innerHTML = `
-                <p>${job.correctAnswerDialog}</p>
-                <p style="color: #ffd700; font-weight: bold;">+${job.reward} coins!</p>
+                <p>${this.currentJob.correctAnswerDialog}</p>
+                <p style="color: #ffd700; font-weight: bold;">+${this.currentJob.reward} coins!</p>
+                <p style="color: #aaa; margin-top: 10px;">Talk to me again for more work!</p>
             `;
         } else {
-            document.getElementById('npc-dialog').innerHTML = `<p>${job.wrongAnswerDialog}</p>`;
+            document.getElementById('npc-dialog').innerHTML = `
+                <p>${this.currentJob.wrongAnswerDialog}</p>
+                <p style="color: #ff6b6b;">The answer was: ${this.currentJob.correctAnswer}</p>
+            `;
         }
-
-        const existingQuestion = document.querySelector('.job-question');
-        if (existingQuestion) existingQuestion.remove();
 
         this.updateUI();
     }
@@ -535,14 +587,14 @@ class Game {
         const itemsDiv = document.getElementById('shop-items');
         itemsDiv.innerHTML = '';
 
-        Object.entries(GameData.shopItems).forEach(([itemId, item]) => {
+        Object.entries(this.shop).forEach(([itemId, item]) => {
             const alreadyOwned = this.state.inventory.includes(itemId);
 
             const itemDiv = document.createElement('div');
             itemDiv.className = 'shop-item';
             itemDiv.innerHTML = `
                 <div class="shop-item-info">
-                    <h4>${item.name}</h4>
+                    <h4>${item.emoji || ''} ${item.name}</h4>
                     <p>${item.description}</p>
                     <p class="shop-item-price">💰 ${item.price} coins</p>
                 </div>
@@ -565,7 +617,7 @@ class Game {
     }
 
     buyItem(itemId) {
-        const item = GameData.shopItems[itemId];
+        const item = this.shop[itemId];
 
         if (this.state.coins >= item.price) {
             this.state.coins -= item.price;
@@ -585,8 +637,8 @@ class Game {
             itemsList.innerHTML = '<p class="empty-state">No items</p>';
         } else {
             itemsList.innerHTML = this.state.inventory.map(itemId => {
-                const item = GameData.shopItems[itemId];
-                return `<div class="creature">${item.name}</div>`;
+                const item = this.shop[itemId];
+                return `<div class="creature">${item.emoji || ''} ${item.name}</div>`;
             }).join('');
         }
 
@@ -616,11 +668,13 @@ class Game {
         document.getElementById(modalId).classList.add('hidden');
         this.combatState = null;
         this.currentNPC = null;
+        this.currentJob = null;
     }
 }
 
-// Initialize game
+// Initialize game when page loads
 let game;
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     game = new Game();
+    await game.init();
 });
