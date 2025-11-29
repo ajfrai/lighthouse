@@ -208,10 +208,19 @@ class Game {
                 );
                 this.ctx.fill();
 
-                // Add outline
-                this.ctx.strokeStyle = '#fff';
-                this.ctx.lineWidth = 2;
+                // Add outline (pulsing if player is nearby)
+                const isNearby = this.isAdjacent(this.player.x, this.player.y, npc.x, npc.y);
+                this.ctx.strokeStyle = isNearby ? '#ffff00' : '#fff';
+                this.ctx.lineWidth = isNearby ? 3 : 2;
                 this.ctx.stroke();
+
+                // Show interaction hint if nearby
+                if (isNearby) {
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.font = '10px monospace';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('Press Space/Action', npc.x * tileSize + tileSize / 2, npc.y * tileSize - 5);
+                }
             }
         });
     }
@@ -247,14 +256,16 @@ class Game {
             }
         });
 
-        // Check for shop
-        if (this.isAdjacent(this.player.x, this.player.y, 10, 7)) {
+        // Check for shop (door at 10, 7 or nearby shop area)
+        if (this.isAdjacent(this.player.x, this.player.y, 10, 7) ||
+            this.isAdjacent(this.player.x, this.player.y, 10, 9)) {
             this.openShop();
         }
     }
 
     isAdjacent(x1, y1, x2, y2) {
-        return Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1;
+        // Allow interaction within 2 tiles distance
+        return Math.abs(x1 - x2) <= 2 && Math.abs(y1 - y2) <= 2;
     }
 
     checkEncounter() {

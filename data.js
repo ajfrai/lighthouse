@@ -53,7 +53,7 @@ const GameData = {
         // Shop entrance
         shop: { x: 10, y: 7, type: 'shop' },
         // Fisherman NPC
-        fisherman: { x: 16, y: 3, type: 'npc', npcId: 'fisherman' },
+        fisherman: { x: 14, y: 3, type: 'npc', npcId: 'fisherman' },
         // Lighthouse entrance
         lighthouseEntrance: { x: 3, y: 4, type: 'info', message: 'The lighthouse stands tall. Its beacon is dark.' }
     },
@@ -62,7 +62,7 @@ const GameData = {
     npcs: {
         fisherman: {
             name: "Old Fisherman",
-            x: 16,
+            x: 14,
             y: 3,
             color: '#ff8c42', // Orange color for NPC
             dialog: "Ahoy there! I've got a job for ye if you're interested. I'll pay good coin for help counting my catch.",
