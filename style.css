@@ -20,7 +20,7 @@ body {
     width: 100vw;
 }
 
-/* Game View */
+/* Game View - Larger, more prominent */
 .game-view {
     flex: 1;
     display: flex;
@@ -30,21 +30,28 @@ body {
     background-color: #0f0f1e;
     position: relative;
     overflow: hidden;
+    padding: 20px;
 }
 
 #gameCanvas {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    border: 2px solid #e94560;
-    max-width: 100%;
-    max-height: 100%;
+    /* Pixel-art style border - like Game Boy screen */
+    border: 4px solid #8b7355;
+    box-shadow:
+        0 0 0 2px #1a1a2e,
+        0 0 0 6px #d4c4a8,
+        0 8px 16px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+    max-height: 90%;
+    background-color: #0f0f1e;
 }
 
-/* Sidebar */
+/* Sidebar - Streamlined */
 .sidebar {
-    width: 280px;
+    width: 240px;
     background-color: #16213e;
-    border-left: 2px solid #0f3460;
+    border-left: 4px solid #8b7355;
     overflow-y: auto;
     position: relative;
 }
@@ -56,87 +63,92 @@ body {
     right: 10px;
     z-index: 10;
     background-color: #e94560;
-    border: none;
+    border: 2px solid #1a1a2e;
     color: white;
-    padding: 8px 12px;
-    font-size: 18px;
+    padding: 6px 10px;
+    font-size: 16px;
     cursor: pointer;
-    border-radius: 4px;
+    font-family: 'Courier New', monospace;
 }
 
 .sidebar-content {
-    padding: 20px;
+    padding: 15px;
 }
 
 .sidebar h3 {
     color: #e94560;
-    margin-bottom: 10px;
-    font-size: 14px;
+    margin-bottom: 8px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    border-bottom: 2px solid #e94560;
+    padding-bottom: 4px;
 }
 
 .sidebar > div > div {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .coins {
     background-color: #0f3460;
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 16px;
+    border: 2px solid #8b7355;
+    padding: 8px;
+    font-size: 14px;
     font-weight: bold;
     color: #ffd700;
 }
 
 .items-list, .creatures-list {
     background-color: #0f3460;
-    padding: 10px;
-    border-radius: 5px;
-    min-height: 60px;
-    max-height: 150px;
+    border: 2px solid #8b7355;
+    padding: 8px;
+    min-height: 50px;
+    max-height: 120px;
     overflow-y: auto;
 }
 
 .empty-state {
     color: #888;
     font-style: italic;
-    font-size: 12px;
+    font-size: 11px;
     text-align: center;
-    padding: 10px;
+    padding: 8px;
 }
 
 .creature {
     background-color: #1a1a2e;
-    padding: 8px;
-    margin-bottom: 8px;
-    border-radius: 4px;
-    font-size: 12px;
+    border: 1px solid #8b7355;
+    padding: 6px;
+    margin-bottom: 6px;
+    font-size: 11px;
 }
 
 .creature h4 {
     color: #e94560;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
+    font-size: 12px;
 }
 
 #location-name {
     background-color: #0f3460;
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 14px;
+    border: 2px solid #8b7355;
+    padding: 8px;
+    font-size: 13px;
     color: #ffd700;
+    text-align: center;
 }
 
 .controls-hint {
     background-color: #0f3460;
-    padding: 10px;
-    border-radius: 5px;
+    border: 2px solid #8b7355;
+    padding: 8px;
     text-align: center;
     color: #aaa;
-    margin-top: 20px;
+    margin-top: 15px;
+    font-size: 10px;
 }
 
-/* Mobile Controls */
+/* Mobile Controls - Pixel styled D-Pad */
 .mobile-controls {
     display: none;
     position: absolute;
@@ -145,6 +157,7 @@ body {
     transform: translateX(-50%);
     gap: 20px;
     align-items: center;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
 
 .dpad {
@@ -157,52 +170,78 @@ body {
 }
 
 .dpad-btn {
-    background-color: rgba(15, 52, 96, 0.8);
-    border: 2px solid #e94560;
+    background-color: rgba(15, 52, 96, 0.9);
+    border: 3px solid #8b7355;
     color: #eee;
-    font-size: 20px;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.1s;
     backdrop-filter: blur(5px);
+    /* Pixel-perfect corners */
+    border-radius: 0;
+    font-family: 'Courier New', monospace;
+    image-rendering: pixelated;
 }
 
 .dpad-btn:active {
     background-color: #e94560;
-    transform: scale(0.95);
+    border-color: #ffd700;
+    transform: scale(0.9);
 }
 
-.dpad-up { grid-column: 2; grid-row: 1; }
-.dpad-left { grid-column: 1; grid-row: 2; }
-.dpad-right { grid-column: 3; grid-row: 2; }
-.dpad-down { grid-column: 2; grid-row: 3; }
+.dpad-up {
+    grid-column: 2;
+    grid-row: 1;
+    border-bottom: 2px solid #1a1a2e;
+}
+
+.dpad-left {
+    grid-column: 1;
+    grid-row: 2;
+    border-right: 2px solid #1a1a2e;
+}
+
+.dpad-right {
+    grid-column: 3;
+    grid-row: 2;
+    border-left: 2px solid #1a1a2e;
+}
+
+.dpad-down {
+    grid-column: 2;
+    grid-row: 3;
+    border-top: 2px solid #1a1a2e;
+}
 
 .action-btn {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background-color: rgba(233, 69, 96, 0.8);
-    border: 3px solid #e94560;
+    background-color: rgba(233, 69, 96, 0.9);
+    border: 4px solid #8b7355;
     color: white;
     font-family: 'Courier New', monospace;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     cursor: pointer;
     backdrop-filter: blur(5px);
+    box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.2);
 }
 
 .action-btn:active {
     background-color: #c73550;
-    transform: scale(0.95);
+    transform: scale(0.92);
+    box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
-/* Modals */
+/* Modals - Pixel styled */
 .modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgba(0, 0, 0, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -216,10 +255,12 @@ body {
 
 .modal-content {
     background-color: #16213e;
-    border: 3px solid #e94560;
-    border-radius: 10px;
+    border: 4px solid #8b7355;
+    box-shadow:
+        0 0 0 2px #1a1a2e,
+        0 0 0 6px #d4c4a8;
     padding: 20px;
-    max-width: 600px;
+    max-width: 550px;
     width: 100%;
     max-height: 80vh;
     overflow-y: auto;
@@ -229,6 +270,8 @@ body {
     color: #e94560;
     margin-bottom: 15px;
     text-align: center;
+    border-bottom: 2px solid #e94560;
+    padding-bottom: 8px;
 }
 
 /* Combat */
@@ -241,31 +284,33 @@ body {
 
 .creature-display, .player-creature-display {
     background-color: #0f3460;
-    padding: 12px;
-    border-radius: 5px;
+    border: 2px solid #8b7355;
+    padding: 10px;
 }
 
 .creature-display h3, .player-creature-display h3 {
     color: #ffd700;
-    font-size: 14px;
-    margin-bottom: 8px;
+    font-size: 13px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #8b7355;
+    padding-bottom: 3px;
 }
 
 #wild-creature-stats, #player-creature-stats {
     font-size: 11px;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 .combat-log {
     background-color: #0f3460;
-    padding: 12px;
-    border-radius: 5px;
+    border: 2px solid #8b7355;
+    padding: 10px;
     margin-bottom: 15px;
-    min-height: 80px;
-    max-height: 120px;
+    min-height: 70px;
+    max-height: 100px;
     overflow-y: auto;
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: 11px;
+    line-height: 1.4;
 }
 
 .combat-actions, .npc-actions, .shop-actions {
@@ -278,44 +323,48 @@ body {
 button {
     background-color: #0f3460;
     color: #eee;
-    border: 2px solid #e94560;
-    padding: 10px 16px;
+    border: 3px solid #8b7355;
+    padding: 8px 14px;
     font-family: 'Courier New', monospace;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.2s;
+    border-radius: 0;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 button:hover:not(:disabled) {
     background-color: #e94560;
-    transform: translateY(-2px);
+    border-color: #ffd700;
+    transform: translateY(-1px);
 }
 
 button:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 button:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
 /* NPC Dialog */
 .npc-dialog {
     background-color: #0f3460;
-    padding: 15px;
-    border-radius: 5px;
+    border: 2px solid #8b7355;
+    padding: 12px;
     margin-bottom: 15px;
-    line-height: 1.6;
-    font-size: 13px;
+    line-height: 1.5;
+    font-size: 12px;
 }
 
 .job-question {
     background-color: #1a1a2e;
-    padding: 12px;
-    border-radius: 5px;
-    margin-top: 12px;
+    border: 2px solid #8b7355;
+    padding: 10px;
+    margin-top: 10px;
 }
 
 .answer-input {
@@ -328,25 +377,30 @@ button:disabled {
     flex: 1;
     padding: 8px;
     background-color: #16213e;
-    border: 2px solid #0f3460;
+    border: 2px solid #8b7355;
     color: #eee;
     font-family: 'Courier New', monospace;
-    font-size: 14px;
-    border-radius: 4px;
+    font-size: 13px;
+    border-radius: 0;
+}
+
+.answer-input input:focus {
+    outline: none;
+    border-color: #ffd700;
 }
 
 /* Shop */
 .shop-items {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 15px;
 }
 
 .shop-item {
     background-color: #0f3460;
-    padding: 12px;
-    border-radius: 5px;
+    border: 2px solid #8b7355;
+    padding: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -355,59 +409,58 @@ button:disabled {
 
 .shop-item-info h4 {
     color: #e94560;
-    margin-bottom: 4px;
-    font-size: 13px;
+    margin-bottom: 3px;
+    font-size: 12px;
 }
 
 .shop-item-info p {
-    font-size: 11px;
-    margin-bottom: 4px;
+    font-size: 10px;
+    margin-bottom: 3px;
 }
 
 .shop-item-price {
     color: #ffd700;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 /* Character Selection */
 .character-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
 }
 
 .character-card {
     background-color: #0f3460;
-    border: 3px solid #0f3460;
-    border-radius: 10px;
-    padding: 20px;
+    border: 3px solid #8b7355;
+    padding: 15px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
 }
 
 .character-card:hover {
-    border-color: #e94560;
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+    border-color: #ffd700;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
 }
 
 .character-card .emoji {
-    font-size: 48px;
-    margin-bottom: 10px;
+    font-size: 42px;
+    margin-bottom: 8px;
 }
 
 .character-card h3 {
     color: #e94560;
-    margin-bottom: 8px;
-    font-size: 16px;
+    margin-bottom: 6px;
+    font-size: 14px;
 }
 
 .character-card p {
     color: #aaa;
-    font-size: 12px;
+    font-size: 11px;
     margin: 0;
 }
 
@@ -417,16 +470,20 @@ button:disabled {
         flex-direction: column;
     }
 
+    .game-view {
+        padding: 10px;
+    }
+
     .sidebar {
         width: 100%;
-        max-height: 200px;
+        max-height: 180px;
         border-left: none;
-        border-top: 2px solid #0f3460;
+        border-top: 4px solid #8b7355;
         order: 2;
     }
 
     .sidebar.collapsed {
-        max-height: 50px;
+        max-height: 45px;
         overflow: hidden;
     }
 
@@ -448,12 +505,16 @@ button:disabled {
     }
 
     #gameCanvas {
-        border: 1px solid #e94560;
+        border: 3px solid #8b7355;
+        box-shadow:
+            0 0 0 1px #1a1a2e,
+            0 0 0 4px #d4c4a8,
+            0 4px 8px rgba(0, 0, 0, 0.4);
     }
 
     .modal-content {
         max-width: 95%;
-        padding: 15px;
+        padding: 12px;
     }
 
     .combat-area {
@@ -475,16 +536,23 @@ button:disabled {
 
     .dpad-btn {
         font-size: 16px;
+        border-width: 2px;
     }
 
     .action-btn {
         width: 70px;
         height: 70px;
-        font-size: 12px;
+        font-size: 11px;
+        border-width: 3px;
     }
 
     button {
-        font-size: 12px;
-        padding: 8px 12px;
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+
+    #gameCanvas {
+        max-width: 95%;
+        max-height: 85%;
     }
 }

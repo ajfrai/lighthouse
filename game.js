@@ -229,7 +229,10 @@ class Game {
 
     // ===== GAME LOOP =====
 
-    gameLoop() {
+    gameLoop(timestamp = 0) {
+        // Update animations
+        svgLoader.updateAnimation(timestamp);
+
         // Process input queue
         const now = Date.now();
         if (now - this.lastMoveTime >= this.moveDelay && this.inputQueue.length > 0) {
@@ -246,7 +249,7 @@ class Game {
         }
 
         this.render();
-        requestAnimationFrame(() => this.gameLoop());
+        requestAnimationFrame((ts) => this.gameLoop(ts));
     }
 
     // ===== RENDERING =====
@@ -270,8 +273,17 @@ class Game {
                 const tileIndex = map.tiles[y][x];
                 const tileType = map.tileKey[tileIndex];
 
-                // Get SVG image for this tile type
-                const tileSVG = SVGAssets.tiles[tileType];
+                // Get the correct tile variant or animated frame
+                let tileSVG;
+                if (tileType === 'water') {
+                    // Water is animated
+                    tileSVG = svgLoader.getWaterFrame();
+                } else {
+                    // Get tile variant based on position (or single tile if not an array)
+                    const baseTile = SVGAssets.tiles[tileType];
+                    tileSVG = svgLoader.getTileVariant(baseTile, x, y);
+                }
+
                 if (tileSVG) {
                     const img = svgLoader.cache.get(`${tileSVG}-${tileSize}-${tileSize}`);
                     if (img) {
@@ -279,8 +291,10 @@ class Game {
                     } else {
                         // Fallback to colored rect if SVG not loaded
                         const tile = this.tiles[tileType];
-                        this.ctx.fillStyle = tile.color;
-                        this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                        if (tile) {
+                            this.ctx.fillStyle = tile.color;
+                            this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                        }
                     }
                 }
             }
