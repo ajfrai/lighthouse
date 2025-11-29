@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lighthouse - Educational Creature Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Main Game View -->
+        <div class="main-view">
+            <div id="location-view" class="location-view">
+                <h2 id="location-name">Lighthouse</h2>
+                <div id="location-description"></div>
+                <div id="location-connections"></div>
+            </div>
+
+            <!-- Combat View (hidden by default) -->
+            <div id="combat-view" class="combat-view hidden">
+                <h2>Wild Creature Encountered!</h2>
+                <div class="creature-display">
+                    <h3 id="wild-creature-name"></h3>
+                    <div id="wild-creature-stats" class="stats"></div>
+                </div>
+                <div class="player-creature-display">
+                    <h3>Your Creature</h3>
+                    <div id="player-creature-stats" class="stats"></div>
+                </div>
+                <div id="combat-log" class="combat-log"></div>
+                <div id="combat-actions" class="combat-actions"></div>
+            </div>
+
+            <!-- NPC Dialog View (hidden by default) -->
+            <div id="npc-view" class="npc-view hidden">
+                <h2 id="npc-name"></h2>
+                <div id="npc-dialog" class="npc-dialog"></div>
+                <div id="npc-actions" class="npc-actions"></div>
+            </div>
+
+            <!-- Shop View (hidden by default) -->
+            <div id="shop-view" class="shop-view hidden">
+                <h2>Shop</h2>
+                <div id="shop-items" class="shop-items"></div>
+                <div id="shop-actions" class="shop-actions"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="inventory">
+                <h3>Inventory</h3>
+                <div class="coins">
+                    💰 Coins: <span id="coin-count">0</span>
+                </div>
+                <div id="items-list" class="items-list"></div>
+            </div>
+
+            <div class="creatures">
+                <h3>Your Creatures</h3>
+                <div id="creatures-list" class="creatures-list">
+                    <p class="empty-state">No creatures yet</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>Controls</h3>
+                <p>Use WASD or Arrow Keys to explore</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
