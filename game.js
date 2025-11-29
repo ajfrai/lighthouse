@@ -1,127 +1,329 @@
-// Main Game Logic
-// Lighthouse Educational Creature Game
+// Lighthouse - Canvas-based Game Engine
 
 class Game {
     constructor() {
-        // Initialize game state from data
-        this.state = JSON.parse(JSON.stringify(GameData.initialPlayerState));
-        this.currentView = 'location'; // location, combat, npc, shop
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+
+        // Set canvas size
+        this.canvas.width = GameData.map.main.width * GameData.TILE_SIZE;
+        this.canvas.height = GameData.map.main.height * GameData.TILE_SIZE;
+
+        // Game state
+        this.state = JSON.parse(JSON.stringify(GameData.initialState));
+        this.player = {
+            x: GameData.playerStart.x,
+            y: GameData.playerStart.y,
+            color: '#e94560' // Player color
+        };
+
+        // Input state
+        this.keys = {};
+        this.lastMoveTime = 0;
+        this.moveDelay = 150; // ms between moves
+
+        // Combat state
         this.combatState = null;
         this.currentNPC = null;
-        this.encounterTriggered = {}; // Track which locations have triggered encounters
 
         this.init();
     }
 
     init() {
-        this.setupEventListeners();
+        this.setupControls();
+        this.setupMobileControls();
         this.render();
+        this.gameLoop();
     }
 
-    setupEventListeners() {
-        // Keyboard controls for movement
+    // ===== CONTROLS =====
+
+    setupControls() {
+        // Keyboard controls
         document.addEventListener('keydown', (e) => {
-            if (this.currentView !== 'location') return;
+            this.keys[e.key.toLowerCase()] = true;
+        });
 
-            const key = e.key.toLowerCase();
-            // For now, we'll use keyboard to navigate between locations
-            // In a more advanced version, this would move the player within a location
+        document.addEventListener('keyup', (e) => {
+            this.keys[e.key.toLowerCase()] = false;
+        });
 
-            // Show available connections as shortcuts
-            const connections = GameData.locations[this.state.location].connections;
-            if (key === 'escape' || key === 'esc') {
-                this.render();
+        // Sidebar toggle for mobile
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        });
+    }
+
+    setupMobileControls() {
+        // D-pad controls
+        document.querySelectorAll('.dpad-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const direction = btn.dataset.direction;
+                this.handleMove(direction);
+            });
+        });
+
+        // Action button (for interactions)
+        document.getElementById('actionBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.handleAction();
+        });
+    }
+
+    handleMove(direction) {
+        const now = Date.now();
+        if (now - this.lastMoveTime < this.moveDelay) return;
+
+        let newX = this.player.x;
+        let newY = this.player.y;
+
+        switch(direction) {
+            case 'up':
+            case 'w':
+            case 'arrowup':
+                newY--;
+                break;
+            case 'down':
+            case 's':
+            case 'arrowdown':
+                newY++;
+                break;
+            case 'left':
+            case 'a':
+            case 'arrowleft':
+                newX--;
+                break;
+            case 'right':
+            case 'd':
+            case 'arrowright':
+                newX++;
+                break;
+            default:
+                return;
+        }
+
+        // Check if new position is valid
+        if (this.canMoveTo(newX, newY)) {
+            this.player.x = newX;
+            this.player.y = newY;
+            this.lastMoveTime = now;
+
+            // Check for encounters and interactions
+            this.checkEncounter();
+            this.updateLocationDisplay();
+        }
+    }
+
+    handleAction() {
+        // Check for nearby interactions
+        this.checkInteraction();
+    }
+
+    canMoveTo(x, y) {
+        // Check bounds
+        if (x < 0 || y < 0 || x >= GameData.map.main.width || y >= GameData.map.main.height) {
+            return false;
+        }
+
+        // Check tile walkability
+        const tileIndex = GameData.map.main.tiles[y][x];
+        const tileType = GameData.map.main.tileKey[tileIndex];
+        const tile = GameData.tiles[tileType];
+
+        return tile.walkable;
+    }
+
+    // ===== GAME LOOP =====
+
+    gameLoop() {
+        // Handle keyboard input
+        const now = Date.now();
+        if (now - this.lastMoveTime >= this.moveDelay) {
+            if (this.keys['w'] || this.keys['arrowup']) this.handleMove('up');
+            else if (this.keys['s'] || this.keys['arrowdown']) this.handleMove('down');
+            else if (this.keys['a'] || this.keys['arrowleft']) this.handleMove('left');
+            else if (this.keys['d'] || this.keys['arrowright']) this.handleMove('right');
+            else if (this.keys[' '] || this.keys['enter']) this.handleAction();
+        }
+
+        this.render();
+        requestAnimationFrame(() => this.gameLoop());
+    }
+
+    // ===== RENDERING =====
+
+    render() {
+        // Clear canvas
+        this.ctx.fillStyle = '#0f0f1e';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Render map tiles
+        this.renderMap();
+
+        // Render NPCs
+        this.renderNPCs();
+
+        // Render player
+        this.renderPlayer();
+
+        // Update UI
+        this.updateUI();
+    }
+
+    renderMap() {
+        const map = GameData.map.main;
+        const tileSize = GameData.TILE_SIZE;
+
+        for (let y = 0; y < map.height; y++) {
+            for (let x = 0; x < map.width; x++) {
+                const tileIndex = map.tiles[y][x];
+                const tileType = map.tileKey[tileIndex];
+                const tile = GameData.tiles[tileType];
+
+                this.ctx.fillStyle = tile.color;
+                this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+
+                // Add simple border for visual clarity
+                this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                this.ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            }
+        }
+    }
+
+    renderNPCs() {
+        const tileSize = GameData.TILE_SIZE;
+
+        Object.values(GameData.npcs).forEach(npc => {
+            if (!npc.job.completed) {
+                // Draw NPC as colored circle
+                this.ctx.fillStyle = npc.color;
+                this.ctx.beginPath();
+                this.ctx.arc(
+                    npc.x * tileSize + tileSize / 2,
+                    npc.y * tileSize + tileSize / 2,
+                    tileSize / 3,
+                    0,
+                    Math.PI * 2
+                );
+                this.ctx.fill();
+
+                // Add outline
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
             }
         });
     }
 
-    // ===== NAVIGATION SYSTEM =====
+    renderPlayer() {
+        const tileSize = GameData.TILE_SIZE;
 
-    travelTo(locationId) {
-        this.state.location = locationId;
+        // Draw player as colored circle
+        this.ctx.fillStyle = this.player.color;
+        this.ctx.beginPath();
+        this.ctx.arc(
+            this.player.x * tileSize + tileSize / 2,
+            this.player.y * tileSize + tileSize / 2,
+            tileSize / 3,
+            0,
+            Math.PI * 2
+        );
+        this.ctx.fill();
 
-        // Track visited locations
-        if (!this.state.visitedLocations.includes(locationId)) {
-            this.state.visitedLocations.push(locationId);
-        }
+        // Add outline
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+    }
 
-        // Check for random encounter
-        const location = GameData.locations[locationId];
-        if (location.encounterChance > 0 &&
-            !this.encounterTriggered[locationId] &&
-            Math.random() < location.encounterChance) {
+    // ===== INTERACTIONS =====
 
-            this.encounterTriggered[locationId] = true;
-            const creatureType = location.encounterCreature;
-            this.startCombat(creatureType);
-            return;
-        }
+    checkInteraction() {
+        // Check for NPC interactions
+        Object.entries(GameData.npcs).forEach(([id, npc]) => {
+            if (this.isAdjacent(this.player.x, this.player.y, npc.x, npc.y)) {
+                this.talkToNPC(id);
+            }
+        });
 
-        // Check if location is a shop
-        if (location.isShop) {
+        // Check for shop
+        if (this.isAdjacent(this.player.x, this.player.y, 10, 7)) {
             this.openShop();
-            return;
+        }
+    }
+
+    isAdjacent(x1, y1, x2, y2) {
+        return Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1;
+    }
+
+    checkEncounter() {
+        // Check if player is in encounter zone
+        GameData.encounterZones.forEach(zone => {
+            if (this.player.x >= zone.x && this.player.x < zone.x + zone.width &&
+                this.player.y >= zone.y && this.player.y < zone.y + zone.height) {
+
+                // Random encounter check
+                if (Math.random() < zone.chance) {
+                    const encounterId = `${zone.x},${zone.y}`;
+                    if (!this.state.defeatedEncounters.includes(encounterId)) {
+                        this.state.defeatedEncounters.push(encounterId);
+                        this.startCombat(zone.creature);
+                    }
+                }
+            }
+        });
+    }
+
+    updateLocationDisplay() {
+        // Simple location detection
+        let location = "Exploring";
+
+        if (this.player.x >= 2 && this.player.x <= 5 && this.player.y >= 2 && this.player.y <= 4) {
+            location = "The Lighthouse";
+        } else if (this.player.x >= 15 && this.player.x <= 18 && this.player.y >= 2 && this.player.y <= 4) {
+            location = "Fisherman's Dock";
+        } else if (this.player.x >= 9 && this.player.x <= 11 && this.player.y >= 8 && this.player.y <= 10) {
+            location = "Village Shop";
+        } else if (this.player.x >= 9 && this.player.x <= 11 && this.player.y >= 2 && this.player.y <= 4) {
+            location = "Tall Grass (Watch out!)";
         }
 
-        this.currentView = 'location';
-        this.render();
+        document.getElementById('location-name').textContent = location;
     }
 
     // ===== COMBAT SYSTEM =====
 
     startCombat(creatureType) {
         const wildCreature = JSON.parse(JSON.stringify(GameData.creatures[creatureType]));
-
-        // Player needs a creature to fight
-        // For demo: give player a starter creature if they don't have one
-        if (this.state.creatures.length === 0) {
-            this.state.creatures.push({
-                name: "Shellback", // Starter creature
-                stats: {
-                    heart: 30,
-                    maxHeart: 30,
-                    power: 6,
-                    guard: 6,
-                    speed: 8
-                }
-            });
-        }
-
         wildCreature.stats.maxHeart = wildCreature.stats.heart;
 
         this.combatState = {
             wildCreature: wildCreature,
             playerCreature: this.state.creatures[0],
-            turn: 0,
             log: [],
             canCatch: false
         };
 
-        this.currentView = 'combat';
         this.addCombatLog(`A wild ${wildCreature.name} appeared!`);
-        this.render();
+        this.showModal('combatModal');
+        this.renderCombat();
     }
 
     addCombatLog(message) {
         this.combatState.log.push(message);
     }
 
-    executeCombatTurn(playerAction) {
+    executeCombatTurn(action) {
         const { wildCreature, playerCreature } = this.combatState;
 
-        if (playerAction === 'run') {
+        if (action === 'run') {
             this.addCombatLog("You fled from battle!");
-            setTimeout(() => {
-                this.currentView = 'location';
-                this.combatState = null;
-                this.render();
-            }, 1000);
-            this.render();
+            setTimeout(() => this.hideModal('combatModal'), 1000);
             return;
         }
 
-        if (playerAction === 'catch') {
-            // Attempt to catch
+        if (action === 'catch') {
             this.state.creatures.push({
                 name: wildCreature.name,
                 stats: {
@@ -133,17 +335,12 @@ class Game {
                 }
             });
             this.addCombatLog(`You caught the ${wildCreature.name}!`);
-            setTimeout(() => {
-                this.currentView = 'location';
-                this.combatState = null;
-                this.render();
-            }, 1500);
-            this.render();
+            setTimeout(() => this.hideModal('combatModal'), 1500);
+            this.renderCombat();
             return;
         }
 
-        if (playerAction === 'attack') {
-            // Determine turn order based on speed
+        if (action === 'attack') {
             const playerFirst = playerCreature.stats.speed >= wildCreature.stats.speed;
 
             if (playerFirst) {
@@ -158,35 +355,25 @@ class Game {
                 }
             }
 
-            // Check if wild creature can be caught (HP below 30%)
-            if (wildCreature.stats.heart > 0 &&
-                wildCreature.stats.heart < wildCreature.stats.maxHeart * 0.3) {
+            if (wildCreature.stats.heart > 0 && wildCreature.stats.heart < wildCreature.stats.maxHeart * 0.3) {
                 this.combatState.canCatch = true;
                 this.addCombatLog(`The ${wildCreature.name} looks weak enough to catch!`);
             }
 
-            // Check win/loss conditions
             if (wildCreature.stats.heart <= 0) {
                 this.addCombatLog(`The wild ${wildCreature.name} fainted!`);
-                setTimeout(() => {
-                    this.currentView = 'location';
-                    this.combatState = null;
-                    this.render();
-                }, 1500);
+                setTimeout(() => this.hideModal('combatModal'), 1500);
             } else if (playerCreature.stats.heart <= 0) {
-                this.addCombatLog("Your creature fainted! You return to the lighthouse...");
+                this.addCombatLog("Your creature fainted! Returning to lighthouse...");
                 setTimeout(() => {
-                    // Reset player creature HP
                     playerCreature.stats.heart = playerCreature.stats.maxHeart;
-                    this.state.location = 'lighthouse';
-                    this.currentView = 'location';
-                    this.combatState = null;
-                    this.render();
+                    this.player.x = GameData.playerStart.x;
+                    this.player.y = GameData.playerStart.y;
+                    this.hideModal('combatModal');
                 }, 2000);
             }
 
-            this.combatState.turn++;
-            this.render();
+            this.renderCombat();
         }
     }
 
@@ -200,163 +387,28 @@ class Game {
         this.addCombatLog(`${attackerName} attacks ${defenderName} for ${damage} damage!`);
     }
 
-    // ===== NPC SYSTEM =====
-
-    talkToNPC(npcId) {
-        this.currentNPC = npcId;
-        this.currentView = 'npc';
-        this.render();
-    }
-
-    offerJob(jobId) {
-        if (!this.state.activeJobs.includes(jobId)) {
-            this.state.activeJobs.push(jobId);
-        }
-        this.render();
-    }
-
-    submitJobAnswer(jobId, answer) {
-        const job = GameData.jobs[jobId];
-        const npc = GameData.npcs[this.currentNPC];
-
-        const answerNum = parseInt(answer);
-
-        if (answerNum === job.correctAnswer) {
-            this.state.coins += job.reward;
-            this.state.completedJobs.push(jobId);
-            this.state.activeJobs = this.state.activeJobs.filter(j => j !== jobId);
-            npc.job.completed = true;
-
-            // Show success message
-            document.getElementById('npc-dialog').innerHTML = `
-                <p>${job.correctAnswerDialog}</p>
-                <p style="color: #ffd700; font-weight: bold;">+${job.reward} coins!</p>
-            `;
-        } else {
-            // Show failure message
-            document.getElementById('npc-dialog').innerHTML = `<p>${job.wrongAnswerDialog}</p>`;
-        }
-
-        // Update UI
-        this.updateInventoryDisplay();
-
-        // Clear the job question
-        const existingQuestion = document.querySelector('.job-question');
-        if (existingQuestion) {
-            existingQuestion.remove();
-        }
-    }
-
-    // ===== SHOP SYSTEM =====
-
-    openShop() {
-        this.currentView = 'shop';
-        this.render();
-    }
-
-    buyItem(itemId) {
-        const item = GameData.shopItems[itemId];
-
-        if (this.state.coins >= item.price) {
-            this.state.coins -= item.price;
-            this.state.inventory.push(itemId);
-            this.render();
-        }
-    }
-
-    // ===== RENDERING SYSTEM =====
-
-    render() {
-        // Hide all views
-        document.getElementById('location-view').classList.add('hidden');
-        document.getElementById('combat-view').classList.add('hidden');
-        document.getElementById('npc-view').classList.add('hidden');
-        document.getElementById('shop-view').classList.add('hidden');
-
-        // Render appropriate view
-        if (this.currentView === 'location') {
-            this.renderLocation();
-        } else if (this.currentView === 'combat') {
-            this.renderCombat();
-        } else if (this.currentView === 'npc') {
-            this.renderNPC();
-        } else if (this.currentView === 'shop') {
-            this.renderShop();
-        }
-
-        // Always update sidebar
-        this.updateInventoryDisplay();
-    }
-
-    renderLocation() {
-        const view = document.getElementById('location-view');
-        view.classList.remove('hidden');
-
-        const location = GameData.locations[this.state.location];
-
-        document.getElementById('location-name').textContent = location.name;
-        document.getElementById('location-description').textContent = location.description;
-
-        // Render connections (travel options)
-        const connectionsDiv = document.getElementById('location-connections');
-        connectionsDiv.innerHTML = '<h3 style="margin-bottom: 10px;">Where to?</h3>';
-
-        location.connections.forEach(connId => {
-            const conn = GameData.locations[connId];
-            const btn = document.createElement('button');
-            btn.textContent = `Go to ${conn.name}`;
-            btn.onclick = () => this.travelTo(connId);
-            connectionsDiv.appendChild(btn);
-        });
-
-        // Render NPCs
-        if (location.npcs && location.npcs.length > 0) {
-            const npcsDiv = document.createElement('div');
-            npcsDiv.style.marginTop = '20px';
-            npcsDiv.innerHTML = '<h3 style="margin-bottom: 10px;">People</h3>';
-
-            location.npcs.forEach(npcId => {
-                const npc = GameData.npcs[npcId];
-                const btn = document.createElement('button');
-                btn.textContent = `Talk to ${npc.name}`;
-                btn.onclick = () => this.talkToNPC(npcId);
-                npcsDiv.appendChild(btn);
-            });
-
-            connectionsDiv.appendChild(npcsDiv);
-        }
-    }
-
     renderCombat() {
-        const view = document.getElementById('combat-view');
-        view.classList.remove('hidden');
-
         const { wildCreature, playerCreature, log, canCatch } = this.combatState;
 
-        // Wild creature display
         document.getElementById('wild-creature-name').textContent = wildCreature.name;
         document.getElementById('wild-creature-stats').innerHTML = `
-            <div class="stat"><strong>❤️ Heart:</strong> ${wildCreature.stats.heart}/${wildCreature.stats.maxHeart}</div>
-            <div class="stat"><strong>⚔️ Power:</strong> ${wildCreature.stats.power}</div>
-            <div class="stat"><strong>🛡️ Guard:</strong> ${wildCreature.stats.guard}</div>
-            <div class="stat"><strong>⚡ Speed:</strong> ${wildCreature.stats.speed}</div>
+            ❤️ ${wildCreature.stats.heart}/${wildCreature.stats.maxHeart} |
+            ⚔️ ${wildCreature.stats.power} |
+            🛡️ ${wildCreature.stats.guard} |
+            ⚡ ${wildCreature.stats.speed}
         `;
 
-        // Player creature display
         document.getElementById('player-creature-stats').innerHTML = `
-            <div><strong>${playerCreature.name}</strong></div>
-            <div class="stat"><strong>❤️ Heart:</strong> ${playerCreature.stats.heart}/${playerCreature.stats.maxHeart}</div>
-            <div class="stat"><strong>⚔️ Power:</strong> ${playerCreature.stats.power}</div>
-            <div class="stat"><strong>🛡️ Guard:</strong> ${playerCreature.stats.guard}</div>
-            <div class="stat"><strong>⚡ Speed:</strong> ${playerCreature.stats.speed}</div>
+            <strong>${playerCreature.name}</strong><br>
+            ❤️ ${playerCreature.stats.heart}/${playerCreature.stats.maxHeart} |
+            ⚔️ ${playerCreature.stats.power} |
+            🛡️ ${playerCreature.stats.guard} |
+            ⚡ ${playerCreature.stats.speed}
         `;
 
-        // Combat log
-        const logDiv = document.getElementById('combat-log');
-        logDiv.innerHTML = log.map(msg => `<p>${msg}</p>`).join('');
-        logDiv.scrollTop = logDiv.scrollHeight;
+        document.getElementById('combat-log').innerHTML = log.map(msg => `<p>${msg}</p>`).join('');
+        document.getElementById('combat-log').scrollTop = document.getElementById('combat-log').scrollHeight;
 
-        // Combat actions
         const actionsDiv = document.getElementById('combat-actions');
         actionsDiv.innerHTML = '';
 
@@ -380,10 +432,15 @@ class Game {
         }
     }
 
-    renderNPC() {
-        const view = document.getElementById('npc-view');
-        view.classList.remove('hidden');
+    // ===== NPC SYSTEM =====
 
+    talkToNPC(npcId) {
+        this.currentNPC = npcId;
+        this.showModal('npcModal');
+        this.renderNPC();
+    }
+
+    renderNPC() {
         const npc = GameData.npcs[this.currentNPC];
 
         document.getElementById('npc-name').textContent = npc.name;
@@ -392,7 +449,6 @@ class Game {
         const actionsDiv = document.getElementById('npc-actions');
         actionsDiv.innerHTML = '';
 
-        // Job interaction
         if (npc.job && !npc.job.completed) {
             const jobId = npc.job.id;
             const job = GameData.jobs[jobId];
@@ -405,7 +461,6 @@ class Game {
             }
 
             if (this.state.activeJobs.includes(jobId)) {
-                // Show job question
                 const questionDiv = document.createElement('div');
                 questionDiv.className = 'job-question';
                 questionDiv.innerHTML = `
@@ -422,18 +477,50 @@ class Game {
 
         const leaveBtn = document.createElement('button');
         leaveBtn.textContent = 'Leave';
-        leaveBtn.onclick = () => {
-            this.currentView = 'location';
-            this.currentNPC = null;
-            this.render();
-        };
+        leaveBtn.onclick = () => this.hideModal('npcModal');
         actionsDiv.appendChild(leaveBtn);
     }
 
-    renderShop() {
-        const view = document.getElementById('shop-view');
-        view.classList.remove('hidden');
+    offerJob(jobId) {
+        if (!this.state.activeJobs.includes(jobId)) {
+            this.state.activeJobs.push(jobId);
+        }
+        this.renderNPC();
+    }
 
+    submitJobAnswer(jobId, answer) {
+        const job = GameData.jobs[jobId];
+        const npc = GameData.npcs[this.currentNPC];
+        const answerNum = parseInt(answer);
+
+        if (answerNum === job.correctAnswer) {
+            this.state.coins += job.reward;
+            this.state.completedJobs.push(jobId);
+            this.state.activeJobs = this.state.activeJobs.filter(j => j !== jobId);
+            npc.job.completed = true;
+
+            document.getElementById('npc-dialog').innerHTML = `
+                <p>${job.correctAnswerDialog}</p>
+                <p style="color: #ffd700; font-weight: bold;">+${job.reward} coins!</p>
+            `;
+        } else {
+            document.getElementById('npc-dialog').innerHTML = `<p>${job.wrongAnswerDialog}</p>`;
+        }
+
+        const existingQuestion = document.querySelector('.job-question');
+        if (existingQuestion) existingQuestion.remove();
+
+        this.updateUI();
+    }
+
+    // ===== SHOP SYSTEM =====
+
+    openShop() {
+        this.showModal('shopModal');
+        this.renderShop();
+    }
+
+    renderShop() {
         const itemsDiv = document.getElementById('shop-items');
         itemsDiv.innerHTML = '';
 
@@ -451,7 +538,7 @@ class Game {
                 <button
                     onclick="game.buyItem('${itemId}')"
                     ${alreadyOwned || this.state.coins < item.price ? 'disabled' : ''}>
-                    ${alreadyOwned ? 'Owned' : this.state.coins < item.price ? 'Not enough coins' : 'Buy'}
+                    ${alreadyOwned ? 'Owned' : this.state.coins < item.price ? 'Not enough' : 'Buy'}
                 </button>
             `;
             itemsDiv.appendChild(itemDiv);
@@ -462,54 +549,66 @@ class Game {
 
         const leaveBtn = document.createElement('button');
         leaveBtn.textContent = 'Leave Shop';
-        leaveBtn.onclick = () => this.travelTo('village');
+        leaveBtn.onclick = () => this.hideModal('shopModal');
         actionsDiv.appendChild(leaveBtn);
     }
 
-    updateInventoryDisplay() {
-        // Update coins
+    buyItem(itemId) {
+        const item = GameData.shopItems[itemId];
+
+        if (this.state.coins >= item.price) {
+            this.state.coins -= item.price;
+            this.state.inventory.push(itemId);
+            this.renderShop();
+            this.updateUI();
+        }
+    }
+
+    // ===== UI UPDATES =====
+
+    updateUI() {
         document.getElementById('coin-count').textContent = this.state.coins;
 
-        // Update items
         const itemsList = document.getElementById('items-list');
         if (this.state.inventory.length === 0) {
-            itemsList.innerHTML = '<p class="empty-state">No items yet</p>';
+            itemsList.innerHTML = '<p class="empty-state">No items</p>';
         } else {
-            itemsList.innerHTML = '';
-            this.state.inventory.forEach(itemId => {
+            itemsList.innerHTML = this.state.inventory.map(itemId => {
                 const item = GameData.shopItems[itemId];
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'item';
-                itemDiv.textContent = item.name;
-                itemsList.appendChild(itemDiv);
-            });
+                return `<div class="creature">${item.name}</div>`;
+            }).join('');
         }
 
-        // Update creatures
         const creaturesList = document.getElementById('creatures-list');
         if (this.state.creatures.length === 0) {
-            creaturesList.innerHTML = '<p class="empty-state">No creatures yet</p>';
+            creaturesList.innerHTML = '<p class="empty-state">No creatures</p>';
         } else {
-            creaturesList.innerHTML = '';
-            this.state.creatures.forEach(creature => {
-                const creatureDiv = document.createElement('div');
-                creatureDiv.className = 'creature';
-                creatureDiv.innerHTML = `
+            creaturesList.innerHTML = this.state.creatures.map(creature => `
+                <div class="creature">
                     <h4>${creature.name}</h4>
-                    <div class="creature-stats">
-                        <div>❤️ ${creature.stats.heart}/${creature.stats.maxHeart}</div>
-                        <div>⚔️ ${creature.stats.power}</div>
-                        <div>🛡️ ${creature.stats.guard}</div>
-                        <div>⚡ ${creature.stats.speed}</div>
-                    </div>
-                `;
-                creaturesList.appendChild(creatureDiv);
-            });
+                    ❤️${creature.stats.heart}/${creature.stats.maxHeart}
+                    ⚔️${creature.stats.power}
+                    🛡️${creature.stats.guard}
+                    ⚡${creature.stats.speed}
+                </div>
+            `).join('');
         }
+    }
+
+    // ===== MODAL HELPERS =====
+
+    showModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    hideModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+        this.combatState = null;
+        this.currentNPC = null;
     }
 }
 
-// Initialize game when page loads
+// Initialize game
 let game;
 window.addEventListener('DOMContentLoaded', () => {
     game = new Game();

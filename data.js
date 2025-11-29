@@ -1,63 +1,70 @@
-// Game Data Configuration
-// This file contains all game data in a modular, JSON-like format
-// Easy to expand and eventually generate procedurally
+// Game Data - Tile-based map system
+// Tile size: 32x32 pixels
 
 const GameData = {
-    // Creature definitions
-    creatures: {
-        seasprite: {
-            name: "Seasprite",
-            stats: {
-                heart: 25,    // HP
-                power: 8,     // Attack
-                guard: 4,     // Defense
-                speed: 12     // Turn order
-            }
-        },
-        // Placeholder for future creatures
-        // rockshell: { ... },
-        // stormwing: { ... }
+    TILE_SIZE: 32,
+
+    // Tile types with colors (simple colored rectangles for now)
+    tiles: {
+        grass: { color: '#2d5016', walkable: true },
+        path: { color: '#8b7355', walkable: true },
+        water: { color: '#1e4d8b', walkable: false },
+        sand: { color: '#e0d0a0', walkable: true },
+        building: { color: '#6b5b3e', walkable: false },
+        door: { color: '#4a3520', walkable: true, isInteraction: true },
+        tallGrass: { color: '#3d6b21', walkable: true, encounter: true },
+        lighthouse: { color: '#c0c0c0', walkable: false },
+        tree: { color: '#1a3d0f', walkable: false },
+        shop: { color: '#8b4513', walkable: false },
+        counter: { color: '#654321', walkable: false }
     },
 
-    // Location/Map definitions
-    locations: {
-        lighthouse: {
-            name: "The Lighthouse",
-            description: "A tall stone lighthouse stands here, its beacon dark. The path winds down toward a small village. You can hear waves crashing against the rocks below.",
-            connections: ["path"],
-            // Encounter trigger - placeholder for procedural generation later
-            encounterChance: 0,
-            npcs: []
-        },
-        path: {
-            name: "Coastal Path",
-            description: "A winding path between the lighthouse and the village. Tall grass rustles in the sea breeze. Something might be lurking here...",
-            connections: ["lighthouse", "village"],
-            encounterChance: 0.8, // 80% chance of encounter on first visit
-            encounterCreature: "seasprite",
-            npcs: []
-        },
-        village: {
-            name: "Tidemark Village",
-            description: "A small fishing village with weathered buildings. Fishermen mend their nets near the docks. You can see a shop and a villager who looks like they need help.",
-            connections: ["path", "shop"],
-            encounterChance: 0,
-            npcs: ["fisherman"]
-        },
-        shop: {
-            name: "General Store",
-            description: "A cozy shop filled with supplies and odd trinkets. The shopkeeper nods at you from behind the counter.",
-            connections: ["village"],
-            encounterChance: 0,
-            npcs: [],
-            isShop: true
+    // Game world map (each area is a 2D grid)
+    // Map format: each cell is a tile type
+    // 0 = grass, 1 = path, 2 = water, 3 = sand, 4 = building, 5 = door, 6 = tallGrass, 7 = lighthouse, 8 = tree, 9 = shop, 10 = counter
+    map: {
+        // Starting area - 20x15 tiles (640x480 pixels)
+        main: {
+            width: 20,
+            height: 15,
+            tiles: [
+                [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                [2,3,3,3,3,3,3,8,0,0,0,0,0,8,3,3,3,3,3,2],
+                [2,3,7,7,7,3,3,0,0,6,6,6,0,0,3,4,4,4,3,2],
+                [2,3,7,7,7,3,1,1,1,6,6,6,1,1,1,4,5,4,3,2],
+                [2,3,3,5,3,3,1,0,0,6,6,6,0,0,1,4,4,4,3,2],
+                [2,3,3,3,3,3,1,0,0,0,0,0,0,0,1,3,3,3,3,2],
+                [2,8,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,8,2],
+                [2,0,0,0,0,0,1,1,1,1,5,1,1,1,1,0,0,0,0,2],
+                [2,0,0,0,8,0,0,0,0,4,4,4,0,0,0,0,8,0,0,2],
+                [2,0,0,0,0,0,0,0,0,4,9,4,0,0,0,0,0,0,0,2],
+                [2,0,8,0,0,0,0,0,0,4,4,4,0,0,0,0,0,8,0,2],
+                [2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
+                [2,0,0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0,0,2],
+                [2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2],
+                [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+            ],
+            tileKey: ['grass', 'path', 'water', 'sand', 'building', 'door', 'tallGrass', 'lighthouse', 'tree', 'shop', 'counter']
         }
     },
 
-    // NPC definitions
+    // Interaction points on the map
+    interactions: {
+        // Shop entrance
+        shop: { x: 10, y: 7, type: 'shop' },
+        // Fisherman NPC
+        fisherman: { x: 16, y: 3, type: 'npc', npcId: 'fisherman' },
+        // Lighthouse entrance
+        lighthouseEntrance: { x: 3, y: 4, type: 'info', message: 'The lighthouse stands tall. Its beacon is dark.' }
+    },
+
+    // NPCs with positions on map
     npcs: {
         fisherman: {
             name: "Old Fisherman",
+            x: 16,
+            y: 3,
+            color: '#ff8c42', // Orange color for NPC
             dialog: "Ahoy there! I've got a job for ye if you're interested. I'll pay good coin for help counting my catch.",
             job: {
                 id: "fish_count",
@@ -67,38 +74,73 @@ const GameData = {
         }
     },
 
-    // Job/Quest definitions
+    // Job definitions
     jobs: {
         fish_count: {
             name: "Count the Catch",
-            description: "The fisherman needs help counting and calculating the value of his catch.",
-            // Placeholder - in full game, these would be procedurally generated
-            question: "I caught 7 silverfish and 3 redmouths today. Silverfish fetch 1 coin each, and redmouths fetch 2 coins each. How many coins is my catch worth?",
-            correctAnswer: 13, // (7 * 1) + (3 * 2) = 7 + 6 = 13
+            description: "Help the fisherman calculate his earnings.",
+            question: "I caught 7 silverfish and 3 redmouths today. Silverfish fetch 1 coin each, redmouths fetch 2 coins each. How many coins total?",
+            correctAnswer: 13,
             reward: 13,
-            wrongAnswerDialog: "Hmm, let me check... 7 silverfish at 1 coin each is 7 coins, and 3 redmouths at 2 coins each is 6 coins. That's 13 total. No pay this time, but feel free to try again!",
+            wrongAnswerDialog: "Let me check... 7 silverfish at 1 coin = 7 coins, 3 redmouths at 2 coins = 6 coins. That's 13 total. Try again!",
             correctAnswerDialog: "That's right! You've got a good head for numbers. Here's your payment."
         }
     },
 
-    // Shop inventory
+    // Creatures
+    creatures: {
+        seasprite: {
+            name: "Seasprite",
+            color: '#4da6ff', // Light blue
+            stats: {
+                heart: 25,
+                power: 8,
+                guard: 4,
+                speed: 12
+            }
+        }
+    },
+
+    // Shop items
     shopItems: {
         compass: {
             name: "Brass Compass",
-            description: "A finely crafted compass that always points home. Useful for navigation.",
+            description: "A finely crafted compass. Always points home.",
             price: 50,
             id: "compass"
         }
     },
 
-    // Starting player state
-    initialPlayerState: {
-        location: "lighthouse",
+    // Encounter zones (tall grass areas)
+    encounterZones: [
+        { x: 9, y: 2, width: 3, height: 3, creature: 'seasprite', chance: 0.3 }
+    ],
+
+    // Player starting position
+    playerStart: {
+        x: 3,
+        y: 5
+    },
+
+    // Initial game state
+    initialState: {
         coins: 0,
         inventory: [],
-        creatures: [],
-        visitedLocations: ["lighthouse"],
+        creatures: [
+            // Starter creature
+            {
+                name: "Shellback",
+                stats: {
+                    heart: 30,
+                    maxHeart: 30,
+                    power: 6,
+                    guard: 6,
+                    speed: 8
+                }
+            }
+        ],
         completedJobs: [],
-        activeJobs: []
+        activeJobs: [],
+        defeatedEncounters: []
     }
 };
