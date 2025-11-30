@@ -13,12 +13,14 @@ const PALETTE = {
 };
 
 const SVGAssets = {
-    // ===== CHARACTERS - Pixel art with shadows =====
+    // ===== CHARACTERS - Pixel art with shadows and outlines for visibility =====
     player: {
         // Explorer with subtle pixel detail
         explorer: `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
             <!-- Shadow -->
-            <ellipse cx="16" cy="28" rx="6" ry="2" fill="#000" opacity="0.25"/>
+            <ellipse cx="16" cy="28" rx="7" ry="2.5" fill="#000" opacity="0.35"/>
+            <!-- Outline for visibility -->
+            <rect x="11" y="9" width="10" height="19" fill="none" stroke="#1a1a2e" stroke-width="1"/>
             <!-- Body -->
             <rect x="12" y="20" width="8" height="8" fill="${PALETTE.wood.mid}"/>
             <!-- Head -->
@@ -34,7 +36,8 @@ const SVGAssets = {
         </svg>`,
 
         scholar: `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="16" cy="28" rx="6" ry="2" fill="#000" opacity="0.25"/>
+            <ellipse cx="16" cy="28" rx="7" ry="2.5" fill="#000" opacity="0.35"/>
+            <rect x="11" y="10" width="10" height="18" fill="none" stroke="#1a1a2e" stroke-width="1"/>
             <rect x="12" y="20" width="8" height="8" fill="#3d7fa8"/>
             <rect x="12" y="12" width="8" height="8" fill="#f4d4b0"/>
             <rect x="13" y="15" width="2" height="2" fill="#3d2817"/>
@@ -44,7 +47,8 @@ const SVGAssets = {
         </svg>`,
 
         sailor: `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="16" cy="28" rx="6" ry="2" fill="#000" opacity="0.25"/>
+            <ellipse cx="16" cy="28" rx="7" ry="2.5" fill="#000" opacity="0.35"/>
+            <rect x="11" y="10" width="10" height="18" fill="none" stroke="#1a1a2e" stroke-width="1"/>
             <rect x="12" y="20" width="8" height="8" fill="#4aa87c"/>
             <rect x="13" y="22" width="6" height="2" fill="#fff"/>
             <rect x="12" y="12" width="8" height="8" fill="#f4d4b0"/>
@@ -55,13 +59,14 @@ const SVGAssets = {
         </svg>`,
 
         mage: `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="16" cy="28" rx="6" ry="2" fill="#000" opacity="0.25"/>
+            <ellipse cx="16" cy="28" rx="7" ry="2.5" fill="#000" opacity="0.35"/>
+            <rect x="11" y="6" width="10" height="22" fill="none" stroke="#1a1a2e" stroke-width="1"/>
             <rect x="12" y="20" width="8" height="8" fill="#8b5fbf"/>
             <rect x="12" y="12" width="8" height="8" fill="#f4d4b0"/>
             <rect x="13" y="15" width="2" height="2" fill="#3d2817"/>
             <rect x="17" y="15" width="2" height="2" fill="#3d2817"/>
             <!-- Wizard hat -->
-            <path d="M 16,6 L 12,12 L 20,12 Z" fill="#8b5fbf"/>
+            <path d="M 16,6 L 12,12 L 20,12 Z" fill="#8b5fbf" stroke="#1a1a2e" stroke-width="0.5"/>
             <rect x="11" y="12" width="10" height="2" fill="#8b5fbf"/>
             <rect x="15" y="8" width="2" height="2" fill="#ffd700"/>
         </svg>`
@@ -131,46 +136,32 @@ const SVGAssets = {
 
     // ===== TILES - Multiple variants with pixel art style =====
     tiles: {
-        // GRASS - 4 variants
+        // GRASS - 4 variants (SUBTLE - barely noticeable variation)
         grass: [
+            // Base grass (70% usage probability)
             `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                 <rect width="32" height="32" fill="${PALETTE.grass.mid}"/>
-                <rect x="4" y="8" width="2" height="4" fill="${PALETTE.grass.light}"/>
-                <rect x="12" y="6" width="2" height="3" fill="${PALETTE.grass.light}"/>
-                <rect x="20" y="10" width="2" height="4" fill="${PALETTE.grass.light}"/>
-                <rect x="28" y="8" width="2" height="3" fill="${PALETTE.grass.light}"/>
-                <rect x="8" y="18" width="2" height="3" fill="${PALETTE.grass.dark}"/>
-                <rect x="16" y="20" width="2" height="4" fill="${PALETTE.grass.dark}"/>
-                <rect x="24" y="22" width="2" height="3" fill="${PALETTE.grass.dark}"/>
+                <rect x="8" y="24" width="1" height="2" fill="${PALETTE.grass.light}" opacity="0.4"/>
+                <rect x="20" y="26" width="1" height="2" fill="${PALETTE.grass.light}" opacity="0.4"/>
             </svg>`,
+            // Variant A (subtle light blades)
             `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                 <rect width="32" height="32" fill="${PALETTE.grass.mid}"/>
-                <rect x="6" y="4" width="2" height="3" fill="${PALETTE.grass.light}"/>
-                <rect x="14" y="10" width="2" height="4" fill="${PALETTE.grass.light}"/>
-                <rect x="22" y="6" width="2" height="3" fill="${PALETTE.grass.light}"/>
-                <rect x="10" y="20" width="2" height="4" fill="${PALETTE.grass.dark}"/>
-                <rect x="18" y="18" width="2" height="3" fill="${PALETTE.grass.dark}"/>
-                <rect x="26" y="24" width="2" height="4" fill="${PALETTE.grass.dark}"/>
+                <rect x="12" y="22" width="1" height="3" fill="${PALETTE.grass.light}" opacity="0.5"/>
+                <rect x="24" y="24" width="1" height="2" fill="${PALETTE.grass.light}" opacity="0.4"/>
+                <rect x="6" y="26" width="1" height="2" fill="${PALETTE.grass.dark}" opacity="0.3"/>
             </svg>`,
+            // Variant B (subtle dark patches)
             `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                 <rect width="32" height="32" fill="${PALETTE.grass.mid}"/>
-                <rect x="2" y="10" width="2" height="4" fill="${PALETTE.grass.light}"/>
-                <rect x="10" y="8" width="2" height="3" fill="${PALETTE.grass.light}"/>
-                <rect x="18" y="12" width="2" height="4" fill="${PALETTE.grass.light}"/>
-                <rect x="26" y="10" width="2" height="3" fill="${PALETTE.grass.light}"/>
-                <rect x="6" y="22" width="2" height="3" fill="${PALETTE.grass.dark}"/>
-                <rect x="14" y="24" width="2" height="4" fill="${PALETTE.grass.dark}"/>
-                <rect x="22" y="20" width="2" height="3" fill="${PALETTE.grass.dark}"/>
+                <rect x="16" y="24" width="1" height="2" fill="${PALETTE.grass.dark}" opacity="0.3"/>
+                <rect x="10" y="26" width="1" height="2" fill="${PALETTE.grass.light}" opacity="0.4"/>
             </svg>`,
+            // Base variant (same as first for weighted distribution)
             `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                 <rect width="32" height="32" fill="${PALETTE.grass.mid}"/>
-                <rect x="8" y="6" width="2" height="4" fill="${PALETTE.grass.light}"/>
-                <rect x="16" y="8" width="2" height="3" fill="${PALETTE.grass.light}"/>
-                <rect x="24" y="4" width="2" height="4" fill="${PALETTE.grass.light}"/>
-                <rect x="4" y="18" width="2" height="3" fill="${PALETTE.grass.dark}"/>
-                <rect x="12" y="22" width="2" height="4" fill="${PALETTE.grass.dark}"/>
-                <rect x="20" y="18" width="2" height="3" fill="${PALETTE.grass.dark}"/>
-                <rect x="28" y="20" width="2" height="4" fill="${PALETTE.grass.dark}"/>
+                <rect x="14" y="26" width="1" height="2" fill="${PALETTE.grass.light}" opacity="0.4"/>
+                <rect x="28" y="24" width="1" height="2" fill="${PALETTE.grass.dark}" opacity="0.3"/>
             </svg>`
         ],
 
@@ -330,25 +321,9 @@ const SVGAssets = {
             <rect x="18" y="16" width="2" height="2" fill="${PALETTE.wood.light}"/>
         </svg>`,
 
-        // LIGHTHOUSE - Iconic pixel art
+        // LIGHTHOUSE - Placeholder tile (actual lighthouse is drawn separately)
         lighthouse: `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <!-- Base -->
-            <rect x="12" y="8" width="8" height="20" fill="${PALETTE.lighthouse.white}"/>
-            <!-- Red stripes -->
-            <rect x="12" y="12" width="8" height="2" fill="${PALETTE.lighthouse.roof}"/>
-            <rect x="12" y="20" width="8" height="2" fill="${PALETTE.lighthouse.roof}"/>
-            <!-- Top -->
-            <rect x="10" y="6" width="12" height="2" fill="${PALETTE.lighthouse.roof}"/>
-            <!-- Light -->
-            <rect x="13" y="4" width="6" height="2" fill="#ffd700"/>
-            <rect x="15" y="2" width="2" height="2" fill="#ffd700"/>
-            <!-- Light rays -->
-            <rect x="16" y="0" width="0" height="2" stroke="#ffd700" stroke-width="1"/>
-            <!-- Door -->
-            <rect x="14" y="22" width="4" height="6" fill="${PALETTE.wood.dark}"/>
-            <!-- Windows -->
-            <rect x="12" y="14" width="2" height="2" fill="${PALETTE.water.light}"/>
-            <rect x="18" y="14" width="2" height="2" fill="${PALETTE.water.light}"/>
+            <rect width="32" height="32" fill="${PALETTE.sand.light}"/>
         </svg>`,
 
         // TREE - Pixelated
@@ -380,6 +355,51 @@ const SVGAssets = {
             <rect width="32" height="32" fill="${PALETTE.wood.mid}"/>
             <rect x="4" y="12" width="24" height="8" fill="${PALETTE.wood.dark}"/>
             <rect x="4" y="12" width="24" height="2" fill="${PALETTE.wood.light}"/>
+        </svg>`
+    },
+
+    // ===== STRUCTURES - Large multi-tile structures =====
+    structures: {
+        // Large lighthouse (2x4 tiles = 64x128 pixels) - THE focal point
+        lighthouse: `<svg viewBox="0 0 64 128" xmlns="http://www.w3.org/2000/svg">
+            <!-- Base platform -->
+            <rect x="8" y="110" width="48" height="18" fill="${PALETTE.sand.shadow}"/>
+            <!-- Main tower -->
+            <rect x="20" y="30" width="24" height="80" fill="${PALETTE.lighthouse.white}"/>
+            <!-- Tower highlights -->
+            <rect x="20" y="30" width="2" height="80" fill="#fff" opacity="0.3"/>
+            <!-- Red stripes -->
+            <rect x="20" y="50" width="24" height="6" fill="${PALETTE.lighthouse.roof}"/>
+            <rect x="20" y="70" width="24" height="6" fill="${PALETTE.lighthouse.roof}"/>
+            <rect x="20" y="90" width="24" height="6" fill="${PALETTE.lighthouse.roof}"/>
+            <!-- Top housing -->
+            <rect x="16" y="20" width="32" height="10" fill="${PALETTE.lighthouse.roof}"/>
+            <rect x="16" y="20" width="32" height="2" fill="#d47070"/>
+            <!-- Light chamber -->
+            <rect x="22" y="10" width="20" height="10" fill="#ffd700"/>
+            <rect x="24" y="12" width="16" height="6" fill="#ffed4e"/>
+            <!-- Light top -->
+            <rect x="28" y="6" width="8" height="4" fill="${PALETTE.lighthouse.roof}"/>
+            <!-- Light beam effect -->
+            <rect x="30" y="0" width="4" height="6" fill="#ffd700" opacity="0.6"/>
+            <rect x="0" y="14" width="20" height="2" fill="#ffd700" opacity="0.3"/>
+            <rect x="44" y="14" width="20" height="2" fill="#ffd700" opacity="0.3"/>
+            <!-- Door -->
+            <rect x="26" y="96" width="12" height="14" fill="${PALETTE.wood.dark}"/>
+            <rect x="28" y="98" width="8" height="10" fill="${PALETTE.wood.mid}" opacity="0.3"/>
+            <rect x="35" y="103" width="2" height="2" fill="${PALETTE.wood.light}"/>
+            <!-- Windows (multiple floors) -->
+            <rect x="24" y="40" width="4" height="6" fill="${PALETTE.water.light}"/>
+            <rect x="36" y="40" width="4" height="6" fill="${PALETTE.water.light}"/>
+            <rect x="24" y="60" width="4" height="6" fill="${PALETTE.water.light}"/>
+            <rect x="36" y="60" width="4" height="6" fill="${PALETTE.water.light}"/>
+            <rect x="24" y="80" width="4" height="6" fill="${PALETTE.water.light}"/>
+            <rect x="36" y="80" width="4" height="6" fill="${PALETTE.water.light}"/>
+            <!-- Window highlights -->
+            <rect x="24" y="40" width="4" height="1" fill="#e0f3ff" opacity="0.6"/>
+            <rect x="36" y="40" width="4" height="1" fill="#e0f3ff" opacity="0.6"/>
+            <rect x="24" y="60" width="4" height="1" fill="#e0f3ff" opacity="0.6"/>
+            <rect x="36" y="60" width="4" height="1" fill="#e0f3ff" opacity="0.6"/>
         </svg>`
     },
 
@@ -502,6 +522,11 @@ class SVGLoader {
             } else {
                 promises.push(this.loadSVG(tile));
             }
+        }
+
+        // Structures (large multi-tile sprites)
+        for (const structure of Object.values(SVGAssets.structures)) {
+            promises.push(this.loadSVG(structure, 64, 128));
         }
 
         // Icons
