@@ -259,6 +259,7 @@ class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.renderMap();
+        this.renderLighthouse(); // Large lighthouse structure
         this.renderNPCs();
         this.renderPlayer();
         this.updateUI();
@@ -272,6 +273,11 @@ class Game {
             for (let x = 0; x < map.width; x++) {
                 const tileIndex = map.tiles[y][x];
                 const tileType = map.tileKey[tileIndex];
+
+                // Skip lighthouse tiles - they're rendered separately as one large structure
+                if (tileType === 'lighthouse') {
+                    continue;
+                }
 
                 // Get the correct tile variant or animated frame
                 let tileSVG;
@@ -288,16 +294,21 @@ class Game {
                     const img = svgLoader.cache.get(`${tileSVG}-${tileSize}-${tileSize}`);
                     if (img) {
                         this.ctx.drawImage(img, x * tileSize, y * tileSize, tileSize, tileSize);
-                    } else {
-                        // Fallback to colored rect if SVG not loaded
-                        const tile = this.tiles[tileType];
-                        if (tile) {
-                            this.ctx.fillStyle = tile.color;
-                            this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-                        }
                     }
                 }
             }
+        }
+    }
+
+    renderLighthouse() {
+        // Render the large lighthouse structure at fixed position (2x4 tiles)
+        const tileSize = this.dataLoader.TILE_SIZE;
+        const lighthouseSVG = SVGAssets.structures.lighthouse;
+        const img = svgLoader.cache.get(`${lighthouseSVG}-64-128`);
+
+        if (img) {
+            // Position: x=2, y=1 (top-left corner of lighthouse in tile coordinates)
+            this.ctx.drawImage(img, 2 * tileSize, 1 * tileSize, 64, 128);
         }
     }
 
@@ -341,10 +352,7 @@ class Game {
                 );
                 this.ctx.stroke();
 
-                this.ctx.fillStyle = '#ffff00';
-                this.ctx.font = '10px monospace';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText('Press Space/Action', npc.x * tileSize + tileSize / 2, npc.y * tileSize - 5);
+                // Text hint removed - use HTML overlay instead
             }
         });
     }
@@ -359,16 +367,6 @@ class Game {
 
         if (img) {
             this.ctx.drawImage(img, this.player.x * tileSize, this.player.y * tileSize, tileSize, tileSize);
-        } else {
-            // Fallback to emoji
-            this.ctx.font = `${tileSize - 4}px Arial`;
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(
-                char.emoji,
-                this.player.x * tileSize + tileSize / 2,
-                this.player.y * tileSize + tileSize / 2
-            );
         }
     }
 
