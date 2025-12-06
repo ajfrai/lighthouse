@@ -1,118 +1,214 @@
-// Data Loader - Loads game data from static JSON files
+/**
+ * Game Data
+ * Map, creatures, NPCs, jobs, shop items
+ */
 
-class DataLoader {
-    constructor() {
-        this.TILE_SIZE = 32;
-        this.loaded = false;
-        this.data = {
-            characters: null,
-            jobs: null,
-            creatures: null,
-            npcs: null,
-            shop: null
-        };
+// Map data with layers (32x32 tiles, 16px each = 512x512 canvas)
+const MAP_DATA = {
+    width: 32,
+    height: 32,
+    tileSize: 16,
+
+    // Ground layer - base terrain
+    ground: [
+        // Row 0-5: Water at top
+        ...Array(6).fill(null).map(() => Array(32).fill('water')),
+
+        // Rows 6-9: Sand beach
+        ...Array(4).fill(null).map(() => Array(32).fill('sand')),
+
+        // Rows 10-31: Grass
+        ...Array(22).fill(null).map(() => Array(32).fill('grass'))
+    ].flat(),
+
+    // Collision objects (structures, NPCs)
+    objects: [
+        // Lighthouse (center-top, 3x5 tiles)
+        { type: 'lighthouse', x: 14, y: 12, width: 3, height: 5 },
+
+        // Trees scattered around
+        { type: 'tree', x: 5, y: 15 },
+        { type: 'tree', x: 25, y: 15 },
+        { type: 'tree', x: 8, y: 25 },
+        { type: 'tree', x: 23, y: 25 },
+        { type: 'tree', x: 15, y: 28 },
+
+        // NPCs
+        { type: 'npc', id: 'shopkeeper', x: 16, y: 18, sprite: 'down' },
+        { type: 'npc', id: 'mathTeacher', x: 12, y: 20, sprite: 'right' },
+        { type: 'npc', id: 'scientist', x: 20, y: 20, sprite: 'left' },
+        { type: 'npc', id: 'fisherman', x: 10, y: 8, sprite: 'down' },
+
+        // Creature spawn points (hidden until discovered)
+        { type: 'creature', id: 'lumina', x: 8, y: 12 },
+        { type: 'creature', id: 'marina', x: 16, y: 6 },
+        { type: 'creature', id: 'dusty', x: 24, y: 14 },
+        { type: 'creature', id: 'pebble', x: 18, y: 8 },
+        { type: 'creature', id: 'sprout', x: 5, y: 22 },
+        { type: 'creature', id: 'blaze', x: 27, y: 28 },
+        { type: 'creature', id: 'frost', x: 12, y: 6 },
+        { type: 'creature', id: 'spark', x: 22, y: 30 }
+    ]
+};
+
+// Creature encyclopedia (8 creatures to discover)
+const CREATURES = {
+    lumina: {
+        name: 'Lumina',
+        description: 'A glowing moth that appears near lighthouses on foggy nights.',
+        fact: 'Lumina can see ultraviolet light invisible to humans!',
+        emoji: '🦋'
+    },
+    marina: {
+        name: 'Marina',
+        description: 'A friendly dolphin that loves to help sailors navigate.',
+        fact: 'Dolphins sleep with one eye open to watch for predators.',
+        emoji: '🐬'
+    },
+    dusty: {
+        name: 'Dusty',
+        description: 'A tiny sand crab that builds intricate castles.',
+        fact: 'Some crabs can regenerate lost claws!',
+        emoji: '🦀'
+    },
+    pebble: {
+        name: 'Pebble',
+        description: 'A smooth river stone that mysteriously moves on its own.',
+        fact: 'This creature is actually a colony of tiny organisms.',
+        emoji: '🪨'
+    },
+    sprout: {
+        name: 'Sprout',
+        description: 'A cheerful seedling that grows wherever it travels.',
+        fact: 'Some plants can communicate through underground networks!',
+        emoji: '🌱'
+    },
+    blaze: {
+        name: 'Blaze',
+        description: 'A warm salamander found near the lighthouse furnace.',
+        fact: 'Salamanders can regenerate entire limbs and even parts of their heart!',
+        emoji: '🦎'
+    },
+    frost: {
+        name: 'Frost',
+        description: 'A crystalline creature that appears only in cold water.',
+        fact: 'Ice crystals form in hexagonal patterns due to water molecule bonds.',
+        emoji: '❄️'
+    },
+    spark: {
+        name: 'Spark',
+        description: 'An energetic firefly that powers the lighthouse.',
+        fact: 'Fireflies produce light through a chemical reaction with almost no heat!',
+        emoji: '✨'
     }
+};
 
-    async loadAll() {
-        try {
-            const [characters, jobs, creatures, npcs, shop] = await Promise.all([
-                fetch('static/characters.json').then(r => r.json()),
-                fetch('static/jobs.json').then(r => r.json()),
-                fetch('static/creatures.json').then(r => r.json()),
-                fetch('static/npcs.json').then(r => r.json()),
-                fetch('static/shop.json').then(r => r.json())
-            ]);
-
-            this.data.characters = characters.characters;
-            this.data.jobs = jobs.jobTemplates;
-            this.data.creatures = creatures.creatures;
-            this.data.npcs = npcs.npcs;
-            this.data.shop = shop.items;
-
-            this.loaded = true;
-            return true;
-        } catch (error) {
-            console.error('Failed to load game data:', error);
-            return false;
-        }
+// NPC dialogues and jobs
+const NPCS = {
+    shopkeeper: {
+        name: 'Marina the Shopkeeper',
+        greeting: 'Welcome to the Lighthouse Shop! I sell helpful items.',
+        shop: true
+    },
+    mathTeacher: {
+        name: 'Professor Oak',
+        greeting: 'Hello! I can pay you for solving math problems.',
+        job: 'addition',
+        jobDescription: 'Solve addition problems to earn 5 coins each!',
+        payment: 5
+    },
+    scientist: {
+        name: 'Dr. Nova',
+        greeting: 'Greetings! I study creatures and need help with multiplication.',
+        job: 'multiplication',
+        jobDescription: 'Help me with multiplication and earn 10 coins!',
+        payment: 10
+    },
+    fisherman: {
+        name: 'Old Salt',
+        greeting: 'Ahoy! Help me count my catch and I\'ll pay ye well.',
+        job: 'counting',
+        jobDescription: 'Count the fish correctly for 3 coins!',
+        payment: 3
     }
+};
 
-    getTiles() {
+// Shop items
+const SHOP_ITEMS = [
+    {
+        id: 'map',
+        name: 'Treasure Map',
+        description: 'Reveals all creature locations',
+        price: 25,
+        icon: '🗺️'
+    },
+    {
+        id: 'net',
+        name: 'Golden Net',
+        description: 'Increases creature encounter chance',
+        price: 30,
+        icon: '🥅'
+    },
+    {
+        id: 'boots',
+        name: 'Speed Boots',
+        description: 'Move faster across the island',
+        price: 20,
+        icon: '👟'
+    },
+    {
+        id: 'compass',
+        name: 'Mystical Compass',
+        description: 'Points toward the nearest undiscovered creature',
+        price: 35,
+        icon: '🧭'
+    }
+];
+
+// Math job generators
+const JOBS = {
+    addition: () => {
+        const a = Math.floor(Math.random() * 20) + 1;
+        const b = Math.floor(Math.random() * 20) + 1;
+        const answer = a + b;
+        const wrong1 = answer + Math.floor(Math.random() * 5) + 1;
+        const wrong2 = answer - Math.floor(Math.random() * 5) - 1;
+        const answers = [answer, wrong1, wrong2].sort(() => Math.random() - 0.5);
+
         return {
-            grass: { color: '#2d5016', walkable: true },
-            path: { color: '#8b7355', walkable: true },
-            water: { color: '#1e4d8b', walkable: false },
-            sand: { color: '#e0d0a0', walkable: true },
-            building: { color: '#6b5b3e', walkable: false },
-            door: { color: '#4a3520', walkable: true, isInteraction: true },
-            tallGrass: { color: '#3d6b21', walkable: true, encounter: true },
-            lighthouse: { color: '#c0c0c0', walkable: false },
-            tree: { color: '#1a3d0f', walkable: false },
-            shop: { color: '#8b4513', walkable: false },
-            counter: { color: '#654321', walkable: false }
+            question: `What is ${a} + ${b}?`,
+            answers: answers,
+            correct: answer
         };
-    }
+    },
 
-    getMap() {
+    multiplication: () => {
+        const a = Math.floor(Math.random() * 10) + 1;
+        const b = Math.floor(Math.random() * 10) + 1;
+        const answer = a * b;
+        const wrong1 = answer + a;
+        const wrong2 = answer - b;
+        const answers = [answer, wrong1, wrong2].sort(() => Math.random() - 0.5);
+
         return {
-            main: {
-                width: 20,
-                height: 15,
-                tiles: [
-                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
-                    [2,3,3,3,3,3,3,8,0,0,0,0,0,8,3,3,3,3,3,2],
-                    [2,3,7,7,7,3,3,0,0,6,6,6,0,0,3,4,4,4,3,2],
-                    [2,3,7,7,7,3,1,1,1,6,6,6,1,1,1,4,5,4,3,2],
-                    [2,3,3,5,3,3,1,0,0,6,6,6,0,0,1,4,4,4,3,2],
-                    [2,3,3,3,3,3,1,0,0,0,0,0,0,0,1,3,3,3,3,2],
-                    [2,8,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,8,2],
-                    [2,0,0,0,0,0,1,1,1,1,5,1,1,1,1,0,0,0,0,2],
-                    [2,0,0,0,8,0,0,0,0,4,4,4,0,0,0,0,8,0,0,2],
-                    [2,0,0,0,0,0,0,0,0,4,9,4,0,0,0,0,0,0,0,2],
-                    [2,0,8,0,0,0,0,0,0,4,4,4,0,0,0,0,0,8,0,2],
-                    [2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
-                    [2,0,0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0,0,2],
-                    [2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2],
-                    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
-                ],
-                tileKey: ['grass', 'path', 'water', 'sand', 'building', 'door', 'tallGrass', 'lighthouse', 'tree', 'shop', 'counter']
-            }
+            question: `What is ${a} × ${b}?`,
+            answers: answers,
+            correct: answer
         };
-    }
+    },
 
-    getEncounterZones() {
-        return [
-            { x: 9, y: 2, width: 3, height: 3, creature: 'seasprite', chance: 0.3 }
-        ];
-    }
+    counting: () => {
+        const count = Math.floor(Math.random() * 15) + 5;
+        const fishEmoji = '🐟'.repeat(count);
+        const answer = count;
+        const wrong1 = count + Math.floor(Math.random() * 3) + 1;
+        const wrong2 = count - Math.floor(Math.random() * 3) - 1;
+        const answers = [answer, wrong1, wrong2].sort(() => Math.random() - 0.5);
 
-    getPlayerStart() {
-        return { x: 3, y: 5 };
-    }
-
-    getInitialState() {
         return {
-            coins: 0,
-            inventory: [],
-            creatures: [
-                {
-                    name: "Shellback",
-                    stats: {
-                        heart: 30,
-                        maxHeart: 30,
-                        power: 6,
-                        guard: 6,
-                        speed: 8
-                    }
-                }
-            ],
-            completedJobs: [],
-            activeJobs: [],
-            defeatedEncounters: [],
-            character: null
+            question: `How many fish are there?\n${fishEmoji}`,
+            answers: answers,
+            correct: answer
         };
     }
-}
-
-// Global data loader instance
-const gameDataLoader = new DataLoader();
+};

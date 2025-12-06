@@ -1,0 +1,109 @@
+{
+  "tileSize": 16,
+  "tiles": {
+    "grass_0": {
+      "x": 0,
+      "y": 0
+    },
+    "grass_1": {
+      "x": 1,
+      "y": 0
+    },
+    "grass_2": {
+      "x": 2,
+      "y": 0
+    },
+    "grass_3": {
+      "x": 3,
+      "y": 0
+    },
+    "water_0": {
+      "x": 4,
+      "y": 0
+    },
+    "water_1": {
+      "x": 5,
+      "y": 0
+    },
+    "water_2": {
+      "x": 6,
+      "y": 0
+    },
+    "sand_0": {
+      "x": 7,
+      "y": 0
+    },
+    "sand_1": {
+      "x": 8,
+      "y": 0
+    },
+    "sand_2": {
+      "x": 9,
+      "y": 0
+    },
+    "grass_sand_N": {
+      "x": 0,
+      "y": 1
+    },
+    "grass_sand_S": {
+      "x": 1,
+      "y": 1
+    },
+    "grass_sand_E": {
+      "x": 2,
+      "y": 1
+    },
+    "grass_sand_W": {
+      "x": 3,
+      "y": 1
+    },
+    "grass_sand_NE": {
+      "x": 4,
+      "y": 1
+    },
+    "grass_sand_NW": {
+      "x": 5,
+      "y": 1
+    },
+    "grass_sand_SE": {
+      "x": 6,
+      "y": 1
+    },
+    "grass_sand_SW": {
+      "x": 7,
+      "y": 1
+    },
+    "grass_water_N": {
+      "x": 8,
+      "y": 1
+    },
+    "grass_water_S": {
+      "x": 9,
+      "y": 1
+    },
+    "grass_water_E": {
+      "x": 10,
+      "y": 1
+    },
+    "grass_water_W": {
+      "x": 11,
+      "y": 1
+    },
+    "grass_water_NE": {
+      "x": 12,
+      "y": 1
+    },
+    "grass_water_NW": {
+      "x": 13,
+      "y": 1
+    },
+    "grass_water_SE": {
+      "x": 14,
+      "y": 1
+    },
+    "grass_water_SW": {
+      "x": 15,
+      "y": 1
+    }
+  }
+}
