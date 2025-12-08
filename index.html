@@ -2,108 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Lighthouse - Educational Creature Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lighthouse Adventure - Educational Creature Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="game-container">
-        <!-- Game Canvas Area -->
-        <div class="game-view">
-            <canvas id="gameCanvas"></canvas>
-
-            <!-- Mobile D-Pad Controls -->
-            <div class="mobile-controls" id="mobileControls">
-                <div class="dpad">
-                    <button class="dpad-btn dpad-up" data-direction="up">▲</button>
-                    <button class="dpad-btn dpad-left" data-direction="left">◄</button>
-                    <button class="dpad-btn dpad-right" data-direction="right">►</button>
-                    <button class="dpad-btn dpad-down" data-direction="down">▼</button>
-                </div>
-                <button class="action-btn" id="actionBtn">Action</button>
+    <div id="gameContainer">
+        <div id="header">
+            <h1>Lighthouse Adventure</h1>
+            <div id="stats">
+                <span id="coins">Coins: 0</span>
+                <span id="creatures">Creatures: 0/8</span>
             </div>
         </div>
 
-        <!-- Sidebar - Collapsible on mobile -->
-        <div class="sidebar" id="sidebar">
-            <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+        <div id="gameWrapper">
+            <canvas id="gameCanvas" width="512" height="512"></canvas>
 
-            <div class="sidebar-content">
-                <div class="inventory">
-                    <h3>Inventory</h3>
-                    <div class="coins">
-                        💰 <span id="coin-count">0</span> coins
-                    </div>
-                    <div id="items-list" class="items-list">
-                        <p class="empty-state">No items</p>
-                    </div>
-                </div>
+            <!-- UI Overlays -->
+            <div id="dialogBox" class="hidden">
+                <div id="dialogContent"></div>
+                <button id="dialogClose">Close</button>
+            </div>
 
-                <div class="creatures">
-                    <h3>Creatures</h3>
-                    <div id="creatures-list" class="creatures-list">
-                        <p class="empty-state">No creatures</p>
-                    </div>
-                </div>
+            <div id="shopUI" class="hidden">
+                <h2>Lighthouse Shop</h2>
+                <div id="shopItems"></div>
+                <button id="shopClose">Close</button>
+            </div>
 
-                <div class="location-info">
-                    <h3>Location</h3>
-                    <div id="location-name">The Lighthouse</div>
-                </div>
+            <div id="jobUI" class="hidden">
+                <h2 id="jobTitle"></h2>
+                <div id="jobQuestion"></div>
+                <div id="jobAnswers"></div>
+            </div>
 
-                <div class="controls-hint">
-                    <small>Desktop: WASD/Arrows<br>Mobile: D-Pad</small>
-                </div>
+            <div id="creatureUI" class="hidden">
+                <h2>Creature Encountered!</h2>
+                <div id="creatureInfo"></div>
+                <button id="creatureClose">Continue</button>
             </div>
         </div>
-    </div>
 
-    <!-- Character Selection Screen -->
-    <div class="modal" id="characterSelect">
-        <div class="modal-content">
-            <h2>Choose Your Character</h2>
-            <div id="characterGrid" class="character-grid"></div>
-        </div>
-    </div>
-
-    <!-- Modal Overlays -->
-    <div class="modal hidden" id="combatModal">
-        <div class="modal-content">
-            <h2>Wild Creature!</h2>
-            <div class="combat-area">
-                <div class="creature-display">
-                    <h3 id="wild-creature-name"></h3>
-                    <div id="wild-creature-stats"></div>
-                </div>
-                <div class="player-creature-display">
-                    <h3>Your Creature</h3>
-                    <div id="player-creature-stats"></div>
-                </div>
+        <!-- Mobile Controls -->
+        <div id="mobileControls">
+            <div class="dpad">
+                <button class="dpad-btn" id="btnUp" data-key="ArrowUp">▲</button>
+                <button class="dpad-btn" id="btnLeft" data-key="ArrowLeft">◄</button>
+                <button class="dpad-btn" id="btnDown" data-key="ArrowDown">▼</button>
+                <button class="dpad-btn" id="btnRight" data-key="ArrowRight">►</button>
             </div>
-            <div id="combat-log" class="combat-log"></div>
-            <div id="combat-actions" class="combat-actions"></div>
+            <div class="action-btns">
+                <button class="action-btn" id="btnAction">A</button>
+            </div>
         </div>
-    </div>
 
-    <div class="modal hidden" id="npcModal">
-        <div class="modal-content">
-            <h2 id="npc-name"></h2>
-            <div id="npc-dialog" class="npc-dialog"></div>
-            <div id="npc-actions" class="npc-actions"></div>
-        </div>
-    </div>
-
-    <div class="modal hidden" id="shopModal">
-        <div class="modal-content">
-            <h2>General Store</h2>
-            <div id="shop-items" class="shop-items"></div>
-            <div id="shop-actions" class="shop-actions"></div>
+        <div id="instructions">
+            <p>Arrow keys to move • Space/A to interact</p>
         </div>
     </div>
 
     <script src="data.js"></script>
-    <script src="jobGenerator.js"></script>
-    <script src="svgAssets.js"></script>
+    <script src="spriteLoader.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
