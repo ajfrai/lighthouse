@@ -11,9 +11,9 @@ class LighthouseGame {
 
         // Player state
         this.player = {
-            x: 16,  // Grid position
-            y: 22,
-            direction: 'down',
+            x: 15,  // Grid position - start near the Keeper
+            y: 19,  // Just south of the Keeper at the lighthouse
+            direction: 'up',  // Facing toward the lighthouse
             moving: false,
             walkFrame: 0,
             walkTimer: 0
