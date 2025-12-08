@@ -9,45 +9,84 @@ const MAP_DATA = {
     height: 32,
     tileSize: 16,
 
-    // Ground layer - base terrain
+    // Ground layer - base terrain with more variety
     ground: [
-        // Row 0-5: Water at top
+        // Row 0-5: Water (ocean)
         ...Array(6).fill(null).map(() => Array(32).fill('water')),
 
-        // Rows 6-9: Sand beach
-        ...Array(4).fill(null).map(() => Array(32).fill('sand')),
+        // Row 6-8: Beach with sand
+        ...Array(3).fill(null).map(() => Array(32).fill('sand')),
 
-        // Rows 10-31: Grass
-        ...Array(22).fill(null).map(() => Array(32).fill('grass'))
+        // Row 9: Transition row (mostly grass, some sand near edges)
+        ...Array(1).fill(null).map(() => {
+            const row = Array(32).fill('grass');
+            row[0] = 'sand'; row[1] = 'sand'; row[30] = 'sand'; row[31] = 'sand';
+            return row;
+        }),
+
+        // Rows 10-31: Grassland with lighthouse area
+        ...Array(22).fill(null).map((_, rowIdx) => {
+            const row = Array(32).fill('grass');
+            // Keep some sand patches near western edge (storytelling: path from beach)
+            if (rowIdx < 5 && (rowIdx % 2 === 0)) {
+                row[2] = 'sand';
+                row[3] = 'sand';
+            }
+            return row;
+        })
     ].flat(),
 
     // Collision objects (structures, NPCs)
     objects: [
-        // Lighthouse (center-top, 3x5 tiles)
-        { type: 'lighthouse', x: 14, y: 12, width: 3, height: 5 },
+        // Lighthouse (center-top, 3x5 tiles) - the focal point
+        { type: 'lighthouse', x: 14, y: 11, width: 3, height: 5 },
 
-        // Trees scattered around
-        { type: 'tree', x: 5, y: 15 },
-        { type: 'tree', x: 25, y: 15 },
-        { type: 'tree', x: 8, y: 25 },
-        { type: 'tree', x: 23, y: 25 },
-        { type: 'tree', x: 15, y: 28 },
+        // Dense tree clusters creating "forest" areas
+        // Western forest (left side)
+        { type: 'tree', x: 3, y: 15 },
+        { type: 'tree', x: 5, y: 14 },
+        { type: 'tree', x: 4, y: 17 },
+        { type: 'tree', x: 2, y: 19 },
+        { type: 'tree', x: 6, y: 19 },
+        { type: 'tree', x: 3, y: 22 },
+        { type: 'tree', x: 7, y: 23 },
 
-        // NPCs
-        { type: 'npc', id: 'shopkeeper', x: 16, y: 18, sprite: 'down' },
-        { type: 'npc', id: 'mathTeacher', x: 12, y: 20, sprite: 'right' },
-        { type: 'npc', id: 'scientist', x: 20, y: 20, sprite: 'left' },
-        { type: 'npc', id: 'fisherman', x: 10, y: 8, sprite: 'down' },
+        // Eastern forest (right side)
+        { type: 'tree', x: 25, y: 14 },
+        { type: 'tree', x: 27, y: 15 },
+        { type: 'tree', x: 24, y: 17 },
+        { type: 'tree', x: 28, y: 18 },
+        { type: 'tree', x: 26, y: 20 },
+        { type: 'tree', x: 29, y: 22 },
 
-        // Creature spawn points (hidden until discovered)
-        { type: 'creature', id: 'lumina', x: 8, y: 12 },
-        { type: 'creature', id: 'marina', x: 16, y: 6 },
-        { type: 'creature', id: 'dusty', x: 24, y: 14 },
-        { type: 'creature', id: 'pebble', x: 18, y: 8 },
-        { type: 'creature', id: 'sprout', x: 5, y: 22 },
-        { type: 'creature', id: 'blaze', x: 27, y: 28 },
-        { type: 'creature', id: 'frost', x: 12, y: 6 },
-        { type: 'creature', id: 'spark', x: 22, y: 30 }
+        // Southern grove (bottom area)
+        { type: 'tree', x: 10, y: 28 },
+        { type: 'tree', x: 13, y: 27 },
+        { type: 'tree', x: 15, y: 29 },
+        { type: 'tree', x: 18, y: 28 },
+        { type: 'tree', x: 21, y: 27 },
+        { type: 'tree', x: 23, y: 29 },
+
+        // Lighthouse garden trees (near building)
+        { type: 'tree', x: 11, y: 12 },
+        { type: 'tree', x: 19, y: 12 },
+
+        // NPCs positioned in story-meaningful locations
+        { type: 'npc', id: 'keeper', x: 15, y: 17, sprite: 'down', charType: 'teacher' },  // Just south of lighthouse
+        { type: 'npc', id: 'fisherman', x: 8, y: 7, sprite: 'down', charType: 'fisherman' },  // On the beach (west)
+        { type: 'npc', id: 'shopkeeper', x: 22, y: 18, sprite: 'left', charType: 'shopkeeper' },  // Near eastern path
+        { type: 'npc', id: 'scientist', x: 18, y: 24, sprite: 'up', charType: 'scientist' },  // In southern clearing
+        { type: 'npc', id: 'mathTeacher', x: 9, y: 19, sprite: 'right', charType: 'teacher' },  // In western clearing
+
+        // Creature spawn points - positioned in thematic locations
+        { type: 'creature', id: 'lumina', x: 16, y: 13 },  // Near lighthouse (moth drawn to light)
+        { type: 'creature', id: 'marina', x: 15, y: 5 },   // In the water
+        { type: 'creature', id: 'frost', x: 10, y: 5 },    // Cold water (west)
+        { type: 'creature', id: 'dusty', x: 12, y: 8 },    // Sandy beach area
+        { type: 'creature', id: 'pebble', x: 25, y: 8 },   // Rocky beach (east)
+        { type: 'creature', id: 'sprout', x: 5, y: 21 },   // Western forest
+        { type: 'creature', id: 'blaze', x: 14, y: 10 },   // Near lighthouse furnace
+        { type: 'creature', id: 'spark', x: 20, y: 30 }    // Southern grove
     ]
 };
 
@@ -105,14 +144,24 @@ const CREATURES = {
 
 // NPC dialogues and jobs
 const NPCS = {
+    keeper: {
+        name: 'The Keeper',
+        dialogues: {
+            start: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
+            metCreature: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light.",
+            working: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies.",
+            boatReady: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't."
+        },
+        isKeeper: true
+    },
     shopkeeper: {
         name: 'Marina the Shopkeeper',
         greeting: 'Welcome to the Lighthouse Shop! I sell helpful items.',
         shop: true
     },
     mathTeacher: {
-        name: 'Professor Oak',
-        greeting: 'Hello! I can pay you for solving math problems.',
+        name: 'Professor Beacon',
+        greeting: 'Greetings, young learner! I study mathematics and can pay you for solving problems.',
         job: 'addition',
         jobDescription: 'Solve addition problems to earn 5 coins each!',
         payment: 5

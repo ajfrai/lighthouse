@@ -215,9 +215,10 @@ button:disabled {
 /* Mobile Controls */
 #mobileControls {
     display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 15px;
+    justify-content: space-around;
+    align-items: center;
+    gap: 30px;
+    padding: 20px;
     background: rgba(26, 35, 50, 0.9);
     border: 3px solid #8b7355;
     border-radius: 0;
@@ -228,9 +229,11 @@ button:disabled {
     width: 120px;
     height: 120px;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    gap: 2px;
+    grid-template-columns: 38px 38px 38px;
+    grid-template-rows: 38px 38px 38px;
+    gap: 3px;
+    justify-content: center;
+    align-content: center;
 }
 
 .dpad-btn {
@@ -245,6 +248,8 @@ button:disabled {
     justify-content: center;
     touch-action: none;
     user-select: none;
+    margin: 0;
+    padding: 0;
 }
 
 #btnUp { grid-column: 2; grid-row: 1; }
@@ -259,18 +264,27 @@ button:disabled {
 .action-btns {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
+    min-width: 120px;
 }
 
 .action-btn {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     background: rgba(200, 50, 50, 0.9);
     border: 3px solid #8b7355;
     color: #ffffff;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    touch-action: none;
+    user-select: none;
 }
 
 .action-btn:active {

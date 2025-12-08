@@ -73,16 +73,23 @@ class SpriteLoader {
     /**
      * Draw character sprite
      * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {string} charType - Character type ('player', 'shopkeeper', 'teacher', 'scientist', 'fisherman')
      * @param {string} direction - Direction ('down', 'up', 'left', 'right')
      * @param {number} frame - Animation frame (0 or 1)
      * @param {number} dx - Destination X
      * @param {number} dy - Destination Y
      */
-    drawCharacter(ctx, direction, frame, dx, dy) {
+    drawCharacter(ctx, charType, direction, frame, dx, dy) {
         if (!this.loaded) return;
 
         const index = this.indexes.characters;
-        const anim = index.animations[direction];
+        const charData = index.characters[charType];
+        if (!charData) {
+            console.warn(`Character type not found: ${charType}`);
+            return;
+        }
+
+        const anim = charData.animations[direction];
         if (!anim) return;
 
         const frameData = anim.frames[frame % 2];
@@ -92,7 +99,7 @@ class SpriteLoader {
         ctx.drawImage(
             this.images.characters,
             sx, sy, index.spriteWidth, index.spriteHeight,
-            dx, dy - 8, index.spriteWidth, index.spriteHeight  // -8 to center vertically on tile
+            dx, dy - 16, index.spriteWidth, index.spriteHeight  // -16 to center vertically on tile (24x32 chars)
         );
     }
 
