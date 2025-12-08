@@ -25,6 +25,7 @@ class LighthouseGame {
         this.inventory = new Set();
         this.currentDialog = null;
         this.currentJob = null;
+        this.gamePhase = 'start';  // Phases: start -> metCreature -> working -> boatReady
 
         // Input
         this.keys = {};
@@ -203,6 +204,13 @@ class LighthouseGame {
         const npc = NPCS[npcId];
         if (!npc) return;
 
+        // Handle the Keeper with state-based dialogue
+        if (npc.isKeeper) {
+            const dialogue = npc.dialogues[this.gamePhase];
+            this.showDialog(dialogue || npc.dialogues.start);
+            return;
+        }
+
         if (npc.shop) {
             this.showShop();
         } else if (npc.job) {
@@ -326,6 +334,21 @@ class LighthouseGame {
         this.discoveredCreatures.add(creatureId);
         const creature = CREATURES[creatureId];
 
+        // Progress game phase after first creature
+        if (this.gamePhase === 'start' && this.discoveredCreatures.size === 1) {
+            this.gamePhase = 'metCreature';
+        }
+
+        // Progress to working phase after 3 creatures
+        if (this.gamePhase === 'metCreature' && this.discoveredCreatures.size >= 3) {
+            this.gamePhase = 'working';
+        }
+
+        // Progress to boat ready after 6 creatures
+        if (this.gamePhase === 'working' && this.discoveredCreatures.size >= 6) {
+            this.gamePhase = 'boatReady';
+        }
+
         const creatureUI = document.getElementById('creatureUI');
         const creatureInfo = document.getElementById('creatureInfo');
 
@@ -422,8 +445,9 @@ class LighthouseGame {
             } else if (obj.type === 'npc') {
                 spriteLoader.drawCharacter(
                     this.ctx,
-                    obj.sprite,
-                    0,
+                    obj.charType || 'player',  // Character type
+                    obj.sprite,                 // Direction
+                    0,                          // Frame (NPCs don't animate)
                     obj.x * tileSize,
                     obj.y * tileSize
                 );
@@ -438,8 +462,9 @@ class LighthouseGame {
 
         spriteLoader.drawCharacter(
             this.ctx,
-            this.player.direction,
-            frame,
+            'player',               // Character type
+            this.player.direction,  // Direction
+            frame,                  // Animation frame
             this.player.x * tileSize,
             this.player.y * tileSize
         );

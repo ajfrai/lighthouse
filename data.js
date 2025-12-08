@@ -34,10 +34,11 @@ const MAP_DATA = {
         { type: 'tree', x: 15, y: 28 },
 
         // NPCs
-        { type: 'npc', id: 'shopkeeper', x: 16, y: 18, sprite: 'down' },
-        { type: 'npc', id: 'mathTeacher', x: 12, y: 20, sprite: 'right' },
-        { type: 'npc', id: 'scientist', x: 20, y: 20, sprite: 'left' },
-        { type: 'npc', id: 'fisherman', x: 10, y: 8, sprite: 'down' },
+        { type: 'npc', id: 'keeper', x: 15, y: 17, sprite: 'down', charType: 'teacher' },  // The Keeper - at lighthouse
+        { type: 'npc', id: 'shopkeeper', x: 16, y: 18, sprite: 'down', charType: 'shopkeeper' },
+        { type: 'npc', id: 'mathTeacher', x: 12, y: 20, sprite: 'right', charType: 'teacher' },
+        { type: 'npc', id: 'scientist', x: 20, y: 20, sprite: 'left', charType: 'scientist' },
+        { type: 'npc', id: 'fisherman', x: 10, y: 8, sprite: 'down', charType: 'fisherman' },
 
         // Creature spawn points (hidden until discovered)
         { type: 'creature', id: 'lumina', x: 8, y: 12 },
@@ -105,14 +106,24 @@ const CREATURES = {
 
 // NPC dialogues and jobs
 const NPCS = {
+    keeper: {
+        name: 'The Keeper',
+        dialogues: {
+            start: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
+            metCreature: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light.",
+            working: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies.",
+            boatReady: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't."
+        },
+        isKeeper: true
+    },
     shopkeeper: {
         name: 'Marina the Shopkeeper',
         greeting: 'Welcome to the Lighthouse Shop! I sell helpful items.',
         shop: true
     },
     mathTeacher: {
-        name: 'Professor Oak',
-        greeting: 'Hello! I can pay you for solving math problems.',
+        name: 'Professor Beacon',
+        greeting: 'Greetings, young learner! I study mathematics and can pay you for solving problems.',
         job: 'addition',
         jobDescription: 'Solve addition problems to earn 5 coins each!',
         payment: 5

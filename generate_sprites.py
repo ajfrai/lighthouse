@@ -185,61 +185,156 @@ def create_transition_tile(from_terrain, to_terrain, direction):
 
     return img
 
-def create_character_sprite(direction='down', frame=0):
-    """16x24 character sprite with walk animation"""
-    img = Image.new('RGBA', (16, 24), COLORS['transparent'])
+def create_character_sprite(char_type='player', direction='down', frame=0):
+    """24x32 character sprite with distinct personalities"""
+    img = Image.new('RGBA', (24, 32), COLORS['transparent'])
     draw = ImageDraw.Draw(img)
 
-    # Shadow
-    draw.ellipse([4, 21, 11, 23], fill=COLORS['shadow'])
+    # Shadow (larger)
+    draw.ellipse([6, 29, 17, 31], fill=COLORS['shadow'])
 
-    # Character body outline
-    draw.rectangle([5, 4, 10, 19], outline=COLORS['outline'], width=1)
+    # Character-specific colors and features
+    if char_type == 'player':
+        # Young explorer - brown hair, blue shirt, tan pants
+        hair_color = COLORS['brown_dark']
+        shirt_color = COLORS['blue_clothes']
+        pants_color = (139, 119, 101)  # Tan
+        skin_color = COLORS['skin_light']
+        has_hat = True
+    elif char_type == 'shopkeeper':
+        # Friendly merchant - red hair, green apron, warm personality
+        hair_color = (200, 100, 50)  # Auburn
+        shirt_color = (140, 180, 140)  # Green
+        pants_color = (80, 80, 120)  # Dark blue
+        skin_color = COLORS['skin_mid']
+        has_hat = False
+    elif char_type == 'teacher':
+        # Wise educator - gray hair, purple robe, glasses
+        hair_color = (150, 150, 160)  # Gray
+        shirt_color = (120, 80, 160)  # Purple
+        pants_color = (100, 70, 140)  # Dark purple
+        skin_color = COLORS['skin_light']
+        has_hat = False
+    elif char_type == 'scientist':
+        # Researcher - blonde, white lab coat, energetic
+        hair_color = (220, 200, 130)  # Blonde
+        shirt_color = (240, 240, 250)  # White coat
+        pants_color = (60, 60, 60)  # Dark gray
+        skin_color = COLORS['skin_mid']
+        has_hat = False
+    elif char_type == 'fisherman':
+        # Weathered sailor - beard, yellow raincoat, boots
+        hair_color = (90, 70, 50)  # Dark brown beard
+        shirt_color = (220, 200, 50)  # Yellow raincoat
+        pants_color = (40, 60, 80)  # Blue jeans
+        skin_color = (220, 170, 130)  # Tan skin
+        has_hat = True
+    else:
+        # Default
+        hair_color = COLORS['brown_dark']
+        shirt_color = COLORS['blue_clothes']
+        pants_color = COLORS['brown_light']
+        skin_color = COLORS['skin_mid']
+        has_hat = False
 
-    # Head
-    draw.ellipse([5, 3, 10, 8], fill=COLORS['skin_mid'])
+    # Outline for visibility
+    draw.rectangle([7, 6, 16, 27], outline=COLORS['outline'], width=1)
 
-    # Hat
-    draw.rectangle([4, 2, 11, 4], fill=COLORS['brown_dark'])
-
-    # Body
-    draw.rectangle([6, 9, 9, 15], fill=COLORS['blue_clothes'])
-
-    # Legs - animate based on frame
+    # Draw based on direction
     if direction == 'down':
+        # Head
+        draw.ellipse([8, 5, 15, 12], fill=skin_color)
+
+        # Hair/Hat
+        if has_hat:
+            if char_type == 'fisherman':
+                # Rain hat
+                draw.rectangle([7, 4, 16, 7], fill=shirt_color)
+            else:
+                # Explorer cap
+                draw.rectangle([7, 3, 16, 6], fill=hair_color)
+        else:
+            # Hair
+            draw.ellipse([7, 4, 16, 10], fill=hair_color)
+
+        # Eyes
+        draw.point([(10, 9), (13, 9)], fill=COLORS['outline'])
+
+        # Body (shirt)
+        draw.rectangle([8, 13, 15, 21], fill=shirt_color)
+
+        # Arms
+        draw.rectangle([7, 14, 8, 20], fill=shirt_color)
+        draw.rectangle([15, 14, 16, 20], fill=shirt_color)
+
+        # Pants/Legs - animated
         if frame == 0:  # Standing
-            draw.rectangle([6, 16, 7, 19], fill=COLORS['brown_light'])
-            draw.rectangle([8, 16, 9, 19], fill=COLORS['brown_light'])
+            draw.rectangle([9, 22, 11, 27], fill=pants_color)
+            draw.rectangle([12, 22, 14, 27], fill=pants_color)
         else:  # Walking
-            draw.rectangle([6, 16, 7, 19], fill=COLORS['brown_light'])
-            draw.rectangle([8, 15, 9, 19], fill=COLORS['brown_light'])
+            draw.rectangle([9, 22, 11, 27], fill=pants_color)
+            draw.rectangle([12, 21, 14, 27], fill=pants_color)
 
     elif direction == 'up':
-        draw.ellipse([5, 3, 10, 8], fill=COLORS['brown_dark'])  # Back of head
+        # Back of head
+        draw.ellipse([8, 5, 15, 12], fill=hair_color)
+
+        # Body
+        draw.rectangle([8, 13, 15, 21], fill=shirt_color)
+
+        # Arms
+        draw.rectangle([7, 14, 8, 20], fill=shirt_color)
+        draw.rectangle([15, 14, 16, 20], fill=shirt_color)
+
+        # Legs - animated
         if frame == 0:
-            draw.rectangle([6, 16, 7, 19], fill=COLORS['brown_light'])
-            draw.rectangle([8, 16, 9, 19], fill=COLORS['brown_light'])
+            draw.rectangle([9, 22, 11, 27], fill=pants_color)
+            draw.rectangle([12, 22, 14, 27], fill=pants_color)
         else:
-            draw.rectangle([6, 15, 7, 19], fill=COLORS['brown_light'])
-            draw.rectangle([8, 16, 9, 19], fill=COLORS['brown_light'])
+            draw.rectangle([9, 21, 11, 27], fill=pants_color)
+            draw.rectangle([12, 22, 14, 27], fill=pants_color)
 
     elif direction == 'left':
-        # Side view
-        draw.ellipse([6, 3, 11, 8], fill=COLORS['skin_mid'])
+        # Side view - head
+        draw.ellipse([9, 5, 16, 12], fill=skin_color)
+        draw.ellipse([8, 4, 15, 10], fill=hair_color)
+
+        # Eye
+        draw.point([(12, 9)], fill=COLORS['outline'])
+
+        # Body
+        draw.rectangle([9, 13, 15, 21], fill=shirt_color)
+
+        # Arm (one visible)
+        draw.rectangle([8, 15, 10, 20], fill=shirt_color)
+
+        # Legs - animated
         if frame == 0:
-            draw.rectangle([7, 16, 8, 19], fill=COLORS['brown_light'])
+            draw.rectangle([10, 22, 13, 27], fill=pants_color)
         else:
-            draw.rectangle([6, 16, 7, 19], fill=COLORS['brown_light'])
-            draw.rectangle([8, 15, 9, 19], fill=COLORS['brown_light'])
+            draw.rectangle([9, 22, 12, 27], fill=pants_color)
+            draw.rectangle([12, 21, 14, 27], fill=pants_color)
 
     elif direction == 'right':
-        # Side view (mirrored)
-        draw.ellipse([5, 3, 10, 8], fill=COLORS['skin_mid'])
+        # Side view - head (mirrored)
+        draw.ellipse([7, 5, 14, 12], fill=skin_color)
+        draw.ellipse([8, 4, 15, 10], fill=hair_color)
+
+        # Eye
+        draw.point([(11, 9)], fill=COLORS['outline'])
+
+        # Body
+        draw.rectangle([8, 13, 14, 21], fill=shirt_color)
+
+        # Arm
+        draw.rectangle([13, 15, 15, 20], fill=shirt_color)
+
+        # Legs - animated
         if frame == 0:
-            draw.rectangle([7, 16, 8, 19], fill=COLORS['brown_light'])
+            draw.rectangle([10, 22, 13, 27], fill=pants_color)
         else:
-            draw.rectangle([6, 15, 7, 19], fill=COLORS['brown_light'])
-            draw.rectangle([8, 16, 9, 19], fill=COLORS['brown_light'])
+            draw.rectangle([9, 21, 11, 27], fill=pants_color)
+            draw.rectangle([11, 22, 14, 27], fill=pants_color)
 
     return img
 
@@ -366,33 +461,38 @@ def main():
         json.dump(tileset_index, f, indent=2)
     print(f"✓ Tileset created: {output_dir}/tileset.png")
 
-    # CHARACTERS (64x48 - 4 directions × 2 frames)
-    characters = Image.new('RGBA', (64, 48), COLORS['transparent'])
+    # CHARACTERS - Multiple character types (5 types × 4 directions × 2 frames)
+    # Sprite sheet: 120x128 (5 rows of 4 directions, each 24x32)
+    char_types = ['player', 'shopkeeper', 'teacher', 'scientist', 'fisherman']
+    characters = Image.new('RGBA', (96, 160), COLORS['transparent'])
     char_index = {
-        'spriteWidth': 16,
-        'spriteHeight': 24,
-        'animations': {}
+        'spriteWidth': 24,
+        'spriteHeight': 32,
+        'characters': {}
     }
 
     directions = ['down', 'up', 'left', 'right']
-    for i, direction in enumerate(directions):
-        for frame in range(2):
-            char = create_character_sprite(direction, frame)
-            x = i * 16
-            y = frame * 24
-            characters.paste(char, (x, y))
 
-        char_index['animations'][direction] = {
-            'frames': [
-                {'x': i, 'y': 0},
-                {'x': i, 'y': 1}
-            ]
-        }
+    for char_idx, char_type in enumerate(char_types):
+        char_index['characters'][char_type] = {'animations': {}}
+
+        for dir_idx, direction in enumerate(directions):
+            frames_data = []
+            for frame in range(2):
+                char = create_character_sprite(char_type, direction, frame)
+                x = dir_idx * 24
+                y = (char_idx * 2 + frame) * 32
+                characters.paste(char, (x, y))
+                frames_data.append({'x': dir_idx, 'y': char_idx * 2 + frame})
+
+            char_index['characters'][char_type]['animations'][direction] = {
+                'frames': frames_data
+            }
 
     characters.save(f'{output_dir}/characters.png')
     with open(f'{output_dir}/characters.json', 'w') as f:
         json.dump(char_index, f, indent=2)
-    print(f"✓ Characters created: {output_dir}/characters.png")
+    print(f"✓ Characters created: {output_dir}/characters.png (5 unique characters)")
 
     # TREE (32x32)
     tree = create_tree()
