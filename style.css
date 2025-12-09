@@ -103,6 +103,41 @@ body {
     line-height: 1.5;
     white-space: pre-wrap;
     color: #e0e0e0;
+    min-height: 60px;
+}
+
+/* Dialogue Choices */
+.dialogue-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.dialogue-choices .choice {
+    background: rgba(15, 25, 40, 0.6);
+    border: 2px solid #8b7355;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #e0e0e0;
+}
+
+.dialogue-choices .choice.selected {
+    background: rgba(25, 52, 96, 0.9);
+    border-color: #ffd700;
+    color: #ffd700;
+    transform: translateX(5px);
+}
+
+.dialogue-choices .choice::before {
+    content: '▸ ';
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.dialogue-choices .choice.selected::before {
+    opacity: 1;
 }
 
 button {

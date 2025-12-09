@@ -3,34 +3,88 @@
  * Educational creature collection game with modern pixel art
  */
 
+// Game States
+const GameState = {
+    EXPLORING: 'exploring',
+    DIALOGUE: 'dialogue',
+    DIALOGUE_CHOICE: 'choice',
+    COMBAT: 'combat',
+    MENU: 'menu',
+    JOB: 'job',
+    SHOP: 'shop',
+    CUTSCENE: 'cutscene'
+};
+
+// Plot Phases
+const PlotPhase = {
+    WAKE_UP: 'wake_up',
+    FIND_CREATURE: 'find_creature',
+    CREATURE_ENCOUNTER: 'creature_found',
+    RETURN_TO_KEEPER: 'return_keeper',
+    MEET_VILLAGER: 'meet_villager',
+    BOAT_QUEST_START: 'boat_quest',
+    WORKING: 'working',
+    BOAT_READY: 'boat_ready',
+    DEPARTURE: 'departure'
+};
+
 class LighthouseGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.ctx.imageSmoothingEnabled = false;  // Crisp pixels
 
+        // Game state management
+        this.state = GameState.EXPLORING;
+        this.plotPhase = PlotPhase.WAKE_UP;
+
         // Player state
         this.player = {
-            x: 15,  // Grid position - start near the Keeper
-            y: 19,  // Just south of the Keeper at the lighthouse
+            x: 15,  // Grid position - start inside/near lighthouse
+            y: 19,  // Near the Keeper
             direction: 'up',  // Facing toward the lighthouse
             moving: false,
             walkFrame: 0,
-            walkTimer: 0
+            walkTimer: 0,
+            canMove: true
         };
 
-        // Game state
+        // Game progression
         this.coins = 0;
+        this.day = 1;
         this.discoveredCreatures = new Set();
+        this.party = [];  // Creatures traveling with player
         this.inventory = new Set();
-        this.currentDialog = null;
-        this.currentJob = null;
-        this.gamePhase = 'start';  // Phases: start -> metCreature -> working -> boatReady
+
+        // Boat quest tracking
+        this.boatQuest = {
+            planks: { required: 8, collected: 0 },
+            rope: { required: 20, collected: 0 },
+            compass: { required: true, acquired: false },
+            helpFromCallum: { required: true, earned: false }
+        };
+
+        // Dialogue system
+        this.dialogue = {
+            active: false,
+            lines: [],
+            currentLine: 0,
+            currentText: '',
+            fullText: '',
+            textIndex: 0,
+            typewriterSpeed: 30,  // chars per second
+            lastTypewriterUpdate: 0,
+            choices: null,
+            selectedChoice: 0
+        };
 
         // Input
         this.keys = {};
+        this.keysPressed = {};  // For single-press detection
         this.moveTimer = 0;
         this.moveCooldown = 150;  // ms between moves
+        this.moveHoldDelay = 150;  // Initial delay before repeat
+        this.moveRepeatRate = 100;  // Repeat rate when holding
 
         // Map
         this.map = MAP_DATA;
@@ -57,17 +111,20 @@ class LighthouseGame {
     setupInput() {
         // Keyboard
         window.addEventListener('keydown', (e) => {
+            // Track for single-press detection
+            if (!this.keys[e.key]) {
+                this.keysPressed[e.key] = true;
+            }
             this.keys[e.key] = true;
 
-            // Space for interaction
-            if (e.key === ' ') {
-                e.preventDefault();
-                this.interact();
-            }
+            // Handle state-specific single-press keys
+            this.handleKeyPress(e.key);
+            e.preventDefault();
         });
 
         window.addEventListener('keyup', (e) => {
             this.keys[e.key] = false;
+            this.keysPressed[e.key] = false;
         });
 
         // Mobile controls
@@ -77,9 +134,13 @@ class LighthouseGame {
                 e.preventDefault();
                 const key = btn.dataset.key;
                 if (key) {
+                    if (!this.keys[key]) {
+                        this.keysPressed[key] = true;
+                    }
                     this.keys[key] = true;
+                    this.handleKeyPress(key);
                 } else if (btn.id === 'btnAction') {
-                    this.interact();
+                    this.handleKeyPress('Enter');
                 }
             });
 
@@ -88,29 +149,76 @@ class LighthouseGame {
                 const key = btn.dataset.key;
                 if (key) {
                     this.keys[key] = false;
+                    this.keysPressed[key] = false;
                 }
             });
         });
     }
 
+    handleKeyPress(key) {
+        // State-specific single-press key handling
+        if (this.state === GameState.DIALOGUE) {
+            if (key === ' ' || key === 'Enter') {
+                this.advanceDialogue();
+            }
+        } else if (this.state === GameState.DIALOGUE_CHOICE) {
+            if (key === 'ArrowUp') {
+                this.dialogue.selectedChoice = Math.max(0, this.dialogue.selectedChoice - 1);
+            } else if (key === 'ArrowDown') {
+                this.dialogue.selectedChoice = Math.min(
+                    this.dialogue.choices.length - 1,
+                    this.dialogue.selectedChoice + 1
+                );
+            } else if (key === ' ' || key === 'Enter') {
+                this.selectDialogueChoice();
+            }
+        } else if (this.state === GameState.EXPLORING) {
+            if (key === ' ' || key === 'Enter') {
+                this.interact();
+            } else if (key === 'Escape' || key === 'm' || key === 'M') {
+                this.openMenu();
+            }
+        } else if (this.state === GameState.MENU) {
+            if (key === 'Escape' || key === 'm' || key === 'M') {
+                this.closeMenu();
+            }
+        } else if (this.state === GameState.SHOP) {
+            if (key === 'Escape') {
+                this.closeShop();
+            }
+        }
+    }
+
     handleInput(deltaTime) {
-        // Only move if cooldown passed
+        // Only allow movement in EXPLORING state
+        if (this.state !== GameState.EXPLORING) {
+            this.player.moving = false;
+            return;
+        }
+
+        // Only move if cooldown passed and player can move
+        if (!this.player.canMove) {
+            this.player.moving = false;
+            return;
+        }
+
         this.moveTimer += deltaTime;
         if (this.moveTimer < this.moveCooldown) return;
 
         let dx = 0, dy = 0;
         let newDirection = this.player.direction;
 
-        if (this.keys['ArrowUp']) {
+        // Check arrow keys and WASD
+        if (this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) {
             dy = -1;
             newDirection = 'up';
-        } else if (this.keys['ArrowDown']) {
+        } else if (this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) {
             dy = 1;
             newDirection = 'down';
-        } else if (this.keys['ArrowLeft']) {
+        } else if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) {
             dx = -1;
             newDirection = 'left';
-        } else if (this.keys['ArrowRight']) {
+        } else if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) {
             dx = 1;
             newDirection = 'right';
         }
@@ -220,15 +328,109 @@ class LighthouseGame {
         }
     }
 
-    showDialog(text) {
-        const dialogBox = document.getElementById('dialogBox');
-        const dialogContent = document.getElementById('dialogContent');
-        dialogContent.textContent = text;
-        dialogBox.classList.remove('hidden');
+    // New dialogue system with typewriter effect
+    startDialogue(lines, choices = null) {
+        this.state = GameState.DIALOGUE;
+        this.dialogue.active = true;
+        this.dialogue.lines = Array.isArray(lines) ? lines : [lines];
+        this.dialogue.currentLine = 0;
+        this.dialogue.textIndex = 0;
+        this.dialogue.currentText = '';
+        this.dialogue.fullText = this.dialogue.lines[0];
+        this.dialogue.choices = choices;
+        this.dialogue.selectedChoice = 0;
 
-        document.getElementById('dialogClose').onclick = () => {
-            dialogBox.classList.add('hidden');
-        };
+        const dialogBox = document.getElementById('dialogBox');
+        dialogBox.classList.remove('hidden');
+    }
+
+    updateDialogue(timestamp) {
+        if (!this.dialogue.active) return;
+
+        const timeSinceLastChar = timestamp - this.dialogue.lastTypewriterUpdate;
+        const msPerChar = 1000 / this.dialogue.typewriterSpeed;
+
+        if (timeSinceLastChar >= msPerChar && this.dialogue.textIndex < this.dialogue.fullText.length) {
+            this.dialogue.textIndex++;
+            this.dialogue.currentText = this.dialogue.fullText.substring(0, this.dialogue.textIndex);
+            this.dialogue.lastTypewriterUpdate = timestamp;
+
+            // Update UI
+            const dialogContent = document.getElementById('dialogContent');
+            dialogContent.textContent = this.dialogue.currentText;
+        }
+    }
+
+    advanceDialogue() {
+        // If typewriter still going, complete it instantly
+        if (this.dialogue.textIndex < this.dialogue.fullText.length) {
+            this.dialogue.textIndex = this.dialogue.fullText.length;
+            this.dialogue.currentText = this.dialogue.fullText;
+            document.getElementById('dialogContent').textContent = this.dialogue.currentText;
+            return;
+        }
+
+        // Move to next line
+        this.dialogue.currentLine++;
+
+        if (this.dialogue.currentLine < this.dialogue.lines.length) {
+            // Start next line
+            this.dialogue.textIndex = 0;
+            this.dialogue.currentText = '';
+            this.dialogue.fullText = this.dialogue.lines[this.dialogue.currentLine];
+        } else if (this.dialogue.choices) {
+            // Show choices
+            this.state = GameState.DIALOGUE_CHOICE;
+            this.showDialogueChoices();
+        } else {
+            // End dialogue
+            this.endDialogue();
+        }
+    }
+
+    showDialogueChoices() {
+        const dialogContent = document.getElementById('dialogContent');
+        let html = '<div class="dialogue-choices">';
+        this.dialogue.choices.forEach((choice, index) => {
+            const selected = index === this.dialogue.selectedChoice ? 'selected' : '';
+            html += `<div class="choice ${selected}">${choice.text}</div>`;
+        });
+        html += '</div>';
+        dialogContent.innerHTML = html;
+    }
+
+    selectDialogueChoice() {
+        const choice = this.dialogue.choices[this.dialogue.selectedChoice];
+        if (choice.action) {
+            choice.action.call(this);
+        }
+        this.endDialogue();
+    }
+
+    endDialogue() {
+        this.dialogue.active = false;
+        this.state = GameState.EXPLORING;
+        document.getElementById('dialogBox').classList.add('hidden');
+    }
+
+    openMenu() {
+        this.state = GameState.MENU;
+        // TODO: Implement menu UI
+    }
+
+    closeMenu() {
+        this.state = GameState.EXPLORING;
+        // TODO: Hide menu UI
+    }
+
+    closeShop() {
+        this.state = GameState.EXPLORING;
+        document.getElementById('shopUI').classList.add('hidden');
+    }
+
+    // Legacy dialog method for compatibility
+    showDialog(text) {
+        this.startDialogue([text]);
     }
 
     showShop() {
@@ -379,6 +581,7 @@ class LighthouseGame {
 
         // Update
         this.handleInput(deltaTime);
+        this.updateDialogue(timestamp);
         spriteLoader.updateWaterAnimation(timestamp);
 
         // Render
