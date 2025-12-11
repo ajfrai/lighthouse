@@ -58,6 +58,19 @@ class LighthouseGame {
         this.firstEncounterTriggered = false;  // Track first narrative encounter
         this.encounterState = null;  // State for narrative encounter sequence
 
+        // Debug/Speed Run Mode
+        const urlParams = new URLSearchParams(window.location.search);
+        this.autoPilot = urlParams.has('auto') || urlParams.has('autopilot');
+        this.speedRunMode = this.autoPilot || urlParams.has('speedrun') || urlParams.has('debug');
+        this.showDebugInfo = this.speedRunMode || this.autoPilot;
+        this.autoPilotState = {
+            target: null,
+            path: [],
+            action: null,
+            waitFrames: 0,
+            currentTask: 'init'
+        };
+
         // Boat quest tracking
         this.boatQuest = {
             planks: { required: 8, collected: 0 },
@@ -74,7 +87,7 @@ class LighthouseGame {
             currentText: '',
             fullText: '',
             textIndex: 0,
-            typewriterSpeed: 30,  // chars per second
+            typewriterSpeed: this.speedRunMode ? 1000 : 30,  // chars per second (instant in speed run)
             lastTypewriterUpdate: 0,
             choices: null,
             selectedChoice: 0
@@ -84,9 +97,9 @@ class LighthouseGame {
         this.keys = {};
         this.keysPressed = {};  // For single-press detection
         this.moveTimer = 0;
-        this.moveCooldown = 150;  // ms between moves
-        this.moveHoldDelay = 150;  // Initial delay before repeat
-        this.moveRepeatRate = 100;  // Repeat rate when holding
+        this.moveCooldown = this.speedRunMode ? 50 : 150;  // ms between moves (faster in speed run)
+        this.moveHoldDelay = this.speedRunMode ? 50 : 150;  // Initial delay before repeat
+        this.moveRepeatRate = this.speedRunMode ? 30 : 100;  // Repeat rate when holding
 
         // Map
         this.map = MAP_DATA;
@@ -158,6 +171,42 @@ class LighthouseGame {
     }
 
     handleKeyPress(key) {
+        // Debug shortcuts (work in any state)
+        if (key === 'F1') {
+            this.speedRunMode = !this.speedRunMode;
+            this.moveCooldown = this.speedRunMode ? 50 : 150;
+            this.moveHoldDelay = this.speedRunMode ? 50 : 150;
+            this.moveRepeatRate = this.speedRunMode ? 30 : 100;
+            this.dialogue.typewriterSpeed = this.speedRunMode ? 1000 : 30;
+            console.log(`Speed Run Mode: ${this.speedRunMode ? 'ON' : 'OFF'}`);
+            return;
+        }
+        if (key === 'F2') {
+            this.showDebugInfo = !this.showDebugInfo;
+            console.log(`Debug Info: ${this.showDebugInfo ? 'ON' : 'OFF'}`);
+            return;
+        }
+        if (key === 'T' && this.speedRunMode) {
+            // Teleport to Lumina for testing
+            const lumimaObj = this.map.objects.find(obj => obj.id === 'lumina');
+            if (lumimaObj) {
+                this.player.x = lumimaObj.x - 2;
+                this.player.y = lumimaObj.y;
+                console.log(`Teleported to Lumina at (${lumimaObj.x}, ${lumimaObj.y})`);
+            }
+            return;
+        }
+        // Phase jumps (speed run mode only)
+        if (this.speedRunMode && key >= '1' && key <= '9') {
+            const phases = Object.values(PlotPhase);
+            const phaseIndex = parseInt(key) - 1;
+            if (phaseIndex < phases.length) {
+                this.plotPhase = phases[phaseIndex];
+                console.log(`Jumped to phase: ${this.plotPhase}`);
+            }
+            return;
+        }
+
         // State-specific single-press key handling
         if (this.state === GameState.DIALOGUE) {
             if (key === ' ' || key === 'Enter') {
@@ -744,12 +793,19 @@ class LighthouseGame {
         this.lastFrameTime = timestamp;
 
         // Update
-        this.handleInput(deltaTime);
+        if (this.autoPilot) {
+            this.updateAutoPilot();
+        } else {
+            this.handleInput(deltaTime);
+        }
         this.updateDialogue(timestamp);
         spriteLoader.updateWaterAnimation(timestamp);
 
         // Render
         this.render();
+        if (this.showDebugInfo) {
+            this.renderDebugInfo();
+        }
 
         requestAnimationFrame((t) => this.gameLoop(t));
     }
@@ -835,6 +891,194 @@ class LighthouseGame {
             this.player.x * tileSize,
             this.player.y * tileSize
         );
+    }
+
+    renderDebugInfo() {
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(5, 5, 300, 140);
+
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.font = '12px monospace';
+        this.ctx.fillText(`Mode: ${this.autoPilot ? 'AUTO-PILOT' : 'MANUAL'}`, 10, 20);
+        this.ctx.fillText(`Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`, 10, 35);
+        this.ctx.fillText(`Phase: ${this.plotPhase}`, 10, 50);
+        this.ctx.fillText(`State: ${this.state}`, 10, 65);
+        this.ctx.fillText(`Position: (${this.player.x}, ${this.player.y})`, 10, 80);
+        this.ctx.fillText(`Creatures: ${this.discoveredCreatures.size}/8`, 10, 95);
+        if (this.autoPilot) {
+            this.ctx.fillText(`Task: ${this.autoPilotState.currentTask}`, 10, 110);
+            if (this.autoPilotState.target) {
+                this.ctx.fillText(`Target: (${this.autoPilotState.target.x}, ${this.autoPilotState.target.y})`, 10, 125);
+            }
+        }
+
+        // Shortcuts
+        this.ctx.fillStyle = '#ffff00';
+        this.ctx.font = '10px monospace';
+        this.ctx.fillText('F1:Speed F2:Debug T:Teleport 1-9:Phases', 10, 140);
+    }
+
+    // ===== AUTOPILOT SYSTEM =====
+
+    updateAutoPilot() {
+        // Wait frames for dialogue/animations
+        if (this.autoPilotState.waitFrames > 0) {
+            this.autoPilotState.waitFrames--;
+            return;
+        }
+
+        // Handle dialogue states
+        if (this.state === GameState.DIALOGUE) {
+            this.autoPilotState.waitFrames = 5; // Wait a bit
+            this.advanceDialogue();
+            return;
+        }
+
+        if (this.state === GameState.DIALOGUE_CHOICE) {
+            this.autoPilotState.waitFrames = 10;
+            // For creature encounter, choose "Approach slowly" (first option)
+            this.dialogue.selectedChoice = 0;
+            this.selectDialogueChoice();
+            return;
+        }
+
+        // Handle creature naming
+        if (document.getElementById('creatureNameInput')) {
+            this.autoPilotState.waitFrames = 10;
+            this.finalizeCreatureNaming();
+            return;
+        }
+
+        // Close any open UIs
+        const creatureUI = document.getElementById('creatureUI');
+        if (creatureUI && !creatureUI.classList.contains('hidden')) {
+            this.autoPilotState.waitFrames = 20;
+            creatureUI.classList.add('hidden');
+            return;
+        }
+
+        // Decision making based on plot phase
+        if (this.state === GameState.EXPLORING) {
+            this.autoPilotDecideAction();
+        }
+    }
+
+    autoPilotDecideAction() {
+        const currentTask = this.autoPilotState.currentTask;
+
+        // Determine task based on plot phase
+        if (this.plotPhase === PlotPhase.WAKE_UP) {
+            // Go talk to Keeper
+            const keeper = this.map.objects.find(obj => obj.id === 'keeper');
+            if (keeper) {
+                if (this.isAdjacentTo(keeper.x, keeper.y)) {
+                    this.autoPilotState.currentTask = 'talking_to_keeper';
+                    this.autoPilotState.waitFrames = 5;
+                    this.player.direction = this.getDirectionTo(keeper.x, keeper.y);
+                    this.interact();
+                } else {
+                    this.walkToTarget(keeper.x, keeper.y);
+                }
+            }
+        } else if (this.plotPhase === PlotPhase.FIND_CREATURE) {
+            // Go find Lumina
+            const lumina = this.map.objects.find(obj => obj.id === 'lumina');
+            if (lumina) {
+                if (Math.hypot(this.player.x - lumina.x, this.player.y - lumina.y) <= 3) {
+                    this.autoPilotState.currentTask = 'near_lumina';
+                    this.autoPilotState.waitFrames = 10;
+                    // Just wait, encounter will trigger automatically
+                } else {
+                    this.autoPilotState.currentTask = 'walking_to_lumina';
+                    this.walkToTarget(lumina.x, lumina.y);
+                }
+            }
+        } else if (this.plotPhase === PlotPhase.RETURN_TO_KEEPER) {
+            // Return to Keeper
+            const keeper = this.map.objects.find(obj => obj.id === 'keeper');
+            if (keeper) {
+                if (this.isAdjacentTo(keeper.x, keeper.y)) {
+                    this.autoPilotState.currentTask = 'returned_to_keeper';
+                    this.autoPilotState.waitFrames = 5;
+                    this.player.direction = this.getDirectionTo(keeper.x, keeper.y);
+                    this.interact();
+                } else {
+                    this.autoPilotState.currentTask = 'returning_to_keeper';
+                    this.walkToTarget(keeper.x, keeper.y);
+                }
+            }
+        }
+    }
+
+    walkToTarget(targetX, targetY) {
+        const dx = targetX - this.player.x;
+        const dy = targetY - this.player.y;
+
+        // Simple greedy pathfinding - move in the direction with greater distance
+        let moved = false;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // Move horizontally
+            if (dx > 0) {
+                moved = this.tryMove(this.player.x + 1, this.player.y, 'right');
+            } else {
+                moved = this.tryMove(this.player.x - 1, this.player.y, 'left');
+            }
+        } else {
+            // Move vertically
+            if (dy > 0) {
+                moved = this.tryMove(this.player.x, this.player.y + 1, 'down');
+            } else {
+                moved = this.tryMove(this.player.x, this.player.y - 1, 'up');
+            }
+        }
+
+        // If blocked, try the other direction
+        if (!moved) {
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dy > 0) {
+                    this.tryMove(this.player.x, this.player.y + 1, 'down');
+                } else if (dy < 0) {
+                    this.tryMove(this.player.x, this.player.y - 1, 'up');
+                }
+            } else {
+                if (dx > 0) {
+                    this.tryMove(this.player.x + 1, this.player.y, 'right');
+                } else if (dx < 0) {
+                    this.tryMove(this.player.x - 1, this.player.y, 'left');
+                }
+            }
+        }
+    }
+
+    tryMove(newX, newY, direction) {
+        if (this.canMoveTo(newX, newY)) {
+            this.player.x = newX;
+            this.player.y = newY;
+            this.player.direction = direction;
+            this.player.moving = true;
+            this.checkCreatureEncounter();
+            this.autoPilotState.waitFrames = 3; // Small delay between moves
+            return true;
+        }
+        return false;
+    }
+
+    isAdjacentTo(x, y) {
+        const dx = Math.abs(this.player.x - x);
+        const dy = Math.abs(this.player.y - y);
+        return (dx <= 1 && dy === 0) || (dx === 0 && dy <= 1);
+    }
+
+    getDirectionTo(x, y) {
+        const dx = x - this.player.x;
+        const dy = y - this.player.y;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            return dx > 0 ? 'right' : 'left';
+        } else {
+            return dy > 0 ? 'down' : 'up';
+        }
     }
 }
 
