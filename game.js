@@ -481,6 +481,13 @@ class LighthouseGame {
         this.dialogue.selectedChoice = 0;
 
         const dialogBox = document.getElementById('dialogBox');
+        const dialogClose = document.getElementById('dialogClose');
+
+        // Show/hide close button based on whether there are choices
+        if (dialogClose) {
+            dialogClose.style.display = choices ? 'none' : 'inline-block';
+        }
+
         dialogBox.classList.remove('hidden');
     }
 
@@ -530,6 +537,13 @@ class LighthouseGame {
 
     showDialogueChoices() {
         const dialogContent = document.getElementById('dialogContent');
+        const dialogClose = document.getElementById('dialogClose');
+
+        // Hide close button when showing choices
+        if (dialogClose) {
+            dialogClose.style.display = 'none';
+        }
+
         let html = '<div class="dialogue-choices">';
         this.dialogue.choices.forEach((choice, index) => {
             const selected = index === this.dialogue.selectedChoice ? 'selected' : '';
@@ -1006,13 +1020,15 @@ class LighthouseGame {
 
         // Handle dialogue states
         if (this.state === GameState.DIALOGUE) {
-            this.autoPilotState.waitFrames = 5; // Wait a bit
+            // Wait longer for typewriter and UI updates
+            this.autoPilotState.waitFrames = this.speedRunMode ? 3 : 15;
             this.advanceDialogue();
             return;
         }
 
         if (this.state === GameState.DIALOGUE_CHOICE) {
-            this.autoPilotState.waitFrames = 10;
+            // Wait before making choice to ensure UI is ready
+            this.autoPilotState.waitFrames = this.speedRunMode ? 5 : 20;
             // For creature encounter, choose "Approach slowly" (first option)
             this.dialogue.selectedChoice = 0;
             this.selectDialogueChoice();
@@ -1021,7 +1037,7 @@ class LighthouseGame {
 
         // Handle creature naming
         if (document.getElementById('creatureNameInput')) {
-            this.autoPilotState.waitFrames = 10;
+            this.autoPilotState.waitFrames = this.speedRunMode ? 5 : 15;
             this.finalizeCreatureNaming();
             return;
         }
@@ -1029,7 +1045,7 @@ class LighthouseGame {
         // Close any open UIs
         const creatureUI = document.getElementById('creatureUI');
         if (creatureUI && !creatureUI.classList.contains('hidden')) {
-            this.autoPilotState.waitFrames = 20;
+            this.autoPilotState.waitFrames = this.speedRunMode ? 10 : 30;
             creatureUI.classList.add('hidden');
             return;
         }
@@ -1049,11 +1065,18 @@ class LighthouseGame {
             const keeper = this.map.objects.find(obj => obj.id === 'keeper');
             if (keeper) {
                 if (this.isAdjacentTo(keeper.x, keeper.y)) {
+                    if (currentTask !== 'talking_to_keeper') {
+                        console.log('[AutoPilot] Adjacent to Keeper, interacting...');
+                    }
                     this.autoPilotState.currentTask = 'talking_to_keeper';
                     this.autoPilotState.waitFrames = 5;
                     this.player.direction = this.getDirectionTo(keeper.x, keeper.y);
                     this.interact();
                 } else {
+                    if (currentTask !== 'walking_to_keeper') {
+                        console.log('[AutoPilot] Walking to Keeper...');
+                        this.autoPilotState.currentTask = 'walking_to_keeper';
+                    }
                     this.walkToTarget(keeper.x, keeper.y);
                 }
             }
@@ -1061,12 +1084,19 @@ class LighthouseGame {
             // Go find Lumina
             const lumina = this.map.objects.find(obj => obj.id === 'lumina');
             if (lumina) {
-                if (Math.hypot(this.player.x - lumina.x, this.player.y - lumina.y) <= 3) {
+                const distance = Math.hypot(this.player.x - lumina.x, this.player.y - lumina.y);
+                if (distance <= 3) {
+                    if (currentTask !== 'near_lumina') {
+                        console.log('[AutoPilot] Near Lumina, waiting for encounter...');
+                    }
                     this.autoPilotState.currentTask = 'near_lumina';
                     this.autoPilotState.waitFrames = 10;
                     // Just wait, encounter will trigger automatically
                 } else {
-                    this.autoPilotState.currentTask = 'walking_to_lumina';
+                    if (currentTask !== 'walking_to_lumina') {
+                        console.log('[AutoPilot] Walking to Lumina...');
+                        this.autoPilotState.currentTask = 'walking_to_lumina';
+                    }
                     this.walkToTarget(lumina.x, lumina.y);
                 }
             }
@@ -1075,14 +1105,25 @@ class LighthouseGame {
             const keeper = this.map.objects.find(obj => obj.id === 'keeper');
             if (keeper) {
                 if (this.isAdjacentTo(keeper.x, keeper.y)) {
+                    if (currentTask !== 'returned_to_keeper') {
+                        console.log('[AutoPilot] Returned to Keeper, interacting...');
+                    }
                     this.autoPilotState.currentTask = 'returned_to_keeper';
                     this.autoPilotState.waitFrames = 5;
                     this.player.direction = this.getDirectionTo(keeper.x, keeper.y);
                     this.interact();
                 } else {
-                    this.autoPilotState.currentTask = 'returning_to_keeper';
+                    if (currentTask !== 'returning_to_keeper') {
+                        console.log('[AutoPilot] Returning to Keeper...');
+                        this.autoPilotState.currentTask = 'returning_to_keeper';
+                    }
                     this.walkToTarget(keeper.x, keeper.y);
                 }
+            }
+        } else {
+            if (currentTask !== 'idle') {
+                console.log(`[AutoPilot] Waiting in phase: ${this.plotPhase}`);
+                this.autoPilotState.currentTask = 'idle';
             }
         }
     }
@@ -1135,7 +1176,8 @@ class LighthouseGame {
             this.player.direction = direction;
             this.player.moving = true;
             this.checkCreatureEncounter();
-            this.autoPilotState.waitFrames = 3; // Small delay between moves
+            // Wait longer to allow movement animation and game state updates
+            this.autoPilotState.waitFrames = this.speedRunMode ? 2 : 8;
             return true;
         }
         return false;
