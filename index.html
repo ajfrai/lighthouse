@@ -57,6 +57,29 @@
             </div>
         </div>
 
+        <!-- Debug Menu Button -->
+        <div id="debugMenuBtn" class="debug-menu-btn">⚙️</div>
+
+        <!-- Debug Menu Modal -->
+        <div id="debugMenu" class="hidden">
+            <h2>Debug Menu</h2>
+            <div class="debug-controls">
+                <button id="toggleAutoPilot" class="debug-btn">AutoPilot: OFF</button>
+                <button id="toggleSpeedRun" class="debug-btn">Speed Run: OFF</button>
+                <button id="toggleDebugInfo" class="debug-btn">Debug Info: OFF</button>
+                <button id="teleportLumina" class="debug-btn">Teleport to Lumina</button>
+                <div class="phase-jumps">
+                    <h3>Jump to Phase:</h3>
+                    <button onclick="game.jumpToPhase(0)" class="phase-btn">1. Wake Up</button>
+                    <button onclick="game.jumpToPhase(1)" class="phase-btn">2. Find Creature</button>
+                    <button onclick="game.jumpToPhase(2)" class="phase-btn">3. Creature Found</button>
+                    <button onclick="game.jumpToPhase(3)" class="phase-btn">4. Return to Keeper</button>
+                    <button onclick="game.jumpToPhase(4)" class="phase-btn">5. Meet Villager</button>
+                </div>
+            </div>
+            <button id="debugMenuClose" class="debug-close">Close</button>
+        </div>
+
         <div id="instructions">
             <p>Arrow keys to move • Space/A to interact</p>
         </div>
