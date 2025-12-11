@@ -116,11 +116,88 @@ class LighthouseGame {
 
         // Setup input
         this.setupInput();
+        this.setupDebugMenu();
 
         // Start game loop
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
+    }
+
+    setupDebugMenu() {
+        const debugMenuBtn = document.getElementById('debugMenuBtn');
+        const debugMenu = document.getElementById('debugMenu');
+        const debugMenuClose = document.getElementById('debugMenuClose');
+
+        // Toggle debug menu
+        debugMenuBtn.addEventListener('click', () => {
+            debugMenu.classList.toggle('hidden');
+            this.updateDebugMenuButtons();
+        });
+
+        debugMenuClose.addEventListener('click', () => {
+            debugMenu.classList.add('hidden');
+        });
+
+        // AutoPilot toggle
+        document.getElementById('toggleAutoPilot').addEventListener('click', (e) => {
+            this.autoPilot = !this.autoPilot;
+            if (this.autoPilot) {
+                this.speedRunMode = true;
+                this.autoPilotState.currentTask = 'init';
+            }
+            this.updateDebugMenuButtons();
+        });
+
+        // Speed Run toggle
+        document.getElementById('toggleSpeedRun').addEventListener('click', (e) => {
+            this.speedRunMode = !this.speedRunMode;
+            this.moveCooldown = this.speedRunMode ? 50 : 150;
+            this.moveHoldDelay = this.speedRunMode ? 50 : 150;
+            this.moveRepeatRate = this.speedRunMode ? 30 : 100;
+            this.dialogue.typewriterSpeed = this.speedRunMode ? 1000 : 30;
+            this.updateDebugMenuButtons();
+        });
+
+        // Debug Info toggle
+        document.getElementById('toggleDebugInfo').addEventListener('click', (e) => {
+            this.showDebugInfo = !this.showDebugInfo;
+            this.updateDebugMenuButtons();
+        });
+
+        // Teleport to Lumina
+        document.getElementById('teleportLumina').addEventListener('click', () => {
+            const lumimaObj = this.map.objects.find(obj => obj.id === 'lumina');
+            if (lumimaObj) {
+                this.player.x = lumimaObj.x - 2;
+                this.player.y = lumimaObj.y;
+                debugMenu.classList.add('hidden');
+            }
+        });
+    }
+
+    updateDebugMenuButtons() {
+        const autoPilotBtn = document.getElementById('toggleAutoPilot');
+        const speedRunBtn = document.getElementById('toggleSpeedRun');
+        const debugInfoBtn = document.getElementById('toggleDebugInfo');
+
+        autoPilotBtn.textContent = `AutoPilot: ${this.autoPilot ? 'ON' : 'OFF'}`;
+        autoPilotBtn.classList.toggle('active', this.autoPilot);
+
+        speedRunBtn.textContent = `Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`;
+        speedRunBtn.classList.toggle('active', this.speedRunMode);
+
+        debugInfoBtn.textContent = `Debug Info: ${this.showDebugInfo ? 'ON' : 'OFF'}`;
+        debugInfoBtn.classList.toggle('active', this.showDebugInfo);
+    }
+
+    jumpToPhase(phaseIndex) {
+        const phases = Object.values(PlotPhase);
+        if (phaseIndex >= 0 && phaseIndex < phases.length) {
+            this.plotPhase = phases[phaseIndex];
+            document.getElementById('debugMenu').classList.add('hidden');
+            console.log(`Jumped to phase: ${this.plotPhase}`);
+        }
     }
 
     setupInput() {
