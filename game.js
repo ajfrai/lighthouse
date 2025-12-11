@@ -55,6 +55,8 @@ class LighthouseGame {
         this.discoveredCreatures = new Set();
         this.party = [];  // Creatures traveling with player
         this.inventory = new Set();
+        this.firstEncounterTriggered = false;  // Track first narrative encounter
+        this.encounterState = null;  // State for narrative encounter sequence
 
         // Boat quest tracking
         this.boatQuest = {
@@ -314,8 +316,20 @@ class LighthouseGame {
 
         // Handle the Keeper with state-based dialogue
         if (npc.isKeeper) {
-            const dialogue = npc.dialogues[this.gamePhase];
-            this.showDialog(dialogue || npc.dialogues.start);
+            const dialogue = npc.dialogues[this.plotPhase];
+
+            // After showing wake_up dialogue, transition to find_creature phase
+            if (this.plotPhase === PlotPhase.WAKE_UP) {
+                this.startDialogue([dialogue || npc.dialogues.wake_up], [{
+                    text: "I'll go look for it",
+                    action: () => {
+                        this.plotPhase = PlotPhase.FIND_CREATURE;
+                        this.firstEncounterTriggered = false;
+                    }
+                }]);
+            } else {
+                this.showDialog(dialogue || npc.dialogues.wake_up);
+            }
             return;
         }
 
@@ -513,7 +527,26 @@ class LighthouseGame {
     }
 
     checkCreatureEncounter() {
-        // Random encounter chance
+        // Scripted first encounter - narrative driven
+        if (this.plotPhase === PlotPhase.FIND_CREATURE && !this.firstEncounterTriggered) {
+            // Check proximity to Lumina (the first creature near lighthouse)
+            const lumimaObj = this.map.objects.find(obj => obj.id === 'lumina');
+            if (lumimaObj) {
+                const distance = Math.hypot(
+                    this.player.x - lumimaObj.x,
+                    this.player.y - lumimaObj.y
+                );
+
+                // Trigger narrative encounter when close
+                if (distance <= 3) {
+                    this.firstEncounterTriggered = true;
+                    this.startFirstCreatureEncounter();
+                    return;
+                }
+            }
+        }
+
+        // Random encounter chance (for subsequent creatures)
         const baseChance = 0.02;  // 2% per step
         const hasNet = this.inventory.has('net') ? 2 : 1;  // Golden net doubles chance
 
@@ -536,19 +569,19 @@ class LighthouseGame {
         this.discoveredCreatures.add(creatureId);
         const creature = CREATURES[creatureId];
 
-        // Progress game phase after first creature
-        if (this.gamePhase === 'start' && this.discoveredCreatures.size === 1) {
-            this.gamePhase = 'metCreature';
+        // Progress plot phase after first creature
+        if (this.plotPhase === PlotPhase.FIND_CREATURE && this.discoveredCreatures.size === 1) {
+            this.plotPhase = PlotPhase.RETURN_TO_KEEPER;
         }
 
         // Progress to working phase after 3 creatures
-        if (this.gamePhase === 'metCreature' && this.discoveredCreatures.size >= 3) {
-            this.gamePhase = 'working';
+        if (this.plotPhase === PlotPhase.RETURN_TO_KEEPER && this.discoveredCreatures.size >= 3) {
+            this.plotPhase = PlotPhase.WORKING;
         }
 
         // Progress to boat ready after 6 creatures
-        if (this.gamePhase === 'working' && this.discoveredCreatures.size >= 6) {
-            this.gamePhase = 'boatReady';
+        if (this.plotPhase === PlotPhase.WORKING && this.discoveredCreatures.size >= 6) {
+            this.plotPhase = PlotPhase.BOAT_READY;
         }
 
         const creatureUI = document.getElementById('creatureUI');
@@ -567,6 +600,137 @@ class LighthouseGame {
         };
 
         this.updateUI();
+    }
+
+    // ===== FIRST CREATURE ENCOUNTER - NARRATIVE SEQUENCE =====
+
+    startFirstCreatureEncounter() {
+        this.encounterState = {
+            step: 'intro',
+            choice: null,
+            creatureName: ''
+        };
+
+        // Show first narrative sequence
+        this.showCreatureNarrative("Something small is huddled between the rocks.", () => {
+            this.showCreatureNarrative("It's shivering. One of its wings is tucked at a strange angle.", () => {
+                this.showCreatureNarrative("It sees you and tenses, ready to flee.", () => {
+                    this.showCreatureChoice();
+                });
+            });
+        });
+    }
+
+    showCreatureNarrative(text, onContinue) {
+        this.startDialogue([text], onContinue ? [{
+            text: "Continue",
+            action: onContinue
+        }] : null);
+    }
+
+    showCreatureChoice() {
+        this.startDialogue(["What do you do?"], [
+            {
+                text: "Approach slowly",
+                action: () => this.handleCreatureChoice('slow')
+            },
+            {
+                text: "Stay still and wait",
+                action: () => this.handleCreatureChoice('wait')
+            },
+            {
+                text: "Try to grab it",
+                action: () => this.handleCreatureChoice('grab')
+            }
+        ]);
+    }
+
+    handleCreatureChoice(choice) {
+        this.encounterState.choice = choice;
+
+        if (choice === 'slow') {
+            this.showCreatureNarrative("You take a slow step forward. It watches you but doesn't run.", () => {
+                this.showCreatureNarrative("Another step. It makes a small sound—not fear. Something else.", () => {
+                    this.showCreatureNarrative("You kneel down. It hesitates... then hops toward you.", () => {
+                        this.completeCreatureApproach();
+                    });
+                });
+            });
+        } else if (choice === 'wait') {
+            this.showCreatureNarrative("You sit down on the rocks and wait.", () => {
+                this.showCreatureNarrative("Minutes pass. The creature watches you.", () => {
+                    this.showCreatureNarrative("Eventually, curiosity wins. It inches closer, closer...", () => {
+                        this.showCreatureNarrative("It stops just out of reach, but it's not afraid anymore.", () => {
+                            this.completeCreatureApproach();
+                        });
+                    });
+                });
+            });
+        } else if (choice === 'grab') {
+            this.showCreatureNarrative("You lunge forward. The creature bolts.", () => {
+                this.showCreatureNarrative("It scrambles over the rocks, injured wing dragging.", () => {
+                    this.showCreatureNarrative("But it doesn't get far. It's too hurt.", () => {
+                        this.showCreatureNarrative("You approach more carefully this time. It has no choice but to let you.", () => {
+                            this.completeCreatureApproach();
+                        });
+                    });
+                });
+            });
+        }
+    }
+
+    completeCreatureApproach() {
+        this.showCreatureNarrative("The creature settles against you. It's warm despite the sea wind.", () => {
+            this.showCreatureNaming();
+        });
+    }
+
+    showCreatureNaming() {
+        // Show naming UI using dialogue box
+        this.state = GameState.DIALOGUE;
+        const dialogBox = document.getElementById('dialogBox');
+        const dialogContent = document.getElementById('dialogContent');
+        const dialogChoices = document.getElementById('dialogChoices');
+
+        dialogContent.textContent = "It needs a name.";
+        dialogChoices.innerHTML = `
+            <div class="naming-container">
+                <input type="text" id="creatureNameInput" placeholder="Shimmer" maxlength="12" value="Shimmer" />
+                <button onclick="game.finalizeCreatureNaming()">Confirm Name</button>
+            </div>
+        `;
+
+        // Focus input after a short delay
+        setTimeout(() => {
+            const input = document.getElementById('creatureNameInput');
+            if (input) input.focus();
+        }, 100);
+
+        dialogBox.classList.remove('hidden');
+    }
+
+    finalizeCreatureNaming() {
+        const input = document.getElementById('creatureNameInput');
+        let name = input ? input.value.trim() : 'Shimmer';
+
+        // Validate name (letters only)
+        if (!name || !/^[A-Za-z]+$/.test(name)) {
+            name = 'Shimmer';
+        }
+
+        // Add creature to party with custom name
+        const lumina = { ...CREATURES['lumina'] };
+        lumina.customName = name;
+        this.party.push(lumina);
+
+        // Mark as discovered
+        this.discoverCreature('lumina');
+
+        // Show final message
+        this.showCreatureNarrative(`${name} looks up at you. You should tell the Keeper what you found.`, () => {
+            this.state = GameState.EXPLORING;
+            document.getElementById('dialogBox').classList.add('hidden');
+        });
     }
 
     updateUI() {

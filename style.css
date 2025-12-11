@@ -373,6 +373,38 @@ button:disabled {
     }
 }
 
+/* Creature Naming */
+.naming-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.naming-container input {
+    width: 250px;
+    padding: 12px;
+    background-color: rgba(15, 52, 96, 0.8);
+    border: 2px solid #8b7355;
+    color: #eee;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.naming-container input:focus {
+    outline: none;
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.naming-container button {
+    padding: 12px 24px;
+    font-size: 14px;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 8px;

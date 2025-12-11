@@ -147,10 +147,12 @@ const NPCS = {
     keeper: {
         name: 'The Keeper',
         dialogues: {
-            start: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
-            metCreature: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light.",
-            working: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies.",
-            boatReady: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't."
+            wake_up: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
+            find_creature: "Find anything yet? The path leads to the tall grass. Something's out there, I'm certain.",
+            return_keeper: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light.",
+            meet_villager: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies.",
+            working: "The fisherman treats you fair? Good. Keep working—we'll need those coins for supplies.",
+            boat_ready: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't."
         },
         isKeeper: true
     },
