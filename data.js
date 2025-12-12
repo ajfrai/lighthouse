@@ -402,7 +402,7 @@ const QUESTS = {
         steps: [
             {
                 type: 'visit_location',
-                description: 'Go to the western beach (follow the 🎣 marker on the map)',
+                description: 'Go WEST to the beach nets (pulsing 🎣 marker shows the way)',
                 location: { x: 6, y: 8 },
                 radius: 2,
                 markerText: '🎣',
@@ -418,7 +418,7 @@ const QUESTS = {
             },
             {
                 type: 'visit_location',
-                description: 'Go to the eastern shore (follow the 🎣 marker)',
+                description: 'Go EAST to the shore nets (pulsing 🎣 marker shows the way)',
                 location: { x: 25, y: 8 },
                 radius: 2,
                 markerText: '🎣',
@@ -434,7 +434,7 @@ const QUESTS = {
             },
             {
                 type: 'visit_location',
-                description: 'Check the boat storage (follow the 📦 marker)',
+                description: 'Check the boat storage on WEST beach (pulsing 📦 marker shows the way)',
                 location: { x: 5, y: 7 },
                 radius: 2,
                 markerText: '📦',

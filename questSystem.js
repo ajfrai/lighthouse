@@ -226,14 +226,13 @@ class QuestSystem {
         // Mark as completed
         this.game.completedQuests.add(this.game.activeQuest.questId);
 
-        // Show success message
-        this.game.showDialog(`Excellent work! You earned ${quest.reward} coins!`);
-
-        // Clear quest
+        // Clear quest state BEFORE showing dialog
         document.getElementById('jobUI').classList.add('hidden');
-        this.game.state = GameState.EXPLORING;
         this.game.questObjective = null;
         this.game.activeQuest = null;
+
+        // Show success message (this properly manages state transition)
+        this.game.showDialog(`Excellent work! You earned ${quest.reward} coins!`);
     }
 
     renderQuestMarkers(ctx) {
