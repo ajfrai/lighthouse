@@ -388,6 +388,12 @@ class LighthouseGame {
                     y >= obj.y && y < obj.y + 2) {
                     return false;
                 }
+            } else if (obj.type === 'boat') {
+                // Boat occupies 3x2 tiles
+                if (x >= obj.x && x < obj.x + 3 &&
+                    y >= obj.y && y < obj.y + 2) {
+                    return false;
+                }
             } else if (obj.type === 'rock') {
                 // Rock occupies 1 tile
                 if (x === obj.x && y === obj.y) {
@@ -429,8 +435,25 @@ class LighthouseGame {
                     this.openShop();
                     return;
                 }
+            } else if (obj.type === 'boat') {
+                // Check if player is adjacent to boat (3x2 object)
+                if (checkX >= obj.x && checkX < obj.x + 3 &&
+                    checkY >= obj.y && checkY < obj.y + 2) {
+                    this.showBoatDialogue();
+                    return;
+                }
             }
         }
+    }
+
+    showBoatDialogue() {
+        const progress = `${this.boatQuest.planks.collected}/${this.boatQuest.planks.required} planks, ${this.boatQuest.rope.collected}/${this.boatQuest.rope.required} rope`;
+
+        const dialogue = this.plotPhase === 'boat_ready'
+            ? "The boat is repaired and ready to sail! The storm approaches—it's time to depart."
+            : `The old fishing boat needs repairs before it can sail. You need: ${progress}. Earn coins from jobs to buy supplies at the shop.`;
+
+        this.showDialog(dialogue);
     }
 
     showNPCDialog(npcId) {
@@ -627,6 +650,7 @@ class LighthouseGame {
     }
 
     showJob(npcId, npc) {
+        this.state = GameState.JOB;  // Set state to prevent movement
         const jobUI = document.getElementById('jobUI');
         const jobTitle = document.getElementById('jobTitle');
         const jobQuestion = document.getElementById('jobQuestion');
@@ -647,6 +671,17 @@ class LighthouseGame {
             jobAnswers.appendChild(btn);
         });
 
+        // Add cancel button
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'job-cancel';
+        cancelBtn.onclick = () => {
+            jobUI.classList.add('hidden');
+            this.state = GameState.EXPLORING;
+            this.currentJob = null;
+        };
+        jobAnswers.appendChild(cancelBtn);
+
         jobUI.classList.remove('hidden');
     }
 
@@ -662,6 +697,7 @@ class LighthouseGame {
         }
 
         jobUI.classList.add('hidden');
+        this.state = GameState.EXPLORING;
         this.currentJob = null;
     }
 
@@ -998,6 +1034,12 @@ class LighthouseGame {
                 );
             } else if (obj.type === 'store') {
                 spriteLoader.drawStore(
+                    this.ctx,
+                    obj.x * tileSize,
+                    obj.y * tileSize
+                );
+            } else if (obj.type === 'boat') {
+                spriteLoader.drawBoat(
                     this.ctx,
                     obj.x * tileSize,
                     obj.y * tileSize

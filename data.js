@@ -113,7 +113,10 @@ const MAP_DATA = {
         { type: 'npc', id: 'mathTeacher', x: 9, y: 19, sprite: 'right', charType: 'teacher' },  // In western clearing
 
         // Store building (2x2 tiles)
-        { type: 'store', x: 22, y: 18 }  // Near eastern path
+        { type: 'store', x: 22, y: 18 },  // Near eastern path
+
+        // Boat to repair (3x2 tiles) - on western beach
+        { type: 'boat', x: 4, y: 7 }  // Western beach, near fisherman
 
         // Creatures are now spawned via habitat-based encounters, not fixed coordinates
     ]
