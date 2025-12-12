@@ -55,6 +55,7 @@ class LighthouseGame {
         this.discoveredCreatures = new Set();
         this.party = [];  // Creatures traveling with player
         this.inventory = new Set();
+        this.playerAbilities = new Set();  // surf, torch, etc.
         this.firstEncounterTriggered = false;  // Track first narrative encounter
         this.encounterState = null;  // State for narrative encounter sequence
 
@@ -436,25 +437,27 @@ class LighthouseGame {
         const npc = NPCS[npcId];
         if (!npc) return;
 
-        // Handle the Keeper with state-based dialogue
-        if (npc.isKeeper) {
-            const dialogue = npc.dialogues[this.plotPhase];
+        // Framework-based dialogue system
+        if (npc.type === 'dialogue_npc' && npc.dialogues) {
+            // Find the first matching dialogue based on conditions
+            const dialogue = npc.dialogues.find(d => d.condition(this));
 
-            // After showing wake_up dialogue, transition to find_creature phase
-            if (this.plotPhase === PlotPhase.WAKE_UP) {
-                this.startDialogue([dialogue || npc.dialogues.wake_up], [{
-                    text: "I'll go look for it",
-                    action: () => {
-                        this.plotPhase = PlotPhase.FIND_CREATURE;
-                        this.firstEncounterTriggered = false;
-                    }
-                }]);
+            if (dialogue) {
+                // Convert framework choices to game choices
+                const choices = dialogue.choices ? dialogue.choices.map(choice => ({
+                    text: choice.text,
+                    action: () => choice.action(this)
+                })) : null;
+
+                this.startDialogue([dialogue.text], choices);
             } else {
-                this.showDialog(dialogue || npc.dialogues.wake_up);
+                // Fallback if no dialogue matches
+                this.showDialog("...");
             }
             return;
         }
 
+        // Legacy system for other NPCs
         if (npc.shop) {
             this.openShop();
         } else if (npc.job) {
@@ -610,7 +613,7 @@ class LighthouseGame {
 
         shopUI.classList.remove('hidden');
         document.getElementById('shopClose').onclick = () => {
-            shopUI.classList.add('hidden');
+            this.closeShop();
         };
     }
 
@@ -662,19 +665,28 @@ class LighthouseGame {
         this.currentJob = null;
     }
 
-    checkCreatureEncounter() {
-        // Scripted first encounter - narrative driven
-        if (this.plotPhase === PlotPhase.FIND_CREATURE && !this.firstEncounterTriggered) {
-            // Check proximity to Lumina (the first creature near lighthouse)
-            const lumimaObj = this.map.objects.find(obj => obj.id === 'lumina');
-            if (lumimaObj) {
-                const distance = Math.hypot(
-                    this.player.x - lumimaObj.x,
-                    this.player.y - lumimaObj.y
-                );
+    getTerrainAt(x, y) {
+        // Get terrain type at coordinates
+        const tileIndex = y * this.map.width + x;
+        const groundTerrain = this.map.ground[tileIndex];
 
-                // Trigger narrative encounter when close
-                if (distance <= 3) {
+        // Check if there's tall grass at this position (overrides ground)
+        const hasTallGrass = this.map.objects.some(obj =>
+            obj.type === 'tallgrass' && obj.x === x && obj.y === y
+        );
+
+        if (hasTallGrass) return 'tallgrass';
+        return groundTerrain;  // 'water', 'sand', 'grass', 'cave', etc.
+    }
+
+    checkCreatureEncounter() {
+        // Scripted first encounter - narrative driven (only for Lumina)
+        if (this.plotPhase === PlotPhase.FIND_CREATURE && !this.firstEncounterTriggered) {
+            // Check if player is in tall grass (where Lumina appears)
+            const terrain = this.getTerrainAt(this.player.x, this.player.y);
+            if (terrain === 'tallgrass') {
+                // Random chance to trigger first encounter in tall grass
+                if (Math.random() < 0.15) {  // 15% chance per step
                     this.firstEncounterTriggered = true;
                     this.startFirstCreatureEncounter();
                     return;
@@ -682,21 +694,57 @@ class LighthouseGame {
             }
         }
 
-        // Random encounter chance (for subsequent creatures)
-        const baseChance = 0.02;  // 2% per step
-        const hasNet = this.inventory.has('net') ? 2 : 1;  // Golden net doubles chance
+        // Habitat-based random encounters (for all creatures)
+        this.checkRandomEncounter();
+    }
 
-        if (Math.random() < baseChance * hasNet) {
-            // Find undiscovered creatures
-            const undiscovered = this.map.objects
-                .filter(obj => obj.type === 'creature' && !this.discoveredCreatures.has(obj.id));
+    checkRandomEncounter() {
+        const terrain = this.getTerrainAt(this.player.x, this.player.y);
 
-            if (undiscovered.length > 0) {
-                // Random undiscovered creature
-                const creature = undiscovered[Math.floor(Math.random() * undiscovered.length)];
-                this.discoverCreature(creature.id);
+        // Check each creature for possible encounter
+        for (const [creatureId, creature] of Object.entries(CREATURES)) {
+            // Skip already discovered creatures
+            if (this.discoveredCreatures.has(creatureId)) continue;
+
+            // Skip if not in correct habitat
+            if (!creature.habitats.includes(terrain)) continue;
+
+            // Skip if requires ability player doesn't have
+            if (creature.requiresAbility && !this.playerAbilities.has(creature.requiresAbility)) {
+                continue;
+            }
+
+            // Golden net doubles encounter rate
+            const rate = this.inventory.has('net') ? creature.encounterRate * 2 : creature.encounterRate;
+
+            // Roll for encounter
+            if (Math.random() < rate) {
+                this.triggerCreatureEncounter(creatureId);
+                break;  // Only one encounter at a time
             }
         }
+    }
+
+    triggerCreatureEncounter(creatureId) {
+        const creature = CREATURES[creatureId];
+
+        // Mark as discovered
+        this.discoverCreature(creatureId);
+
+        // Show creature encounter UI
+        const creatureUI = document.getElementById('creatureUI');
+        const creatureInfo = document.getElementById('creatureInfo');
+
+        creatureInfo.innerHTML = `
+            <h3>${creature.emoji} ${creature.name}</h3>
+            <p>${creature.description}</p>
+            <p class="fact"><strong>Fun Fact:</strong> ${creature.fact}</p>
+        `;
+
+        creatureUI.classList.remove('hidden');
+        document.getElementById('creatureClose').onclick = () => {
+            creatureUI.classList.add('hidden');
+        };
     }
 
     discoverCreature(creatureId) {

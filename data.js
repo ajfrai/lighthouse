@@ -84,16 +84,27 @@ const MAP_DATA = {
         { type: 'rock', x: 19, y: 8 },
         { type: 'rock', x: 27, y: 8 },
 
-        // Tall grass patch east of lighthouse (creating the area mentioned in dialogue)
+        // Tall grass patch - large area east of lighthouse for creature encounters
+        { type: 'tallgrass', x: 18, y: 10 },
+        { type: 'tallgrass', x: 19, y: 10 },
+        { type: 'tallgrass', x: 20, y: 10 },
+        { type: 'tallgrass', x: 21, y: 10 },
         { type: 'tallgrass', x: 18, y: 11 },
         { type: 'tallgrass', x: 19, y: 11 },
         { type: 'tallgrass', x: 20, y: 11 },
+        { type: 'tallgrass', x: 21, y: 11 },
         { type: 'tallgrass', x: 18, y: 12 },
         { type: 'tallgrass', x: 19, y: 12 },
         { type: 'tallgrass', x: 20, y: 12 },
+        { type: 'tallgrass', x: 21, y: 12 },
         { type: 'tallgrass', x: 18, y: 13 },
         { type: 'tallgrass', x: 19, y: 13 },
         { type: 'tallgrass', x: 20, y: 13 },
+        { type: 'tallgrass', x: 21, y: 13 },
+        { type: 'tallgrass', x: 18, y: 14 },
+        { type: 'tallgrass', x: 19, y: 14 },
+        { type: 'tallgrass', x: 20, y: 14 },
+        { type: 'tallgrass', x: 21, y: 14 },
 
         // NPCs positioned in story-meaningful locations
         { type: 'npc', id: 'keeper', x: 15, y: 17, sprite: 'down', charType: 'teacher' },  // Just south of lighthouse
@@ -102,85 +113,152 @@ const MAP_DATA = {
         { type: 'npc', id: 'mathTeacher', x: 9, y: 19, sprite: 'right', charType: 'teacher' },  // In western clearing
 
         // Store building (2x2 tiles)
-        { type: 'store', x: 22, y: 18 },  // Near eastern path
+        { type: 'store', x: 22, y: 18 }  // Near eastern path
 
-        // Creature spawn points - ALL in tall grass or water (no random placement)
-        { type: 'creature', id: 'lumina', x: 19, y: 12 },  // In tall grass (moth)
-        { type: 'creature', id: 'marina', x: 15, y: 2 },   // Deep water - unreachable without surf (dolphin)
-        { type: 'creature', id: 'frost', x: 10, y: 3 },    // Deep water - unreachable without surf (ice)
-        { type: 'creature', id: 'dusty', x: 18, y: 13 },   // In tall grass (sand creature)
-        { type: 'creature', id: 'pebble', x: 20, y: 11 },  // In tall grass (rock creature)
-        { type: 'creature', id: 'sprout', x: 18, y: 11 },  // In tall grass (plant)
-        { type: 'creature', id: 'blaze', x: 19, y: 13 },   // In tall grass (fire)
-        { type: 'creature', id: 'spark', x: 20, y: 12 }    // In tall grass (electric)
+        // Creatures are now spawned via habitat-based encounters, not fixed coordinates
     ]
 };
 
-// Creature encyclopedia (8 creatures to discover)
+// Creature encyclopedia - habitat-based spawning system
+// Legal habitats: 'tallgrass', 'sand' (beach), 'water', 'cave'
 const CREATURES = {
     lumina: {
         name: 'Lumina',
         description: 'A glowing moth that appears near lighthouses on foggy nights.',
         fact: 'Lumina can see ultraviolet light invisible to humans!',
-        emoji: '🦋'
-    },
-    marina: {
-        name: 'Marina',
-        description: 'A friendly dolphin that loves to help sailors navigate.',
-        fact: 'Dolphins sleep with one eye open to watch for predators.',
-        emoji: '🐬'
-    },
-    dusty: {
-        name: 'Dusty',
-        description: 'A tiny sand crab that builds intricate castles.',
-        fact: 'Some crabs can regenerate lost claws!',
-        emoji: '🦀'
-    },
-    pebble: {
-        name: 'Pebble',
-        description: 'A smooth river stone that mysteriously moves on its own.',
-        fact: 'This creature is actually a colony of tiny organisms.',
-        emoji: '🪨'
+        emoji: '🦋',
+        habitats: ['tallgrass'],
+        encounterRate: 0.15,  // 15% chance per step (first creature - higher rate)
+        requiresAbility: null
     },
     sprout: {
         name: 'Sprout',
         description: 'A cheerful seedling that grows wherever it travels.',
         fact: 'Some plants can communicate through underground networks!',
-        emoji: '🌱'
-    },
-    blaze: {
-        name: 'Blaze',
-        description: 'A warm salamander found near the lighthouse furnace.',
-        fact: 'Salamanders can regenerate entire limbs and even parts of their heart!',
-        emoji: '🦎'
-    },
-    frost: {
-        name: 'Frost',
-        description: 'A crystalline creature that appears only in cold water.',
-        fact: 'Ice crystals form in hexagonal patterns due to water molecule bonds.',
-        emoji: '❄️'
+        emoji: '🌱',
+        habitats: ['tallgrass'],
+        encounterRate: 0.08,
+        requiresAbility: null
     },
     spark: {
         name: 'Spark',
         description: 'An energetic firefly that powers the lighthouse.',
         fact: 'Fireflies produce light through a chemical reaction with almost no heat!',
-        emoji: '✨'
+        emoji: '✨',
+        habitats: ['tallgrass'],
+        encounterRate: 0.08,
+        requiresAbility: null
+    },
+    dusty: {
+        name: 'Dusty',
+        description: 'A tiny sand crab that builds intricate castles.',
+        fact: 'Some crabs can regenerate lost claws!',
+        emoji: '🦀',
+        habitats: ['sand'],
+        encounterRate: 0.10,
+        requiresAbility: null
+    },
+    pebble: {
+        name: 'Pebble',
+        description: 'A smooth river stone that mysteriously moves on its own.',
+        fact: 'This creature is actually a colony of tiny organisms.',
+        emoji: '🪨',
+        habitats: ['sand'],
+        encounterRate: 0.10,
+        requiresAbility: null
+    },
+    marina: {
+        name: 'Marina',
+        description: 'A friendly dolphin that loves to help sailors navigate.',
+        fact: 'Dolphins sleep with one eye open to watch for predators.',
+        emoji: '🐬',
+        habitats: ['water'],
+        encounterRate: 0.12,
+        requiresAbility: 'surf'  // Can't encounter until player can surf
+    },
+    frost: {
+        name: 'Frost',
+        description: 'A crystalline creature that appears only in cold water.',
+        fact: 'Ice crystals form in hexagonal patterns due to water molecule bonds.',
+        emoji: '❄️',
+        habitats: ['water'],
+        encounterRate: 0.12,
+        requiresAbility: 'surf'
+    },
+    blaze: {
+        name: 'Blaze',
+        description: 'A warm salamander found near the lighthouse furnace.',
+        fact: 'Salamanders can regenerate entire limbs and even parts of their heart!',
+        emoji: '🦎',
+        habitats: ['cave'],
+        encounterRate: 0.10,
+        requiresAbility: 'torch'  // Placeholder for future cave exploration
     }
 };
 
-// NPC dialogues and jobs
+// NPC dialogues - framework-based system
+// Each NPC has dialogue entries with conditions, text, and optional choices
 const NPCS = {
     keeper: {
         name: 'The Keeper',
-        dialogues: {
-            wake_up: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
-            find_creature: "Find anything yet? The path leads to the tall grass. Something's out there, I'm certain.",
-            return_keeper: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light.",
-            meet_villager: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies.",
-            working: "The fisherman treats you fair? Good. Keep working—we'll need those coins for supplies.",
-            boat_ready: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't."
-        },
-        isKeeper: true
+        type: 'dialogue_npc',
+        dialogues: [
+            {
+                condition: (game) => game.plotPhase === 'wake_up',
+                text: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
+                choices: [
+                    {
+                        text: "I'll go look for it",
+                        action: (game) => {
+                            game.plotPhase = 'find_creature';
+                            game.firstEncounterTriggered = false;
+                        }
+                    }
+                ]
+            },
+            {
+                condition: (game) => game.plotPhase === 'find_creature',
+                text: "Find anything yet? The path leads to the tall grass. Something's out there, I'm certain.",
+                choices: null  // Just dismisses
+            },
+            {
+                condition: (game) => game.plotPhase === 'creature_found',
+                text: "What did you find out there? Tell me about it when you're ready.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'return_keeper',
+                text: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light. Keep exploring—there may be more out there.",
+                choices: [
+                    {
+                        text: "I'll keep looking",
+                        action: (game) => {
+                            game.plotPhase = 'meet_villager';
+                        }
+                    }
+                ]
+            },
+            {
+                condition: (game) => game.plotPhase === 'meet_villager' || game.plotPhase === 'boat_quest',
+                text: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies for the boat.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'working',
+                text: "The fisherman treats you fair? Good. Keep working—we'll need those coins for supplies.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'boat_ready',
+                text: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'departure',
+                text: "Time to set sail. The storm approaches, but we're ready.",
+                choices: null
+            }
+        ]
     },
     shopkeeper: {
         name: 'Marina the Shopkeeper',
