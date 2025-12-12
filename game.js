@@ -55,6 +55,7 @@ class LighthouseGame {
         this.discoveredCreatures = new Set();
         this.party = [];  // Creatures traveling with player
         this.inventory = new Set();
+        this.playerAbilities = new Set();  // surf, torch, etc.
         this.firstEncounterTriggered = false;  // Track first narrative encounter
         this.encounterState = null;  // State for narrative encounter sequence
 
