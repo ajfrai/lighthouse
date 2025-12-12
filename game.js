@@ -60,16 +60,8 @@ class LighthouseGame {
 
         // Debug/Speed Run Mode
         const urlParams = new URLSearchParams(window.location.search);
-        this.autoPilot = urlParams.has('auto') || urlParams.has('autopilot');
-        this.speedRunMode = this.autoPilot || urlParams.has('speedrun') || urlParams.has('debug');
-        this.showDebugInfo = this.speedRunMode || this.autoPilot;
-        this.autoPilotState = {
-            target: null,
-            path: [],
-            action: null,
-            waitFrames: 0,
-            currentTask: 'init'
-        };
+        this.speedRunMode = urlParams.has('speedrun') || urlParams.has('debug');
+        this.showDebugInfo = this.speedRunMode;
 
         // Boat quest tracking
         this.boatQuest = {
@@ -139,16 +131,6 @@ class LighthouseGame {
             debugMenu.classList.add('hidden');
         });
 
-        // AutoPilot toggle
-        document.getElementById('toggleAutoPilot').addEventListener('click', (e) => {
-            this.autoPilot = !this.autoPilot;
-            if (this.autoPilot) {
-                this.speedRunMode = true;
-                this.autoPilotState.currentTask = 'init';
-            }
-            this.updateDebugMenuButtons();
-        });
-
         // Speed Run toggle
         document.getElementById('toggleSpeedRun').addEventListener('click', (e) => {
             this.speedRunMode = !this.speedRunMode;
@@ -177,12 +159,8 @@ class LighthouseGame {
     }
 
     updateDebugMenuButtons() {
-        const autoPilotBtn = document.getElementById('toggleAutoPilot');
         const speedRunBtn = document.getElementById('toggleSpeedRun');
         const debugInfoBtn = document.getElementById('toggleDebugInfo');
-
-        autoPilotBtn.textContent = `AutoPilot: ${this.autoPilot ? 'ON' : 'OFF'}`;
-        autoPilotBtn.classList.toggle('active', this.autoPilot);
 
         speedRunBtn.textContent = `Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`;
         speedRunBtn.classList.toggle('active', this.speedRunMode);
@@ -884,11 +862,7 @@ class LighthouseGame {
         this.lastFrameTime = timestamp;
 
         // Update
-        if (this.autoPilot) {
-            this.updateAutoPilot();
-        } else {
-            this.handleInput(deltaTime);
-        }
+        this.handleInput(deltaTime);
         this.updateDialogue(timestamp);
         spriteLoader.updateWaterAnimation(timestamp);
 
@@ -990,18 +964,11 @@ class LighthouseGame {
 
         this.ctx.fillStyle = '#00ff00';
         this.ctx.font = '12px monospace';
-        this.ctx.fillText(`Mode: ${this.autoPilot ? 'AUTO-PILOT' : 'MANUAL'}`, 10, 20);
-        this.ctx.fillText(`Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`, 10, 35);
-        this.ctx.fillText(`Phase: ${this.plotPhase}`, 10, 50);
-        this.ctx.fillText(`State: ${this.state}`, 10, 65);
-        this.ctx.fillText(`Position: (${this.player.x}, ${this.player.y})`, 10, 80);
-        this.ctx.fillText(`Creatures: ${this.discoveredCreatures.size}/8`, 10, 95);
-        if (this.autoPilot) {
-            this.ctx.fillText(`Task: ${this.autoPilotState.currentTask}`, 10, 110);
-            if (this.autoPilotState.target) {
-                this.ctx.fillText(`Target: (${this.autoPilotState.target.x}, ${this.autoPilotState.target.y})`, 10, 125);
-            }
-        }
+        this.ctx.fillText(`Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`, 10, 20);
+        this.ctx.fillText(`Phase: ${this.plotPhase}`, 10, 35);
+        this.ctx.fillText(`State: ${this.state}`, 10, 50);
+        this.ctx.fillText(`Position: (${this.player.x}, ${this.player.y})`, 10, 65);
+        this.ctx.fillText(`Creatures: ${this.discoveredCreatures.size}/8`, 10, 80);
 
         // Shortcuts
         this.ctx.fillStyle = '#ffff00';
@@ -1009,200 +976,5 @@ class LighthouseGame {
         this.ctx.fillText('F1:Speed F2:Debug T:Teleport 1-9:Phases', 10, 140);
     }
 
-    // ===== AUTOPILOT SYSTEM =====
-
-    updateAutoPilot() {
-        // Wait frames for dialogue/animations
-        if (this.autoPilotState.waitFrames > 0) {
-            this.autoPilotState.waitFrames--;
-            return;
-        }
-
-        // Handle dialogue states
-        if (this.state === GameState.DIALOGUE) {
-            // Wait longer for typewriter and UI updates
-            this.autoPilotState.waitFrames = this.speedRunMode ? 3 : 15;
-            this.advanceDialogue();
-            return;
-        }
-
-        if (this.state === GameState.DIALOGUE_CHOICE) {
-            // Wait before making choice to ensure UI is ready
-            this.autoPilotState.waitFrames = this.speedRunMode ? 5 : 20;
-            // For creature encounter, choose "Approach slowly" (first option)
-            this.dialogue.selectedChoice = 0;
-            this.selectDialogueChoice();
-            return;
-        }
-
-        // Handle creature naming
-        if (document.getElementById('creatureNameInput')) {
-            this.autoPilotState.waitFrames = this.speedRunMode ? 5 : 15;
-            this.finalizeCreatureNaming();
-            return;
-        }
-
-        // Close any open UIs
-        const creatureUI = document.getElementById('creatureUI');
-        if (creatureUI && !creatureUI.classList.contains('hidden')) {
-            this.autoPilotState.waitFrames = this.speedRunMode ? 10 : 30;
-            creatureUI.classList.add('hidden');
-            return;
-        }
-
-        // Decision making based on plot phase
-        if (this.state === GameState.EXPLORING) {
-            this.autoPilotDecideAction();
-        }
-    }
-
-    autoPilotDecideAction() {
-        const currentTask = this.autoPilotState.currentTask;
-
-        // Determine task based on plot phase
-        if (this.plotPhase === PlotPhase.WAKE_UP) {
-            // Go talk to Keeper
-            const keeper = this.map.objects.find(obj => obj.id === 'keeper');
-            if (keeper) {
-                if (this.isAdjacentTo(keeper.x, keeper.y)) {
-                    if (currentTask !== 'talking_to_keeper') {
-                        console.log('[AutoPilot] Adjacent to Keeper, interacting...');
-                    }
-                    this.autoPilotState.currentTask = 'talking_to_keeper';
-                    this.autoPilotState.waitFrames = 5;
-                    this.player.direction = this.getDirectionTo(keeper.x, keeper.y);
-                    this.interact();
-                } else {
-                    if (currentTask !== 'walking_to_keeper') {
-                        console.log('[AutoPilot] Walking to Keeper...');
-                        this.autoPilotState.currentTask = 'walking_to_keeper';
-                    }
-                    this.walkToTarget(keeper.x, keeper.y);
-                }
-            }
-        } else if (this.plotPhase === PlotPhase.FIND_CREATURE) {
-            // Go find Lumina
-            const lumina = this.map.objects.find(obj => obj.id === 'lumina');
-            if (lumina) {
-                const distance = Math.hypot(this.player.x - lumina.x, this.player.y - lumina.y);
-                if (distance <= 3) {
-                    if (currentTask !== 'near_lumina') {
-                        console.log('[AutoPilot] Near Lumina, waiting for encounter...');
-                    }
-                    this.autoPilotState.currentTask = 'near_lumina';
-                    this.autoPilotState.waitFrames = 10;
-                    // Just wait, encounter will trigger automatically
-                } else {
-                    if (currentTask !== 'walking_to_lumina') {
-                        console.log('[AutoPilot] Walking to Lumina...');
-                        this.autoPilotState.currentTask = 'walking_to_lumina';
-                    }
-                    this.walkToTarget(lumina.x, lumina.y);
-                }
-            }
-        } else if (this.plotPhase === PlotPhase.RETURN_TO_KEEPER) {
-            // Return to Keeper
-            const keeper = this.map.objects.find(obj => obj.id === 'keeper');
-            if (keeper) {
-                if (this.isAdjacentTo(keeper.x, keeper.y)) {
-                    if (currentTask !== 'returned_to_keeper') {
-                        console.log('[AutoPilot] Returned to Keeper, interacting...');
-                    }
-                    this.autoPilotState.currentTask = 'returned_to_keeper';
-                    this.autoPilotState.waitFrames = 5;
-                    this.player.direction = this.getDirectionTo(keeper.x, keeper.y);
-                    this.interact();
-                } else {
-                    if (currentTask !== 'returning_to_keeper') {
-                        console.log('[AutoPilot] Returning to Keeper...');
-                        this.autoPilotState.currentTask = 'returning_to_keeper';
-                    }
-                    this.walkToTarget(keeper.x, keeper.y);
-                }
-            }
-        } else {
-            if (currentTask !== 'idle') {
-                console.log(`[AutoPilot] Waiting in phase: ${this.plotPhase}`);
-                this.autoPilotState.currentTask = 'idle';
-            }
-        }
-    }
-
-    walkToTarget(targetX, targetY) {
-        const dx = targetX - this.player.x;
-        const dy = targetY - this.player.y;
-
-        // Simple greedy pathfinding - move in the direction with greater distance
-        let moved = false;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            // Move horizontally
-            if (dx > 0) {
-                moved = this.tryMove(this.player.x + 1, this.player.y, 'right');
-            } else {
-                moved = this.tryMove(this.player.x - 1, this.player.y, 'left');
-            }
-        } else {
-            // Move vertically
-            if (dy > 0) {
-                moved = this.tryMove(this.player.x, this.player.y + 1, 'down');
-            } else {
-                moved = this.tryMove(this.player.x, this.player.y - 1, 'up');
-            }
-        }
-
-        // If blocked, try the other direction
-        if (!moved) {
-            if (Math.abs(dx) > Math.abs(dy)) {
-                if (dy > 0) {
-                    this.tryMove(this.player.x, this.player.y + 1, 'down');
-                } else if (dy < 0) {
-                    this.tryMove(this.player.x, this.player.y - 1, 'up');
-                }
-            } else {
-                if (dx > 0) {
-                    this.tryMove(this.player.x + 1, this.player.y, 'right');
-                } else if (dx < 0) {
-                    this.tryMove(this.player.x - 1, this.player.y, 'left');
-                }
-            }
-        }
-    }
-
-    tryMove(newX, newY, direction) {
-        if (this.canMoveTo(newX, newY)) {
-            this.player.x = newX;
-            this.player.y = newY;
-            this.player.direction = direction;
-            this.player.moving = true;
-            this.checkCreatureEncounter();
-            // Wait longer to allow movement animation and game state updates
-            this.autoPilotState.waitFrames = this.speedRunMode ? 2 : 8;
-            return true;
-        }
-        return false;
-    }
-
-    isAdjacentTo(x, y) {
-        const dx = Math.abs(this.player.x - x);
-        const dy = Math.abs(this.player.y - y);
-        return (dx <= 1 && dy === 0) || (dx === 0 && dy <= 1);
-    }
-
-    getDirectionTo(x, y) {
-        const dx = x - this.player.x;
-        const dy = y - this.player.y;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            return dx > 0 ? 'right' : 'left';
-        } else {
-            return dy > 0 ? 'down' : 'up';
-        }
-    }
-}
-
-// Start game when page loads
-let game;
-window.addEventListener('load', () => {
     game = new LighthouseGame();
 });
