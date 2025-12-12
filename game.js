@@ -381,6 +381,11 @@ class LighthouseGame {
                     y >= obj.y && y < obj.y + 2) {
                     return false;
                 }
+            } else if (obj.type === 'rock') {
+                // Rock occupies 1 tile
+                if (x === obj.x && y === obj.y) {
+                    return false;
+                }
             } else if (obj.type === 'npc') {
                 // NPC occupies 1 tile
                 if (x === obj.x && y === obj.y) {
@@ -926,6 +931,18 @@ class LighthouseGame {
                 );
             } else if (obj.type === 'tree') {
                 spriteLoader.drawTree(
+                    this.ctx,
+                    obj.x * tileSize,
+                    obj.y * tileSize
+                );
+            } else if (obj.type === 'rock') {
+                spriteLoader.drawRock(
+                    this.ctx,
+                    obj.x * tileSize,
+                    obj.y * tileSize
+                );
+            } else if (obj.type === 'tallgrass') {
+                spriteLoader.drawTallGrass(
                     this.ctx,
                     obj.x * tileSize,
                     obj.y * tileSize

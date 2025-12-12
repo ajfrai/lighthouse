@@ -71,6 +71,28 @@ const MAP_DATA = {
         { type: 'tree', x: 11, y: 12 },
         { type: 'tree', x: 19, y: 12 },
 
+        // Rocks scattered around the beach and shoreline
+        { type: 'rock', x: 6, y: 9 },    // Western shore
+        { type: 'rock', x: 8, y: 9 },
+        { type: 'rock', x: 11, y: 9 },
+        { type: 'rock', x: 14, y: 9 },   // Near lighthouse base
+        { type: 'rock', x: 17, y: 9 },
+        { type: 'rock', x: 20, y: 9 },   // Eastern shore
+        { type: 'rock', x: 23, y: 9 },
+        { type: 'rock', x: 25, y: 9 },
+        { type: 'rock', x: 5, y: 8 },    // Beach rocks
+        { type: 'rock', x: 19, y: 8 },
+        { type: 'rock', x: 27, y: 8 },
+
+        // Tall grass patch near Lumina's location (creating the area mentioned in dialogue)
+        { type: 'tallgrass', x: 15, y: 13 },
+        { type: 'tallgrass', x: 16, y: 12 },
+        { type: 'tallgrass', x: 17, y: 13 },
+        { type: 'tallgrass', x: 16, y: 14 },
+        { type: 'tallgrass', x: 18, y: 13 },
+        { type: 'tallgrass', x: 15, y: 14 },
+        { type: 'tallgrass', x: 17, y: 14 },
+
         // NPCs positioned in story-meaningful locations
         { type: 'npc', id: 'keeper', x: 15, y: 17, sprite: 'down', charType: 'teacher' },  // Just south of lighthouse
         { type: 'npc', id: 'fisherman', x: 8, y: 7, sprite: 'down', charType: 'fisherman' },  // On the beach (west)

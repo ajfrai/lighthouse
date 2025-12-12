@@ -120,6 +120,69 @@ class SpriteLoader {
     }
 
     /**
+     * Draw rock (16x16, 1x1 tile)
+     */
+    drawRock(ctx, dx, dy) {
+        if (!this.loaded) return;
+
+        // Draw a simple rock with shading
+        ctx.fillStyle = '#6b6b6b';
+        ctx.beginPath();
+        ctx.ellipse(dx + 8, dy + 10, 7, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Highlight
+        ctx.fillStyle = '#8b8b8b';
+        ctx.beginPath();
+        ctx.ellipse(dx + 6, dy + 8, 3, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Shadow
+        ctx.fillStyle = '#4b4b4b';
+        ctx.beginPath();
+        ctx.ellipse(dx + 10, dy + 12, 3, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    /**
+     * Draw tall grass (16x16, 1x1 tile)
+     */
+    drawTallGrass(ctx, dx, dy) {
+        if (!this.loaded) return;
+
+        // Draw several grass blades
+        ctx.strokeStyle = '#4a7c3e';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+
+        // Draw 5 grass blades with slight variation
+        for (let i = 0; i < 5; i++) {
+            const x = dx + 3 + i * 3;
+            const height = 10 + (i % 3) * 2;
+            const sway = Math.sin(i) * 2;
+
+            ctx.beginPath();
+            ctx.moveTo(x, dy + 16);
+            ctx.quadraticCurveTo(x + sway, dy + 8, x + sway, dy + (16 - height));
+            ctx.stroke();
+        }
+
+        // Lighter tips
+        ctx.strokeStyle = '#6bc95d';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 5; i++) {
+            const x = dx + 3 + i * 3;
+            const height = 10 + (i % 3) * 2;
+            const sway = Math.sin(i) * 2;
+
+            ctx.beginPath();
+            ctx.moveTo(x + sway, dy + (16 - height));
+            ctx.lineTo(x + sway, dy + (16 - height - 2));
+            ctx.stroke();
+        }
+    }
+
+    /**
      * Get current water animation frame
      */
     getWaterFrame() {
