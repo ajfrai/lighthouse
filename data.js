@@ -196,22 +196,69 @@ const CREATURES = {
     }
 };
 
-// NPC dialogues and jobs
+// NPC dialogues - framework-based system
+// Each NPC has dialogue entries with conditions, text, and optional choices
 const NPCS = {
     keeper: {
         name: 'The Keeper',
-        dialogues: {
-            wake_up: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
-            find_creature: "Find anything yet? The path leads to the tall grass. Something's out there, I'm certain.",
-            creature_found: "What did you find out there? Tell me about it when you're ready.",
-            return_keeper: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light.",
-            meet_villager: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies.",
-            boat_quest: "We need supplies for the boat. Keep exploring and earning coins.",
-            working: "The fisherman treats you fair? Good. Keep working—we'll need those coins for supplies.",
-            boat_ready: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't.",
-            departure: "Time to set sail. The storm approaches, but we're ready."
-        },
-        isKeeper: true
+        type: 'dialogue_npc',
+        dialogues: [
+            {
+                condition: (game) => game.plotPhase === 'wake_up',
+                text: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
+                choices: [
+                    {
+                        text: "I'll go look for it",
+                        action: (game) => {
+                            game.plotPhase = 'find_creature';
+                            game.firstEncounterTriggered = false;
+                        }
+                    }
+                ]
+            },
+            {
+                condition: (game) => game.plotPhase === 'find_creature',
+                text: "Find anything yet? The path leads to the tall grass. Something's out there, I'm certain.",
+                choices: null  // Just dismisses
+            },
+            {
+                condition: (game) => game.plotPhase === 'creature_found',
+                text: "What did you find out there? Tell me about it when you're ready.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'return_keeper',
+                text: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light. Keep exploring—there may be more out there.",
+                choices: [
+                    {
+                        text: "I'll keep looking",
+                        action: (game) => {
+                            game.plotPhase = 'meet_villager';
+                        }
+                    }
+                ]
+            },
+            {
+                condition: (game) => game.plotPhase === 'meet_villager' || game.plotPhase === 'boat_quest',
+                text: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies for the boat.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'working',
+                text: "The fisherman treats you fair? Good. Keep working—we'll need those coins for supplies.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'boat_ready',
+                text: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'departure',
+                text: "Time to set sail. The storm approaches, but we're ready.",
+                choices: null
+            }
+        ]
     },
     shopkeeper: {
         name: 'Marina the Shopkeeper',
