@@ -437,25 +437,27 @@ class LighthouseGame {
         const npc = NPCS[npcId];
         if (!npc) return;
 
-        // Handle the Keeper with state-based dialogue
-        if (npc.isKeeper) {
-            const dialogue = npc.dialogues[this.plotPhase];
+        // Framework-based dialogue system
+        if (npc.type === 'dialogue_npc' && npc.dialogues) {
+            // Find the first matching dialogue based on conditions
+            const dialogue = npc.dialogues.find(d => d.condition(this));
 
-            // After showing wake_up dialogue, transition to find_creature phase
-            if (this.plotPhase === PlotPhase.WAKE_UP) {
-                this.startDialogue([dialogue || npc.dialogues.wake_up], [{
-                    text: "I'll go look for it",
-                    action: () => {
-                        this.plotPhase = PlotPhase.FIND_CREATURE;
-                        this.firstEncounterTriggered = false;
-                    }
-                }]);
+            if (dialogue) {
+                // Convert framework choices to game choices
+                const choices = dialogue.choices ? dialogue.choices.map(choice => ({
+                    text: choice.text,
+                    action: () => choice.action(this)
+                })) : null;
+
+                this.startDialogue([dialogue.text], choices);
             } else {
-                this.showDialog(dialogue || npc.dialogues.wake_up);
+                // Fallback if no dialogue matches
+                this.showDialog("...");
             }
             return;
         }
 
+        // Legacy system for other NPCs
         if (npc.shop) {
             this.openShop();
         } else if (npc.job) {
