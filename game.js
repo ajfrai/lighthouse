@@ -56,8 +56,9 @@ class LighthouseGame {
         this.party = [];  // Creatures traveling with player
         this.inventory = new Set();
         this.playerAbilities = new Set();  // surf, torch, etc.
-        this.completedQuests = new Set();  // Track completed quests: 'npcId:oneOff:0', 'npcId:fullQuest'
-        this.activeQuest = null;  // {npcId, type: 'oneOff'|'fullQuest', problemIndex, problems, reward}
+        this.completedQuests = new Set();  // Track completed quests by ID: 'fishing_crates', 'fishing_records'
+        this.activeQuest = null;  // {questId, quest, currentStep, type}
+        this.questObjective = null;  // Current objective text to display
         this.firstEncounterTriggered = false;  // Track first narrative encounter
         this.encounterState = null;  // State for narrative encounter sequence
 
@@ -351,9 +352,39 @@ class LighthouseGame {
 
                 // Check for creature encounters
                 this.checkCreatureEncounter();
+
+                // Check quest objectives
+                this.checkQuestObjectives();
             }
         } else {
             this.player.moving = false;
+        }
+    }
+
+    checkQuestObjectives() {
+        if (!this.activeQuest) return;
+
+        const quest = this.activeQuest.quest;
+        if (quest.type !== 'multi_step') return;
+
+        const step = quest.steps[this.activeQuest.currentStep];
+        if (!step || step.type !== 'visit_location') return;
+
+        // Check if player is within radius of objective
+        const dx = this.player.x - step.location.x;
+        const dy = this.player.y - step.location.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance <= step.radius) {
+            // Player reached objective!
+            this.showDialog(step.onArrive.message);
+            this.activeQuest.currentStep++;
+            this.questObjective = null;
+
+            // After dialog closes, advance to next step
+            setTimeout(() => {
+                this.advanceQuestStep();
+            }, 100);
         }
     }
 
@@ -509,38 +540,41 @@ class LighthouseGame {
         jobQuestion.textContent = npc.greeting;
         jobAnswers.innerHTML = '';
 
-        // Count completed one-off problems
+        // Count completed one-off quests
         let completedOneOffs = 0;
-        for (let i = 0; i < npc.oneOffProblems.length; i++) {
-            if (this.completedQuests.has(`${npcId}:oneOff:${i}`)) {
+        npc.quests.oneOff.forEach(questId => {
+            if (this.completedQuests.has(questId)) {
                 completedOneOffs++;
             }
-        }
+        });
 
         // Check if full quest is completed
-        const fullQuestCompleted = this.completedQuests.has(`${npcId}:fullQuest`);
+        const fullQuestCompleted = this.completedQuests.has(npc.quests.full);
 
         // One-off problem button
         const oneOffBtn = document.createElement('button');
         oneOffBtn.className = 'quest-menu-btn';
-        if (completedOneOffs >= npc.oneOffProblems.length) {
-            oneOffBtn.textContent = `Quick Problem (${completedOneOffs}/${npc.oneOffProblems.length} completed)`;
+        if (completedOneOffs >= npc.quests.oneOff.length) {
+            oneOffBtn.textContent = `Quick Problem (${completedOneOffs}/${npc.quests.oneOff.length} completed)`;
             oneOffBtn.disabled = true;
         } else {
-            oneOffBtn.textContent = `Quick Problem (5 coins) - ${completedOneOffs}/${npc.oneOffProblems.length} done`;
-            oneOffBtn.onclick = () => this.startOneOffProblem(npcId, npc);
+            const nextQuestId = npc.quests.oneOff.find(qId => !this.completedQuests.has(qId));
+            const nextQuest = QUESTS[nextQuestId];
+            oneOffBtn.textContent = `Quick Problem (${nextQuest.reward} coins) - ${completedOneOffs}/${npc.quests.oneOff.length} done`;
+            oneOffBtn.onclick = () => this.startQuest(nextQuestId);
         }
         jobAnswers.appendChild(oneOffBtn);
 
         // Full quest button
+        const fullQuest = QUESTS[npc.quests.full];
         const fullQuestBtn = document.createElement('button');
         fullQuestBtn.className = 'quest-menu-btn';
         if (fullQuestCompleted) {
-            fullQuestBtn.textContent = `${npc.fullQuest.name} (Completed)`;
+            fullQuestBtn.textContent = `${fullQuest.name} (Completed)`;
             fullQuestBtn.disabled = true;
         } else {
-            fullQuestBtn.textContent = `${npc.fullQuest.name} (100 coins)`;
-            fullQuestBtn.onclick = () => this.startFullQuest(npcId, npc);
+            fullQuestBtn.textContent = `${fullQuest.name} (${fullQuest.reward} coins)`;
+            fullQuestBtn.onclick = () => this.startQuest(npc.quests.full);
         }
         jobAnswers.appendChild(fullQuestBtn);
 
@@ -557,48 +591,53 @@ class LighthouseGame {
         jobUI.classList.remove('hidden');
     }
 
-    startOneOffProblem(npcId, npc) {
-        // Find first uncompleted one-off problem
-        let problemIndex = -1;
-        for (let i = 0; i < npc.oneOffProblems.length; i++) {
-            if (!this.completedQuests.has(`${npcId}:oneOff:${i}`)) {
-                problemIndex = i;
-                break;
-            }
-        }
-
-        if (problemIndex === -1) {
-            // All completed
-            this.showDialog("You've already helped me with all my quick problems!");
+    startQuest(questId) {
+        const quest = QUESTS[questId];
+        if (!quest) {
+            console.error(`Quest not found: ${questId}`);
             return;
         }
 
-        const problem = npc.oneOffProblems[problemIndex];
-
         // Set up active quest
         this.activeQuest = {
-            npcId: npcId,
-            type: 'oneOff',
-            problemIndex: problemIndex,
-            currentProblem: 0,
-            problems: [problem],
-            reward: problem.reward
+            questId: questId,
+            quest: quest,
+            currentStep: 0
         };
 
-        this.showQuestProblem(problem, npc.name);
+        document.getElementById('jobUI').classList.add('hidden');
+
+        // Handle different quest types
+        if (quest.type === 'one_off') {
+            // Simple one-problem quest
+            this.showQuestProblem(quest.problem, quest.name);
+        } else if (quest.type === 'multi_step') {
+            // Start multi-step quest
+            this.advanceQuestStep();
+        }
     }
 
-    startFullQuest(npcId, npc) {
-        // Set up active quest
-        this.activeQuest = {
-            npcId: npcId,
-            type: 'fullQuest',
-            currentProblem: 0,
-            problems: npc.fullQuest.problems,
-            reward: npc.fullQuest.reward
-        };
+    advanceQuestStep() {
+        const quest = this.activeQuest.quest;
+        const step = quest.steps[this.activeQuest.currentStep];
 
-        this.showQuestProblem(npc.fullQuest.problems[0], npc.name, 1, npc.fullQuest.problems.length);
+        if (!step) {
+            // Quest complete!
+            this.completeQuest();
+            return;
+        }
+
+        if (step.type === 'visit_location') {
+            // Set up location objective
+            this.questObjective = step.description;
+            this.showDialog(step.description);
+            this.state = GameState.EXPLORING;
+        } else if (step.type === 'problem') {
+            // Show problem
+            const stepNum = this.activeQuest.currentStep + 1;
+            const totalSteps = quest.steps.length;
+            this.showQuestProblem(step, quest.name, stepNum, totalSteps);
+        }
     }
 
     showQuestProblem(problem, npcName, problemNum = null, totalProblems = null) {
@@ -620,52 +659,70 @@ class LighthouseGame {
             jobAnswers.appendChild(btn);
         });
 
+        // Add cancel button
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'job-cancel';
+        cancelBtn.onclick = () => {
+            jobUI.classList.add('hidden');
+            this.state = GameState.EXPLORING;
+            this.activeQuest = null;
+        };
+        jobAnswers.appendChild(cancelBtn);
+
         jobUI.classList.remove('hidden');
     }
 
     submitQuestAnswer(answer) {
         if (!this.activeQuest) return;
 
-        const problem = this.activeQuest.problems[this.activeQuest.currentProblem];
+        const quest = this.activeQuest.quest;
+        let problem;
+
+        // Get the current problem based on quest type
+        if (quest.type === 'one_off') {
+            problem = quest.problem;
+        } else if (quest.type === 'multi_step') {
+            const step = quest.steps[this.activeQuest.currentStep];
+            if (step.type !== 'problem') return;
+            problem = step;
+        }
 
         if (answer !== problem.correct) {
             // Wrong answer
             this.showDialog(`Not quite right. Try again next time!`);
             document.getElementById('jobUI').classList.add('hidden');
             this.state = GameState.EXPLORING;
+            this.questObjective = null;
             this.activeQuest = null;
             return;
         }
 
-        // Correct answer
-        this.activeQuest.currentProblem++;
+        // Correct answer - advance to next step
+        this.activeQuest.currentStep++;
+        document.getElementById('jobUI').classList.add('hidden');
 
-        if (this.activeQuest.currentProblem >= this.activeQuest.problems.length) {
-            // Quest complete!
+        // Continue quest or complete it
+        if (quest.type === 'one_off') {
             this.completeQuest();
-        } else {
-            // Show next problem
-            const nextProblem = this.activeQuest.problems[this.activeQuest.currentProblem];
-            const npc = NPCS[this.activeQuest.npcId];
-            const problemNum = this.activeQuest.currentProblem + 1;
-            const totalProblems = this.activeQuest.problems.length;
-            this.showQuestProblem(nextProblem, npc.name, problemNum, totalProblems);
+        } else if (quest.type === 'multi_step') {
+            if (this.activeQuest.currentStep >= quest.steps.length) {
+                this.completeQuest();
+            } else {
+                this.advanceQuestStep();
+            }
         }
     }
 
     completeQuest() {
-        const quest = this.activeQuest;
+        const quest = this.activeQuest.quest;
 
         // Award coins
         this.coins += quest.reward;
         this.updateUI();
 
         // Mark as completed
-        if (quest.type === 'oneOff') {
-            this.completedQuests.add(`${quest.npcId}:oneOff:${quest.problemIndex}`);
-        } else if (quest.type === 'fullQuest') {
-            this.completedQuests.add(`${quest.npcId}:fullQuest`);
-        }
+        this.completedQuests.add(this.activeQuest.questId);
 
         // Show success message
         this.showDialog(`Excellent work! You earned ${quest.reward} coins!`);
@@ -673,7 +730,13 @@ class LighthouseGame {
         // Clear quest
         document.getElementById('jobUI').classList.add('hidden');
         this.state = GameState.EXPLORING;
+        this.questObjective = null;
         this.activeQuest = null;
+    }
+
+    // Simple dialogue helper
+    showDialog(message) {
+        this.startDialogue([message]);
     }
 
     // New dialogue system with typewriter effect
@@ -1171,7 +1234,58 @@ class LighthouseGame {
         // Render layers
         this.renderTerrain();
         this.renderObjects();
+        this.renderQuestMarkers();
         this.renderPlayer();
+        this.renderQuestObjective();
+    }
+
+    renderQuestMarkers() {
+        if (!this.activeQuest) return;
+
+        const quest = this.activeQuest.quest;
+        if (quest.type !== 'multi_step') return;
+
+        const step = quest.steps[this.activeQuest.currentStep];
+        if (!step || step.type !== 'visit_location') return;
+
+        const tileSize = this.map.tileSize;
+        const x = step.location.x * tileSize + tileSize / 2;
+        const y = step.location.y * tileSize + tileSize / 2;
+
+        // Draw pulsing marker
+        const time = Date.now() / 1000;
+        const pulse = Math.sin(time * 3) * 0.2 + 0.8;
+
+        this.ctx.save();
+        this.ctx.globalAlpha = pulse;
+        this.ctx.font = '24px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(step.markerText, x, y);
+        this.ctx.restore();
+
+        // Draw radius circle
+        this.ctx.save();
+        this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, step.radius * tileSize, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.restore();
+    }
+
+    renderQuestObjective() {
+        if (!this.questObjective) return;
+
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(10, this.canvas.height - 50, this.canvas.width - 20, 40);
+
+        this.ctx.fillStyle = '#ffff00';
+        this.ctx.font = '14px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(`Quest: ${this.questObjective}`, this.canvas.width / 2, this.canvas.height - 25);
+        this.ctx.restore();
     }
 
     renderTerrain() {

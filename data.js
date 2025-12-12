@@ -199,6 +199,106 @@ const CREATURES = {
     }
 };
 
+// Quest Framework - Reusable quest system for all NPCs
+const QUESTS = {
+    // Callum's one-off problems
+    'fishing_crates': {
+        id: 'fishing_crates',
+        name: 'Count the Crates',
+        type: 'one_off',
+        giver: 'mathTeacher',
+        reward: 5,
+        problem: {
+            question: "I caught 24 fish and need to split them equally among 6 crates. How many fish go in each crate?",
+            answers: [2, 3, 4, 5],
+            correct: 4
+        }
+    },
+    'fishing_nets': {
+        id: 'fishing_nets',
+        name: 'Calculate the Nets',
+        type: 'one_off',
+        giver: 'mathTeacher',
+        reward: 5,
+        problem: {
+            question: "I set 3 nets with 8 fish in each net. How many fish did I catch total?",
+            answers: [11, 24, 21, 18],
+            correct: 24
+        }
+    },
+    'fishing_baskets': {
+        id: 'fishing_baskets',
+        name: 'Pack the Lobsters',
+        type: 'one_off',
+        giver: 'mathTeacher',
+        reward: 5,
+        problem: {
+            question: "I have 15 lobsters to pack. If each basket holds 3 lobsters, how many baskets do I need?",
+            answers: [3, 4, 5, 6],
+            correct: 5
+        }
+    },
+    // Callum's multi-step location quest
+    'fishing_records': {
+        id: 'fishing_records',
+        name: 'Check the Catch Records',
+        type: 'multi_step',
+        giver: 'mathTeacher',
+        reward: 100,
+        description: "Help me verify the daily catch records by checking the nets around the island!",
+        steps: [
+            {
+                type: 'visit_location',
+                description: 'Check the western beach nets',
+                location: { x: 6, y: 8 },
+                radius: 2,
+                markerText: '🎣',
+                onArrive: {
+                    message: "You count the fish in the nets. There are 12 fish here, but the record says 15..."
+                }
+            },
+            {
+                type: 'problem',
+                question: "The western nets had 12 fish but the record says 15. What's the difference?",
+                answers: [2, 3, 4, 5],
+                correct: 3
+            },
+            {
+                type: 'visit_location',
+                description: 'Check the eastern shore nets',
+                location: { x: 25, y: 8 },
+                radius: 2,
+                markerText: '🎣',
+                onArrive: {
+                    message: "The eastern nets have 18 fish. The record says 9 nets with 2 fish each..."
+                }
+            },
+            {
+                type: 'problem',
+                question: "If there are 9 nets with 2 fish each, how many fish should there be total?",
+                answers: [11, 16, 18, 20],
+                correct: 18
+            },
+            {
+                type: 'visit_location',
+                description: 'Check the boat storage',
+                location: { x: 5, y: 7 },
+                radius: 2,
+                markerText: '📦',
+                onArrive: {
+                    message: "The boat has 5 crates with 7 fish in each. Let me verify this matches the records..."
+                }
+            },
+            {
+                type: 'problem',
+                question: "How many fish total are stored in the boat? (5 crates × 7 fish each)",
+                answers: [30, 35, 40, 42],
+                correct: 35
+            }
+        ]
+    }
+};
+
 // NPC dialogues - framework-based system
 // Each NPC has dialogue entries with conditions, text, and optional choices
 const NPCS = {
@@ -272,57 +372,9 @@ const NPCS = {
         name: 'Callum the Fisherman',
         type: 'quest_npc',
         greeting: 'Ahoy! I need help with me fishing calculations.',
-        oneOffProblems: [
-            {
-                question: "I caught 24 fish and need to split them equally among 6 crates. How many fish go in each crate?",
-                answers: [2, 3, 4, 5],
-                correct: 4,
-                reward: 5
-            },
-            {
-                question: "I set 3 nets with 8 fish in each net. How many fish did I catch total?",
-                answers: [11, 24, 21, 18],
-                correct: 24,
-                reward: 5
-            },
-            {
-                question: "I have 15 lobsters to pack. If each basket holds 3 lobsters, how many baskets do I need?",
-                answers: [3, 4, 5, 6],
-                correct: 5,
-                reward: 5
-            }
-        ],
-        fullQuest: {
-            name: "Check the Catch Records",
-            description: "Help me verify the daily catch records—some numbers don't look right!",
-            problems: [
-                {
-                    question: "Record says: 12 nets × 3 fish per net = 36 fish. Is this correct?",
-                    answers: ["Correct", "Incorrect"],
-                    correct: "Correct"
-                },
-                {
-                    question: "Record says: Morning catch (18) + Evening catch (15) = 33 fish. Is this correct?",
-                    answers: ["Correct", "Incorrect"],
-                    correct: "Correct"
-                },
-                {
-                    question: "Record says: Started with 25 fish, sold 9, have 14 left. Is this correct?",
-                    answers: ["Correct", "Incorrect"],
-                    correct: "Incorrect"
-                },
-                {
-                    question: "Record says: 45 fish divided into 9 crates = 5 fish per crate. Is this correct?",
-                    answers: ["Correct", "Incorrect"],
-                    correct: "Correct"
-                },
-                {
-                    question: "Record says: 8 fish + 7 fish = 16 fish. Is this correct?",
-                    answers: ["Correct", "Incorrect"],
-                    correct: "Incorrect"
-                }
-            ],
-            reward: 100
+        quests: {
+            oneOff: ['fishing_crates', 'fishing_nets', 'fishing_baskets'],
+            full: 'fishing_records'
         }
     },
     scientist: {
