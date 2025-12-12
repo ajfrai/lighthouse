@@ -992,6 +992,10 @@ class LighthouseGame {
         this.ctx.font = '10px monospace';
         this.ctx.fillText('F1:Speed F2:Debug T:Teleport 1-9:Phases', 10, 140);
     }
+}
 
+// Start game when page loads
+let game;
+window.addEventListener('load', () => {
     game = new LighthouseGame();
 });
