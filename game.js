@@ -610,7 +610,7 @@ class LighthouseGame {
 
         shopUI.classList.remove('hidden');
         document.getElementById('shopClose').onclick = () => {
-            shopUI.classList.add('hidden');
+            this.closeShop();
         };
     }
 
