@@ -269,11 +269,61 @@ const NPCS = {
         shop: true
     },
     mathTeacher: {
-        name: 'Professor Beacon',
-        greeting: 'Greetings, young learner! I study mathematics and can pay you for solving problems.',
-        job: 'addition',
-        jobDescription: 'Solve addition problems to earn 5 coins each!',
-        payment: 5
+        name: 'Callum the Fisherman',
+        type: 'quest_npc',
+        greeting: 'Ahoy! I need help with me fishing calculations.',
+        oneOffProblems: [
+            {
+                question: "I caught 24 fish and need to split them equally among 6 crates. How many fish go in each crate?",
+                answers: [2, 3, 4, 5],
+                correct: 4,
+                reward: 5
+            },
+            {
+                question: "I set 3 nets with 8 fish in each net. How many fish did I catch total?",
+                answers: [11, 24, 21, 18],
+                correct: 24,
+                reward: 5
+            },
+            {
+                question: "I have 15 lobsters to pack. If each basket holds 3 lobsters, how many baskets do I need?",
+                answers: [3, 4, 5, 6],
+                correct: 5,
+                reward: 5
+            }
+        ],
+        fullQuest: {
+            name: "Check the Catch Records",
+            description: "Help me verify the daily catch records—some numbers don't look right!",
+            problems: [
+                {
+                    question: "Record says: 12 nets × 3 fish per net = 36 fish. Is this correct?",
+                    answers: ["Correct", "Incorrect"],
+                    correct: "Correct"
+                },
+                {
+                    question: "Record says: Morning catch (18) + Evening catch (15) = 33 fish. Is this correct?",
+                    answers: ["Correct", "Incorrect"],
+                    correct: "Correct"
+                },
+                {
+                    question: "Record says: Started with 25 fish, sold 9, have 14 left. Is this correct?",
+                    answers: ["Correct", "Incorrect"],
+                    correct: "Incorrect"
+                },
+                {
+                    question: "Record says: 45 fish divided into 9 crates = 5 fish per crate. Is this correct?",
+                    answers: ["Correct", "Incorrect"],
+                    correct: "Correct"
+                },
+                {
+                    question: "Record says: 8 fish + 7 fish = 16 fish. Is this correct?",
+                    answers: ["Correct", "Incorrect"],
+                    correct: "Incorrect"
+                }
+            ],
+            reward: 100
+        }
     },
     scientist: {
         name: 'Dr. Nova',

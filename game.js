@@ -56,6 +56,8 @@ class LighthouseGame {
         this.party = [];  // Creatures traveling with player
         this.inventory = new Set();
         this.playerAbilities = new Set();  // surf, torch, etc.
+        this.completedQuests = new Set();  // Track completed quests: 'npcId:oneOff:0', 'npcId:fullQuest'
+        this.activeQuest = null;  // {npcId, type: 'oneOff'|'fullQuest', problemIndex, problems, reward}
         this.firstEncounterTriggered = false;  // Track first narrative encounter
         this.encounterState = null;  // State for narrative encounter sequence
 
@@ -480,6 +482,12 @@ class LighthouseGame {
             return;
         }
 
+        // Quest system for quest NPCs
+        if (npc.type === 'quest_npc') {
+            this.showQuestMenu(npcId, npc);
+            return;
+        }
+
         // Legacy system for other NPCs
         if (npc.shop) {
             this.openShop();
@@ -488,6 +496,184 @@ class LighthouseGame {
         } else {
             this.showDialog(npc.greeting);
         }
+    }
+
+    showQuestMenu(npcId, npc) {
+        this.state = GameState.JOB;  // Reuse JOB state for quest menu
+        const jobUI = document.getElementById('jobUI');
+        const jobTitle = document.getElementById('jobTitle');
+        const jobQuestion = document.getElementById('jobQuestion');
+        const jobAnswers = document.getElementById('jobAnswers');
+
+        jobTitle.textContent = npc.name;
+        jobQuestion.textContent = npc.greeting;
+        jobAnswers.innerHTML = '';
+
+        // Count completed one-off problems
+        let completedOneOffs = 0;
+        for (let i = 0; i < npc.oneOffProblems.length; i++) {
+            if (this.completedQuests.has(`${npcId}:oneOff:${i}`)) {
+                completedOneOffs++;
+            }
+        }
+
+        // Check if full quest is completed
+        const fullQuestCompleted = this.completedQuests.has(`${npcId}:fullQuest`);
+
+        // One-off problem button
+        const oneOffBtn = document.createElement('button');
+        oneOffBtn.className = 'quest-menu-btn';
+        if (completedOneOffs >= npc.oneOffProblems.length) {
+            oneOffBtn.textContent = `Quick Problem (${completedOneOffs}/${npc.oneOffProblems.length} completed)`;
+            oneOffBtn.disabled = true;
+        } else {
+            oneOffBtn.textContent = `Quick Problem (5 coins) - ${completedOneOffs}/${npc.oneOffProblems.length} done`;
+            oneOffBtn.onclick = () => this.startOneOffProblem(npcId, npc);
+        }
+        jobAnswers.appendChild(oneOffBtn);
+
+        // Full quest button
+        const fullQuestBtn = document.createElement('button');
+        fullQuestBtn.className = 'quest-menu-btn';
+        if (fullQuestCompleted) {
+            fullQuestBtn.textContent = `${npc.fullQuest.name} (Completed)`;
+            fullQuestBtn.disabled = true;
+        } else {
+            fullQuestBtn.textContent = `${npc.fullQuest.name} (100 coins)`;
+            fullQuestBtn.onclick = () => this.startFullQuest(npcId, npc);
+        }
+        jobAnswers.appendChild(fullQuestBtn);
+
+        // Add cancel button
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'job-cancel';
+        cancelBtn.onclick = () => {
+            jobUI.classList.add('hidden');
+            this.state = GameState.EXPLORING;
+        };
+        jobAnswers.appendChild(cancelBtn);
+
+        jobUI.classList.remove('hidden');
+    }
+
+    startOneOffProblem(npcId, npc) {
+        // Find first uncompleted one-off problem
+        let problemIndex = -1;
+        for (let i = 0; i < npc.oneOffProblems.length; i++) {
+            if (!this.completedQuests.has(`${npcId}:oneOff:${i}`)) {
+                problemIndex = i;
+                break;
+            }
+        }
+
+        if (problemIndex === -1) {
+            // All completed
+            this.showDialog("You've already helped me with all my quick problems!");
+            return;
+        }
+
+        const problem = npc.oneOffProblems[problemIndex];
+
+        // Set up active quest
+        this.activeQuest = {
+            npcId: npcId,
+            type: 'oneOff',
+            problemIndex: problemIndex,
+            currentProblem: 0,
+            problems: [problem],
+            reward: problem.reward
+        };
+
+        this.showQuestProblem(problem, npc.name);
+    }
+
+    startFullQuest(npcId, npc) {
+        // Set up active quest
+        this.activeQuest = {
+            npcId: npcId,
+            type: 'fullQuest',
+            currentProblem: 0,
+            problems: npc.fullQuest.problems,
+            reward: npc.fullQuest.reward
+        };
+
+        this.showQuestProblem(npc.fullQuest.problems[0], npc.name, 1, npc.fullQuest.problems.length);
+    }
+
+    showQuestProblem(problem, npcName, problemNum = null, totalProblems = null) {
+        const jobUI = document.getElementById('jobUI');
+        const jobTitle = document.getElementById('jobTitle');
+        const jobQuestion = document.getElementById('jobQuestion');
+        const jobAnswers = document.getElementById('jobAnswers');
+
+        // Show problem number for multi-problem quests
+        const titleText = problemNum ? `${npcName} - Problem ${problemNum}/${totalProblems}` : npcName;
+        jobTitle.textContent = titleText;
+        jobQuestion.textContent = problem.question;
+        jobAnswers.innerHTML = '';
+
+        problem.answers.forEach(answer => {
+            const btn = document.createElement('button');
+            btn.textContent = answer;
+            btn.onclick = () => this.submitQuestAnswer(answer);
+            jobAnswers.appendChild(btn);
+        });
+
+        jobUI.classList.remove('hidden');
+    }
+
+    submitQuestAnswer(answer) {
+        if (!this.activeQuest) return;
+
+        const problem = this.activeQuest.problems[this.activeQuest.currentProblem];
+
+        if (answer !== problem.correct) {
+            // Wrong answer
+            this.showDialog(`Not quite right. Try again next time!`);
+            document.getElementById('jobUI').classList.add('hidden');
+            this.state = GameState.EXPLORING;
+            this.activeQuest = null;
+            return;
+        }
+
+        // Correct answer
+        this.activeQuest.currentProblem++;
+
+        if (this.activeQuest.currentProblem >= this.activeQuest.problems.length) {
+            // Quest complete!
+            this.completeQuest();
+        } else {
+            // Show next problem
+            const nextProblem = this.activeQuest.problems[this.activeQuest.currentProblem];
+            const npc = NPCS[this.activeQuest.npcId];
+            const problemNum = this.activeQuest.currentProblem + 1;
+            const totalProblems = this.activeQuest.problems.length;
+            this.showQuestProblem(nextProblem, npc.name, problemNum, totalProblems);
+        }
+    }
+
+    completeQuest() {
+        const quest = this.activeQuest;
+
+        // Award coins
+        this.coins += quest.reward;
+        this.updateUI();
+
+        // Mark as completed
+        if (quest.type === 'oneOff') {
+            this.completedQuests.add(`${quest.npcId}:oneOff:${quest.problemIndex}`);
+        } else if (quest.type === 'fullQuest') {
+            this.completedQuests.add(`${quest.npcId}:fullQuest`);
+        }
+
+        // Show success message
+        this.showDialog(`Excellent work! You earned ${quest.reward} coins!`);
+
+        // Clear quest
+        document.getElementById('jobUI').classList.add('hidden');
+        this.state = GameState.EXPLORING;
+        this.activeQuest = null;
     }
 
     // New dialogue system with typewriter effect
