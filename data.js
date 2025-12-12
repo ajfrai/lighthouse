@@ -249,12 +249,12 @@ const QUESTS = {
         steps: [
             {
                 type: 'visit_location',
-                description: 'Check the western beach nets',
+                description: 'Go to the western beach (follow the 🎣 marker on the map)',
                 location: { x: 6, y: 8 },
                 radius: 2,
                 markerText: '🎣',
                 onArrive: {
-                    message: "You count the fish in the nets. There are 12 fish here, but the record says 15..."
+                    message: "You count the fish in the nets here. There are 12 fish, but the record says 15..."
                 }
             },
             {
@@ -265,7 +265,7 @@ const QUESTS = {
             },
             {
                 type: 'visit_location',
-                description: 'Check the eastern shore nets',
+                description: 'Go to the eastern shore (follow the 🎣 marker)',
                 location: { x: 25, y: 8 },
                 radius: 2,
                 markerText: '🎣',
@@ -281,7 +281,7 @@ const QUESTS = {
             },
             {
                 type: 'visit_location',
-                description: 'Check the boat storage',
+                description: 'Check the boat storage (follow the 📦 marker)',
                 location: { x: 5, y: 7 },
                 radius: 2,
                 markerText: '📦',

@@ -377,14 +377,24 @@ class LighthouseGame {
 
         if (distance <= step.radius) {
             // Player reached objective!
-            this.showDialog(step.onArrive.message);
             this.activeQuest.currentStep++;
             this.questObjective = null;
 
-            // After dialog closes, advance to next step
-            setTimeout(() => {
-                this.advanceQuestStep();
-            }, 100);
+            // Show arrival message with callback to advance after dialog closes
+            this.startDialogue([step.onArrive.message], [
+                {
+                    text: "Continue Quest",
+                    action: () => this.advanceQuestStep()
+                },
+                {
+                    text: "Abandon Quest",
+                    action: () => {
+                        this.activeQuest = null;
+                        this.questObjective = null;
+                        this.showDialog("Quest abandoned.");
+                    }
+                }
+            ]);
         }
     }
 
