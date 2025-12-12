@@ -620,6 +620,17 @@ class LighthouseGame {
             jobAnswers.appendChild(btn);
         });
 
+        // Add cancel button
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'job-cancel';
+        cancelBtn.onclick = () => {
+            jobUI.classList.add('hidden');
+            this.state = GameState.EXPLORING;
+            this.activeQuest = null;
+        };
+        jobAnswers.appendChild(cancelBtn);
+
         jobUI.classList.remove('hidden');
     }
 
@@ -674,6 +685,11 @@ class LighthouseGame {
         document.getElementById('jobUI').classList.add('hidden');
         this.state = GameState.EXPLORING;
         this.activeQuest = null;
+    }
+
+    // Simple dialogue helper
+    showDialog(message) {
+        this.startDialogue([message]);
     }
 
     // New dialogue system with typewriter effect
