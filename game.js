@@ -456,7 +456,7 @@ class LighthouseGame {
         }
 
         if (npc.shop) {
-            this.showShop();
+            this.openShop();
         } else if (npc.job) {
             this.showJob(npcId, npc);
         } else {
@@ -578,9 +578,9 @@ class LighthouseGame {
         document.getElementById('shopUI').classList.add('hidden');
     }
 
-    // Legacy dialog method for compatibility
-    showDialog(text) {
-        this.startDialogue([text]);
+    openShop() {
+        this.state = GameState.SHOP;
+        this.showShop();
     }
 
     showShop() {

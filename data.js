@@ -104,15 +104,15 @@ const MAP_DATA = {
         // Store building (2x2 tiles)
         { type: 'store', x: 22, y: 18 },  // Near eastern path
 
-        // Creature spawn points - positioned in appropriate terrain
-        { type: 'creature', id: 'lumina', x: 19, y: 12 },  // In tall grass (moth drawn to light)
-        { type: 'creature', id: 'marina', x: 15, y: 5 },   // In the water (dolphin swims)
-        { type: 'creature', id: 'frost', x: 10, y: 5 },    // In water (ice creature)
-        { type: 'creature', id: 'dusty', x: 12, y: 8 },    // On sandy beach
-        { type: 'creature', id: 'pebble', x: 25, y: 8 },   // On rocky beach
-        { type: 'creature', id: 'sprout', x: 18, y: 11 },  // In tall grass (plant creature)
-        { type: 'creature', id: 'blaze', x: 17, y: 8 },    // On beach near rocks (fire creature)
-        { type: 'creature', id: 'spark', x: 20, y: 13 }    // In tall grass (electric creature)
+        // Creature spawn points - ALL in tall grass or water (no random placement)
+        { type: 'creature', id: 'lumina', x: 19, y: 12 },  // In tall grass (moth)
+        { type: 'creature', id: 'marina', x: 15, y: 2 },   // Deep water - unreachable without surf (dolphin)
+        { type: 'creature', id: 'frost', x: 10, y: 3 },    // Deep water - unreachable without surf (ice)
+        { type: 'creature', id: 'dusty', x: 18, y: 13 },   // In tall grass (sand creature)
+        { type: 'creature', id: 'pebble', x: 20, y: 11 },  // In tall grass (rock creature)
+        { type: 'creature', id: 'sprout', x: 18, y: 11 },  // In tall grass (plant)
+        { type: 'creature', id: 'blaze', x: 19, y: 13 },   // In tall grass (fire)
+        { type: 'creature', id: 'spark', x: 20, y: 12 }    // In tall grass (electric)
     ]
 };
 
