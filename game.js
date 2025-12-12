@@ -100,6 +100,11 @@ class LighthouseGame {
         // Map
         this.map = MAP_DATA;
 
+        // Initialize subsystems
+        this.questSystem = new QuestSystem(this);
+        this.dialogueSystem = new DialogueSystem(this);
+        this.renderingSystem = new RenderingSystem(this);
+
         // Animation
         this.lastFrameTime = 0;
 
@@ -269,7 +274,7 @@ class LighthouseGame {
         // State-specific single-press key handling
         if (this.state === GameState.DIALOGUE) {
             if (key === ' ' || key === 'Enter') {
-                this.advanceDialogue();
+                this.dialogueSystem.advanceDialogue();
             }
         } else if (this.state === GameState.DIALOGUE_CHOICE) {
             if (key === 'ArrowUp') {
@@ -280,7 +285,7 @@ class LighthouseGame {
                     this.dialogue.selectedChoice + 1
                 );
             } else if (key === ' ' || key === 'Enter') {
-                this.selectDialogueChoice();
+                this.dialogueSystem.selectDialogueChoice();
             }
         } else if (this.state === GameState.EXPLORING) {
             if (key === ' ' || key === 'Enter') {
@@ -354,37 +359,10 @@ class LighthouseGame {
                 this.checkCreatureEncounter();
 
                 // Check quest objectives
-                this.checkQuestObjectives();
+                this.questSystem.checkQuestObjectives();
             }
         } else {
             this.player.moving = false;
-        }
-    }
-
-    checkQuestObjectives() {
-        if (!this.activeQuest) return;
-
-        const quest = this.activeQuest.quest;
-        if (quest.type !== 'multi_step') return;
-
-        const step = quest.steps[this.activeQuest.currentStep];
-        if (!step) return;
-
-        // Use handler registry for update logic
-        const handler = QUEST_STEP_HANDLERS[step.type];
-        if (handler && handler.onUpdate) {
-            const result = handler.onUpdate(this, step);
-
-            if (result.completed) {
-                // Step completed!
-                this.activeQuest.currentStep++;
-                this.questObjective = null;
-
-                // Show completion message and choices
-                if (result.message) {
-                    this.startDialogue([result.message], result.choices);
-                }
-            }
         }
     }
 
@@ -459,7 +437,7 @@ class LighthouseGame {
         // Find NPC or building at interaction position
         for (const obj of this.map.objects) {
             if (obj.type === 'npc' && obj.x === checkX && obj.y === checkY) {
-                this.showNPCDialog(obj.id);
+                this.dialogueSystem.showNPCDialog(obj.id);
                 return;
             } else if (obj.type === 'store') {
                 // Check if player is adjacent to store (2x2 building)
@@ -489,254 +467,13 @@ class LighthouseGame {
         this.showDialog(dialogue);
     }
 
-    showNPCDialog(npcId) {
-        const npc = NPCS[npcId];
-        if (!npc) return;
+    // New dialogue system with typewriter effect (delegated to dialogueSystem)
+    // Wrapper methods are defined later near updateUI()
 
-        // Framework-based dialogue system
-        if (npc.type === 'dialogue_npc' && npc.dialogues) {
-            // Find the first matching dialogue based on conditions
-            const dialogue = npc.dialogues.find(d => d.condition(this));
+    // Old dialogue/quest methods removed - now in subsystems
 
-            if (dialogue) {
-                // Convert framework choices to game choices
-                const choices = dialogue.choices ? dialogue.choices.map(choice => ({
-                    text: choice.text,
-                    action: () => choice.action(this)
-                })) : null;
-
-                this.startDialogue([dialogue.text], choices);
-            } else {
-                // Fallback if no dialogue matches
-                this.showDialog("...");
-            }
-            return;
-        }
-
-        // Quest system for quest NPCs
-        if (npc.type === 'quest_npc') {
-            this.showQuestMenu(npcId, npc);
-            return;
-        }
-
-        // Legacy system for other NPCs
-        if (npc.shop) {
-            this.openShop();
-        } else if (npc.job) {
-            this.showJob(npcId, npc);
-        } else {
-            this.showDialog(npc.greeting);
-        }
-    }
-
-    showQuestMenu(npcId, npc) {
-        this.state = GameState.JOB;  // Reuse JOB state for quest menu
-        const jobUI = document.getElementById('jobUI');
-        const jobTitle = document.getElementById('jobTitle');
-        const jobQuestion = document.getElementById('jobQuestion');
-        const jobAnswers = document.getElementById('jobAnswers');
-
-        jobTitle.textContent = npc.name;
-        jobQuestion.textContent = npc.greeting;
-        jobAnswers.innerHTML = '';
-
-        // Count completed one-off quests
-        let completedOneOffs = 0;
-        npc.quests.oneOff.forEach(questId => {
-            if (this.completedQuests.has(questId)) {
-                completedOneOffs++;
-            }
-        });
-
-        // Check if full quest is completed
-        const fullQuestCompleted = this.completedQuests.has(npc.quests.full);
-
-        // One-off problem button
-        const oneOffBtn = document.createElement('button');
-        oneOffBtn.className = 'quest-menu-btn';
-        if (completedOneOffs >= npc.quests.oneOff.length) {
-            oneOffBtn.textContent = `Quick Problem (${completedOneOffs}/${npc.quests.oneOff.length} completed)`;
-            oneOffBtn.disabled = true;
-        } else {
-            const nextQuestId = npc.quests.oneOff.find(qId => !this.completedQuests.has(qId));
-            const nextQuest = QUESTS[nextQuestId];
-            oneOffBtn.textContent = `Quick Problem (${nextQuest.reward} coins) - ${completedOneOffs}/${npc.quests.oneOff.length} done`;
-            oneOffBtn.onclick = () => this.startQuest(nextQuestId);
-        }
-        jobAnswers.appendChild(oneOffBtn);
-
-        // Full quest button
-        const fullQuest = QUESTS[npc.quests.full];
-        const fullQuestBtn = document.createElement('button');
-        fullQuestBtn.className = 'quest-menu-btn';
-        if (fullQuestCompleted) {
-            fullQuestBtn.textContent = `${fullQuest.name} (Completed)`;
-            fullQuestBtn.disabled = true;
-        } else {
-            fullQuestBtn.textContent = `${fullQuest.name} (${fullQuest.reward} coins)`;
-            fullQuestBtn.onclick = () => this.startQuest(npc.quests.full);
-        }
-        jobAnswers.appendChild(fullQuestBtn);
-
-        // Add cancel button
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'job-cancel';
-        cancelBtn.onclick = () => {
-            jobUI.classList.add('hidden');
-            this.state = GameState.EXPLORING;
-        };
-        jobAnswers.appendChild(cancelBtn);
-
-        jobUI.classList.remove('hidden');
-    }
-
-    startQuest(questId) {
-        const quest = QUESTS[questId];
-        if (!quest) {
-            console.error(`Quest not found: ${questId}`);
-            return;
-        }
-
-        // Set up active quest
-        this.activeQuest = {
-            questId: questId,
-            quest: quest,
-            currentStep: 0
-        };
-
-        document.getElementById('jobUI').classList.add('hidden');
-
-        // Handle different quest types
-        if (quest.type === 'one_off') {
-            // Simple one-problem quest
-            this.showQuestProblem(quest.problem, quest.name);
-        } else if (quest.type === 'multi_step') {
-            // Start multi-step quest
-            this.advanceQuestStep();
-        }
-    }
-
-    advanceQuestStep() {
-        const quest = this.activeQuest.quest;
-        const step = quest.steps[this.activeQuest.currentStep];
-
-        if (!step) {
-            // Quest complete!
-            this.completeQuest();
-            return;
-        }
-
-        // Use handler registry for extensibility
-        const handler = QUEST_STEP_HANDLERS[step.type];
-        if (handler && handler.onStart) {
-            handler.onStart(this, step);
-        } else {
-            console.error(`Unknown quest step type: ${step.type}`);
-        }
-    }
-
-    showQuestProblem(problem, npcName, problemNum = null, totalProblems = null) {
-        const jobUI = document.getElementById('jobUI');
-        const jobTitle = document.getElementById('jobTitle');
-        const jobQuestion = document.getElementById('jobQuestion');
-        const jobAnswers = document.getElementById('jobAnswers');
-
-        // Show problem number for multi-problem quests
-        const titleText = problemNum ? `${npcName} - Problem ${problemNum}/${totalProblems}` : npcName;
-        jobTitle.textContent = titleText;
-        jobQuestion.textContent = problem.question;
-        jobAnswers.innerHTML = '';
-
-        problem.answers.forEach(answer => {
-            const btn = document.createElement('button');
-            btn.textContent = answer;
-            btn.onclick = () => this.submitQuestAnswer(answer);
-            jobAnswers.appendChild(btn);
-        });
-
-        // Add cancel button
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'job-cancel';
-        cancelBtn.onclick = () => {
-            jobUI.classList.add('hidden');
-            this.state = GameState.EXPLORING;
-            this.activeQuest = null;
-        };
-        jobAnswers.appendChild(cancelBtn);
-
-        jobUI.classList.remove('hidden');
-    }
-
-    submitQuestAnswer(answer) {
-        if (!this.activeQuest) return;
-
-        const quest = this.activeQuest.quest;
-        let problem;
-
-        // Get the current problem based on quest type
-        if (quest.type === 'one_off') {
-            problem = quest.problem;
-        } else if (quest.type === 'multi_step') {
-            const step = quest.steps[this.activeQuest.currentStep];
-            if (step.type !== 'problem') return;
-            problem = step;
-        }
-
-        if (answer !== problem.correct) {
-            // Wrong answer
-            this.showDialog(`Not quite right. Try again next time!`);
-            document.getElementById('jobUI').classList.add('hidden');
-            this.state = GameState.EXPLORING;
-            this.questObjective = null;
-            this.activeQuest = null;
-            return;
-        }
-
-        // Correct answer - advance to next step
-        this.activeQuest.currentStep++;
-        document.getElementById('jobUI').classList.add('hidden');
-
-        // Continue quest or complete it
-        if (quest.type === 'one_off') {
-            this.completeQuest();
-        } else if (quest.type === 'multi_step') {
-            if (this.activeQuest.currentStep >= quest.steps.length) {
-                this.completeQuest();
-            } else {
-                this.advanceQuestStep();
-            }
-        }
-    }
-
-    completeQuest() {
-        const quest = this.activeQuest.quest;
-
-        // Award coins
-        this.coins += quest.reward;
-        this.updateUI();
-
-        // Mark as completed
-        this.completedQuests.add(this.activeQuest.questId);
-
-        // Show success message
-        this.showDialog(`Excellent work! You earned ${quest.reward} coins!`);
-
-        // Clear quest
-        document.getElementById('jobUI').classList.add('hidden');
-        this.state = GameState.EXPLORING;
-        this.questObjective = null;
-        this.activeQuest = null;
-    }
-
-    // Simple dialogue helper
-    showDialog(message) {
-        this.startDialogue([message]);
-    }
-
-    // New dialogue system with typewriter effect
-    startDialogue(lines, choices = null) {
+    // Legacy dialogue wrapper (kept for backward compatibility)
+    startDialogue_old(lines, choices = null) {
         this.state = GameState.DIALOGUE;
         this.dialogue.active = true;
         this.dialogue.lines = Array.isArray(lines) ? lines : [lines];
@@ -1204,19 +941,36 @@ class LighthouseGame {
             `Creatures: ${this.discoveredCreatures.size}/8`;
     }
 
+    // Wrapper methods that delegate to subsystems
+    showDialog(message) {
+        this.dialogueSystem.showDialog(message);
+    }
+
+    startDialogue(lines, choices = null) {
+        this.dialogueSystem.startDialogue(lines, choices);
+    }
+
+    advanceQuestStep() {
+        this.questSystem.advanceQuestStep();
+    }
+
+    showQuestProblem(problem, npcName, problemNum = null, totalProblems = null) {
+        this.questSystem.showQuestProblem(problem, npcName, problemNum, totalProblems);
+    }
+
     gameLoop(timestamp = 0) {
         const deltaTime = timestamp - this.lastFrameTime;
         this.lastFrameTime = timestamp;
 
         // Update
         this.handleInput(deltaTime);
-        this.updateDialogue(timestamp);
+        this.dialogueSystem.updateDialogue(timestamp);
         spriteLoader.updateWaterAnimation(timestamp);
 
         // Render
-        this.render();
+        this.renderingSystem.render();
         if (this.showDebugInfo) {
-            this.renderDebugInfo();
+            this.renderingSystem.renderDebugInfo();
         }
 
         requestAnimationFrame((t) => this.gameLoop(t));
