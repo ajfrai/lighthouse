@@ -125,6 +125,8 @@ class SpriteLoader {
     drawRock(ctx, dx, dy) {
         if (!this.loaded) return;
 
+        ctx.save();
+
         // Draw a simple rock with shading
         ctx.fillStyle = '#6b6b6b';
         ctx.beginPath();
@@ -142,6 +144,8 @@ class SpriteLoader {
         ctx.beginPath();
         ctx.ellipse(dx + 10, dy + 12, 3, 2, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        ctx.restore();
     }
 
     /**
@@ -149,6 +153,8 @@ class SpriteLoader {
      */
     drawTallGrass(ctx, dx, dy) {
         if (!this.loaded) return;
+
+        ctx.save();
 
         // Draw several grass blades
         ctx.strokeStyle = '#4a7c3e';
@@ -180,6 +186,8 @@ class SpriteLoader {
             ctx.lineTo(x + sway, dy + (16 - height - 2));
             ctx.stroke();
         }
+
+        ctx.restore();
     }
 
     /**
