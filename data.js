@@ -84,31 +84,35 @@ const MAP_DATA = {
         { type: 'rock', x: 19, y: 8 },
         { type: 'rock', x: 27, y: 8 },
 
-        // Tall grass patch near Lumina's location (creating the area mentioned in dialogue)
-        { type: 'tallgrass', x: 15, y: 13 },
-        { type: 'tallgrass', x: 16, y: 12 },
-        { type: 'tallgrass', x: 17, y: 13 },
-        { type: 'tallgrass', x: 16, y: 14 },
+        // Tall grass patch east of lighthouse (creating the area mentioned in dialogue)
+        { type: 'tallgrass', x: 18, y: 11 },
+        { type: 'tallgrass', x: 19, y: 11 },
+        { type: 'tallgrass', x: 20, y: 11 },
+        { type: 'tallgrass', x: 18, y: 12 },
+        { type: 'tallgrass', x: 19, y: 12 },
+        { type: 'tallgrass', x: 20, y: 12 },
         { type: 'tallgrass', x: 18, y: 13 },
-        { type: 'tallgrass', x: 15, y: 14 },
-        { type: 'tallgrass', x: 17, y: 14 },
+        { type: 'tallgrass', x: 19, y: 13 },
+        { type: 'tallgrass', x: 20, y: 13 },
 
         // NPCs positioned in story-meaningful locations
         { type: 'npc', id: 'keeper', x: 15, y: 17, sprite: 'down', charType: 'teacher' },  // Just south of lighthouse
         { type: 'npc', id: 'fisherman', x: 8, y: 7, sprite: 'down', charType: 'fisherman' },  // On the beach (west)
-        { type: 'npc', id: 'shopkeeper', x: 22, y: 18, sprite: 'left', charType: 'shopkeeper' },  // Near eastern path
         { type: 'npc', id: 'scientist', x: 18, y: 24, sprite: 'up', charType: 'scientist' },  // In southern clearing
         { type: 'npc', id: 'mathTeacher', x: 9, y: 19, sprite: 'right', charType: 'teacher' },  // In western clearing
 
-        // Creature spawn points - positioned in thematic locations
-        { type: 'creature', id: 'lumina', x: 16, y: 13 },  // Near lighthouse (moth drawn to light)
-        { type: 'creature', id: 'marina', x: 15, y: 5 },   // In the water
-        { type: 'creature', id: 'frost', x: 10, y: 5 },    // Cold water (west)
-        { type: 'creature', id: 'dusty', x: 12, y: 8 },    // Sandy beach area
-        { type: 'creature', id: 'pebble', x: 25, y: 8 },   // Rocky beach (east)
-        { type: 'creature', id: 'sprout', x: 5, y: 21 },   // Western forest
-        { type: 'creature', id: 'blaze', x: 14, y: 10 },   // Near lighthouse furnace
-        { type: 'creature', id: 'spark', x: 20, y: 30 }    // Southern grove
+        // Store building (2x2 tiles)
+        { type: 'store', x: 22, y: 18 },  // Near eastern path
+
+        // Creature spawn points - positioned in appropriate terrain
+        { type: 'creature', id: 'lumina', x: 19, y: 12 },  // In tall grass (moth drawn to light)
+        { type: 'creature', id: 'marina', x: 15, y: 5 },   // In the water (dolphin swims)
+        { type: 'creature', id: 'frost', x: 10, y: 5 },    // In water (ice creature)
+        { type: 'creature', id: 'dusty', x: 12, y: 8 },    // On sandy beach
+        { type: 'creature', id: 'pebble', x: 25, y: 8 },   // On rocky beach
+        { type: 'creature', id: 'sprout', x: 18, y: 11 },  // In tall grass (plant creature)
+        { type: 'creature', id: 'blaze', x: 17, y: 8 },    // On beach near rocks (fire creature)
+        { type: 'creature', id: 'spark', x: 20, y: 13 }    // In tall grass (electric creature)
     ]
 };
 

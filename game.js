@@ -381,6 +381,12 @@ class LighthouseGame {
                     y >= obj.y && y < obj.y + 2) {
                     return false;
                 }
+            } else if (obj.type === 'store') {
+                // Store occupies 2x2 tiles
+                if (x >= obj.x && x < obj.x + 2 &&
+                    y >= obj.y && y < obj.y + 2) {
+                    return false;
+                }
             } else if (obj.type === 'rock') {
                 // Rock occupies 1 tile
                 if (x === obj.x && y === obj.y) {
@@ -398,7 +404,7 @@ class LighthouseGame {
     }
 
     interact() {
-        // Check for nearby NPCs
+        // Check for nearby NPCs and buildings
         const directions = {
             up: [0, -1],
             down: [0, 1],
@@ -410,11 +416,18 @@ class LighthouseGame {
         const checkX = this.player.x + dx;
         const checkY = this.player.y + dy;
 
-        // Find NPC at interaction position
+        // Find NPC or building at interaction position
         for (const obj of this.map.objects) {
             if (obj.type === 'npc' && obj.x === checkX && obj.y === checkY) {
                 this.showNPCDialog(obj.id);
                 return;
+            } else if (obj.type === 'store') {
+                // Check if player is adjacent to store (2x2 building)
+                if (checkX >= obj.x && checkX < obj.x + 2 &&
+                    checkY >= obj.y && checkY < obj.y + 2) {
+                    this.openShop();
+                    return;
+                }
             }
         }
     }
@@ -931,6 +944,12 @@ class LighthouseGame {
                 );
             } else if (obj.type === 'tree') {
                 spriteLoader.drawTree(
+                    this.ctx,
+                    obj.x * tileSize,
+                    obj.y * tileSize
+                );
+            } else if (obj.type === 'store') {
+                spriteLoader.drawStore(
                     this.ctx,
                     obj.x * tileSize,
                     obj.y * tileSize

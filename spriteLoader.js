@@ -120,6 +120,56 @@ class SpriteLoader {
     }
 
     /**
+     * Draw store building (32x32, 2x2 tiles)
+     */
+    drawStore(ctx, dx, dy) {
+        if (!this.loaded) return;
+
+        ctx.save();
+
+        // Store building - simple shop structure
+        // Base building (brown/tan)
+        ctx.fillStyle = '#8b6f47';
+        ctx.fillRect(dx, dy + 8, 32, 24);
+
+        // Roof (darker brown)
+        ctx.fillStyle = '#654321';
+        ctx.beginPath();
+        ctx.moveTo(dx - 2, dy + 8);
+        ctx.lineTo(dx + 16, dy);
+        ctx.lineTo(dx + 34, dy + 8);
+        ctx.lineTo(dx + 32, dy + 10);
+        ctx.lineTo(dx + 16, dy + 3);
+        ctx.lineTo(dx, dy + 10);
+        ctx.closePath();
+        ctx.fill();
+
+        // Door (dark)
+        ctx.fillStyle = '#3d2817';
+        ctx.fillRect(dx + 11, dy + 18, 10, 14);
+
+        // Window (light blue)
+        ctx.fillStyle = '#87ceeb';
+        ctx.fillRect(dx + 4, dy + 14, 6, 6);
+        ctx.fillRect(dx + 22, dy + 14, 6, 6);
+
+        // Window frames
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dx + 4, dy + 14, 6, 6);
+        ctx.strokeRect(dx + 22, dy + 14, 6, 6);
+
+        // Sign above door
+        ctx.fillStyle = '#d4a574';
+        ctx.fillRect(dx + 9, dy + 12, 14, 4);
+        ctx.fillStyle = '#654321';
+        ctx.font = '6px monospace';
+        ctx.fillText('SHOP', dx + 11, dy + 15);
+
+        ctx.restore();
+    }
+
+    /**
      * Draw rock (16x16, 1x1 tile)
      */
     drawRock(ctx, dx, dy) {
