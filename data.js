@@ -199,6 +199,159 @@ const CREATURES = {
     }
 };
 
+// Quest Step Handler Registry - Pluggable handlers for different step types
+const QUEST_STEP_HANDLERS = {
+    'visit_location': {
+        // Called when step becomes active
+        onStart: (game, step) => {
+            game.questObjective = step.description;
+            game.showDialog(step.description);
+            game.state = GameState.EXPLORING;
+        },
+
+        // Called each frame while step is active
+        onUpdate: (game, step) => {
+            // Check if player is within radius of objective
+            const dx = game.player.x - step.location.x;
+            const dy = game.player.y - step.location.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= step.radius) {
+                // Player reached objective!
+                return {
+                    completed: true,
+                    message: step.onArrive.message,
+                    choices: [
+                        {
+                            text: "Continue Quest",
+                            action: () => game.advanceQuestStep()
+                        },
+                        {
+                            text: "Abandon Quest",
+                            action: () => {
+                                game.activeQuest = null;
+                                game.questObjective = null;
+                                game.showDialog("Quest abandoned.");
+                            }
+                        }
+                    ]
+                };
+            }
+            return { completed: false };
+        },
+
+        // Called when rendering (for markers, etc.)
+        onRender: (game, step) => {
+            const tileSize = game.map.tileSize;
+            const x = step.location.x * tileSize + tileSize / 2;
+            const y = step.location.y * tileSize + tileSize / 2;
+
+            // Draw pulsing marker
+            const time = Date.now() / 1000;
+            const pulse = Math.sin(time * 3) * 0.2 + 0.8;
+
+            game.ctx.save();
+            game.ctx.globalAlpha = pulse;
+            game.ctx.font = '24px Arial';
+            game.ctx.textAlign = 'center';
+            game.ctx.textBaseline = 'middle';
+            game.ctx.fillText(step.markerText, x, y);
+            game.ctx.restore();
+
+            // Draw radius circle
+            game.ctx.save();
+            game.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+            game.ctx.lineWidth = 2;
+            game.ctx.beginPath();
+            game.ctx.arc(x, y, step.radius * tileSize, 0, Math.PI * 2);
+            game.ctx.stroke();
+            game.ctx.restore();
+        }
+    },
+
+    'problem': {
+        onStart: (game, step) => {
+            const quest = game.activeQuest.quest;
+            const stepNum = game.activeQuest.currentStep + 1;
+            const totalSteps = quest.steps.length;
+            game.showQuestProblem(step, quest.name, stepNum, totalSteps);
+        },
+
+        onUpdate: (game, step) => {
+            // Problems are handled by UI callbacks, not update loop
+            return { completed: false };
+        },
+
+        onRender: (game, step) => {
+            // No rendering needed for problems
+        }
+    },
+
+    'talk_to': {
+        onStart: (game, step) => {
+            game.questObjective = step.description;
+            game.showDialog(step.description);
+            game.state = GameState.EXPLORING;
+        },
+
+        onUpdate: (game, step) => {
+            // Checked by interact() method when player talks to NPC
+            return { completed: false };
+        },
+
+        onRender: (game, step) => {
+            // Render indicator above target NPC
+            const npc = game.map.objects.find(obj => obj.type === 'npc' && obj.id === step.npcId);
+            if (npc) {
+                const tileSize = game.map.tileSize;
+                const x = npc.x * tileSize + tileSize / 2;
+                const y = npc.y * tileSize - 10;
+
+                game.ctx.save();
+                game.ctx.font = '20px Arial';
+                game.ctx.textAlign = 'center';
+                game.ctx.fillText('❗', x, y);
+                game.ctx.restore();
+            }
+        }
+    },
+
+    'fetch_item': {
+        onStart: (game, step) => {
+            game.questObjective = step.description;
+            game.showDialog(step.description);
+            game.state = GameState.EXPLORING;
+        },
+
+        onUpdate: (game, step) => {
+            // Check if player has the required item
+            if (game.inventory.has(step.itemId)) {
+                return {
+                    completed: true,
+                    message: step.onComplete.message,
+                    choices: [
+                        {
+                            text: "Continue",
+                            action: () => {
+                                // Remove item if consumable
+                                if (step.consumeItem) {
+                                    game.inventory.delete(step.itemId);
+                                }
+                                game.advanceQuestStep();
+                            }
+                        }
+                    ]
+                };
+            }
+            return { completed: false };
+        },
+
+        onRender: (game, step) => {
+            // No special rendering for fetch quests
+        }
+    }
+};
+
 // Quest Framework - Reusable quest system for all NPCs
 const QUESTS = {
     // Callum's one-off problems

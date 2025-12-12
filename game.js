@@ -368,33 +368,23 @@ class LighthouseGame {
         if (quest.type !== 'multi_step') return;
 
         const step = quest.steps[this.activeQuest.currentStep];
-        if (!step || step.type !== 'visit_location') return;
+        if (!step) return;
 
-        // Check if player is within radius of objective
-        const dx = this.player.x - step.location.x;
-        const dy = this.player.y - step.location.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        // Use handler registry for update logic
+        const handler = QUEST_STEP_HANDLERS[step.type];
+        if (handler && handler.onUpdate) {
+            const result = handler.onUpdate(this, step);
 
-        if (distance <= step.radius) {
-            // Player reached objective!
-            this.activeQuest.currentStep++;
-            this.questObjective = null;
+            if (result.completed) {
+                // Step completed!
+                this.activeQuest.currentStep++;
+                this.questObjective = null;
 
-            // Show arrival message with callback to advance after dialog closes
-            this.startDialogue([step.onArrive.message], [
-                {
-                    text: "Continue Quest",
-                    action: () => this.advanceQuestStep()
-                },
-                {
-                    text: "Abandon Quest",
-                    action: () => {
-                        this.activeQuest = null;
-                        this.questObjective = null;
-                        this.showDialog("Quest abandoned.");
-                    }
+                // Show completion message and choices
+                if (result.message) {
+                    this.startDialogue([result.message], result.choices);
                 }
-            ]);
+            }
         }
     }
 
@@ -637,16 +627,12 @@ class LighthouseGame {
             return;
         }
 
-        if (step.type === 'visit_location') {
-            // Set up location objective
-            this.questObjective = step.description;
-            this.showDialog(step.description);
-            this.state = GameState.EXPLORING;
-        } else if (step.type === 'problem') {
-            // Show problem
-            const stepNum = this.activeQuest.currentStep + 1;
-            const totalSteps = quest.steps.length;
-            this.showQuestProblem(step, quest.name, stepNum, totalSteps);
+        // Use handler registry for extensibility
+        const handler = QUEST_STEP_HANDLERS[step.type];
+        if (handler && handler.onStart) {
+            handler.onStart(this, step);
+        } else {
+            console.error(`Unknown quest step type: ${step.type}`);
         }
     }
 
@@ -1256,32 +1242,13 @@ class LighthouseGame {
         if (quest.type !== 'multi_step') return;
 
         const step = quest.steps[this.activeQuest.currentStep];
-        if (!step || step.type !== 'visit_location') return;
+        if (!step) return;
 
-        const tileSize = this.map.tileSize;
-        const x = step.location.x * tileSize + tileSize / 2;
-        const y = step.location.y * tileSize + tileSize / 2;
-
-        // Draw pulsing marker
-        const time = Date.now() / 1000;
-        const pulse = Math.sin(time * 3) * 0.2 + 0.8;
-
-        this.ctx.save();
-        this.ctx.globalAlpha = pulse;
-        this.ctx.font = '24px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(step.markerText, x, y);
-        this.ctx.restore();
-
-        // Draw radius circle
-        this.ctx.save();
-        this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, step.radius * tileSize, 0, Math.PI * 2);
-        this.ctx.stroke();
-        this.ctx.restore();
+        // Use handler registry for rendering
+        const handler = QUEST_STEP_HANDLERS[step.type];
+        if (handler && handler.onRender) {
+            handler.onRender(this, step);
+        }
     }
 
     renderQuestObjective() {
