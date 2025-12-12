@@ -54,7 +54,7 @@ class LighthouseGame {
         this.day = 1;
         this.discoveredCreatures = new Set();
         this.party = [];  // Creatures traveling with player
-        this.inventory = new Set();
+        this.inventory = new Set(['map']);  // Start with a map to navigate
         this.playerAbilities = new Set();  // surf, torch, etc.
         this.completedQuests = new Set();  // Track completed quests by ID: 'fishing_crates', 'fishing_records'
         this.activeQuest = null;  // {questId, quest, currentStep, type}
