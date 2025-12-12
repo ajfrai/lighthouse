@@ -170,6 +170,60 @@ class SpriteLoader {
     }
 
     /**
+     * Draw boat (48x32, 3x2 tiles)
+     */
+    drawBoat(ctx, dx, dy) {
+        if (!this.loaded) return;
+
+        ctx.save();
+
+        // Boat hull (brown wood)
+        ctx.fillStyle = '#8b6f47';
+        ctx.beginPath();
+        ctx.moveTo(dx + 4, dy + 20);
+        ctx.lineTo(dx + 44, dy + 20);
+        ctx.lineTo(dx + 40, dy + 32);
+        ctx.lineTo(dx + 8, dy + 32);
+        ctx.closePath();
+        ctx.fill();
+
+        // Boat sides (darker)
+        ctx.fillStyle = '#6b5437';
+        ctx.fillRect(dx + 4, dy + 20, 4, 12);
+        ctx.fillRect(dx + 40, dy + 20, 4, 12);
+
+        // Mast (vertical pole)
+        ctx.fillStyle = '#654321';
+        ctx.fillRect(dx + 22, dy, 4, 24);
+
+        // Sail (white/cream)
+        ctx.fillStyle = '#f5f5dc';
+        ctx.beginPath();
+        ctx.moveTo(dx + 26, dy + 4);
+        ctx.lineTo(dx + 42, dy + 10);
+        ctx.lineTo(dx + 26, dy + 16);
+        ctx.closePath();
+        ctx.fill();
+
+        // Sail outline
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Rope/rigging
+        ctx.strokeStyle = '#8b7355';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(dx + 24, dy + 4);
+        ctx.lineTo(dx + 42, dy + 10);
+        ctx.moveTo(dx + 24, dy + 16);
+        ctx.lineTo(dx + 42, dy + 10);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    /**
      * Draw rock (16x16, 1x1 tile)
      */
     drawRock(ctx, dx, dy) {
