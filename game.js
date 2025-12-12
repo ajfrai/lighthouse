@@ -60,16 +60,8 @@ class LighthouseGame {
 
         // Debug/Speed Run Mode
         const urlParams = new URLSearchParams(window.location.search);
-        this.autoPilot = urlParams.has('auto') || urlParams.has('autopilot');
-        this.speedRunMode = this.autoPilot || urlParams.has('speedrun') || urlParams.has('debug');
-        this.showDebugInfo = this.speedRunMode || this.autoPilot;
-        this.autoPilotState = {
-            target: null,
-            path: [],
-            action: null,
-            waitFrames: 0,
-            currentTask: 'init'
-        };
+        this.speedRunMode = urlParams.has('speedrun') || urlParams.has('debug');
+        this.showDebugInfo = this.speedRunMode;
 
         // Boat quest tracking
         this.boatQuest = {
@@ -139,16 +131,6 @@ class LighthouseGame {
             debugMenu.classList.add('hidden');
         });
 
-        // AutoPilot toggle
-        document.getElementById('toggleAutoPilot').addEventListener('click', (e) => {
-            this.autoPilot = !this.autoPilot;
-            if (this.autoPilot) {
-                this.speedRunMode = true;
-                this.autoPilotState.currentTask = 'init';
-            }
-            this.updateDebugMenuButtons();
-        });
-
         // Speed Run toggle
         document.getElementById('toggleSpeedRun').addEventListener('click', (e) => {
             this.speedRunMode = !this.speedRunMode;
@@ -177,12 +159,8 @@ class LighthouseGame {
     }
 
     updateDebugMenuButtons() {
-        const autoPilotBtn = document.getElementById('toggleAutoPilot');
         const speedRunBtn = document.getElementById('toggleSpeedRun');
         const debugInfoBtn = document.getElementById('toggleDebugInfo');
-
-        autoPilotBtn.textContent = `AutoPilot: ${this.autoPilot ? 'ON' : 'OFF'}`;
-        autoPilotBtn.classList.toggle('active', this.autoPilot);
 
         speedRunBtn.textContent = `Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`;
         speedRunBtn.classList.toggle('active', this.speedRunMode);
@@ -403,6 +381,11 @@ class LighthouseGame {
                     y >= obj.y && y < obj.y + 2) {
                     return false;
                 }
+            } else if (obj.type === 'rock') {
+                // Rock occupies 1 tile
+                if (x === obj.x && y === obj.y) {
+                    return false;
+                }
             } else if (obj.type === 'npc') {
                 // NPC occupies 1 tile
                 if (x === obj.x && y === obj.y) {
@@ -481,6 +464,13 @@ class LighthouseGame {
         this.dialogue.selectedChoice = 0;
 
         const dialogBox = document.getElementById('dialogBox');
+        const dialogClose = document.getElementById('dialogClose');
+
+        // Show/hide close button based on whether there are choices
+        if (dialogClose) {
+            dialogClose.style.display = choices ? 'none' : 'inline-block';
+        }
+
         dialogBox.classList.remove('hidden');
     }
 
@@ -530,6 +520,13 @@ class LighthouseGame {
 
     showDialogueChoices() {
         const dialogContent = document.getElementById('dialogContent');
+        const dialogClose = document.getElementById('dialogClose');
+
+        // Hide close button when showing choices
+        if (dialogClose) {
+            dialogClose.style.display = 'none';
+        }
+
         let html = '<div class="dialogue-choices">';
         this.dialogue.choices.forEach((choice, index) => {
             const selected = index === this.dialogue.selectedChoice ? 'selected' : '';
@@ -870,11 +867,7 @@ class LighthouseGame {
         this.lastFrameTime = timestamp;
 
         // Update
-        if (this.autoPilot) {
-            this.updateAutoPilot();
-        } else {
-            this.handleInput(deltaTime);
-        }
+        this.handleInput(deltaTime);
         this.updateDialogue(timestamp);
         spriteLoader.updateWaterAnimation(timestamp);
 
@@ -942,6 +935,18 @@ class LighthouseGame {
                     obj.x * tileSize,
                     obj.y * tileSize
                 );
+            } else if (obj.type === 'rock') {
+                spriteLoader.drawRock(
+                    this.ctx,
+                    obj.x * tileSize,
+                    obj.y * tileSize
+                );
+            } else if (obj.type === 'tallgrass') {
+                spriteLoader.drawTallGrass(
+                    this.ctx,
+                    obj.x * tileSize,
+                    obj.y * tileSize
+                );
             } else if (obj.type === 'npc') {
                 spriteLoader.drawCharacter(
                     this.ctx,
@@ -976,18 +981,11 @@ class LighthouseGame {
 
         this.ctx.fillStyle = '#00ff00';
         this.ctx.font = '12px monospace';
-        this.ctx.fillText(`Mode: ${this.autoPilot ? 'AUTO-PILOT' : 'MANUAL'}`, 10, 20);
-        this.ctx.fillText(`Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`, 10, 35);
-        this.ctx.fillText(`Phase: ${this.plotPhase}`, 10, 50);
-        this.ctx.fillText(`State: ${this.state}`, 10, 65);
-        this.ctx.fillText(`Position: (${this.player.x}, ${this.player.y})`, 10, 80);
-        this.ctx.fillText(`Creatures: ${this.discoveredCreatures.size}/8`, 10, 95);
-        if (this.autoPilot) {
-            this.ctx.fillText(`Task: ${this.autoPilotState.currentTask}`, 10, 110);
-            if (this.autoPilotState.target) {
-                this.ctx.fillText(`Target: (${this.autoPilotState.target.x}, ${this.autoPilotState.target.y})`, 10, 125);
-            }
-        }
+        this.ctx.fillText(`Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`, 10, 20);
+        this.ctx.fillText(`Phase: ${this.plotPhase}`, 10, 35);
+        this.ctx.fillText(`State: ${this.state}`, 10, 50);
+        this.ctx.fillText(`Position: (${this.player.x}, ${this.player.y})`, 10, 65);
+        this.ctx.fillText(`Creatures: ${this.discoveredCreatures.size}/8`, 10, 80);
 
         // Shortcuts
         this.ctx.fillStyle = '#ffff00';
@@ -995,172 +993,5 @@ class LighthouseGame {
         this.ctx.fillText('F1:Speed F2:Debug T:Teleport 1-9:Phases', 10, 140);
     }
 
-    // ===== AUTOPILOT SYSTEM =====
-
-    updateAutoPilot() {
-        // Wait frames for dialogue/animations
-        if (this.autoPilotState.waitFrames > 0) {
-            this.autoPilotState.waitFrames--;
-            return;
-        }
-
-        // Handle dialogue states
-        if (this.state === GameState.DIALOGUE) {
-            this.autoPilotState.waitFrames = 5; // Wait a bit
-            this.advanceDialogue();
-            return;
-        }
-
-        if (this.state === GameState.DIALOGUE_CHOICE) {
-            this.autoPilotState.waitFrames = 10;
-            // For creature encounter, choose "Approach slowly" (first option)
-            this.dialogue.selectedChoice = 0;
-            this.selectDialogueChoice();
-            return;
-        }
-
-        // Handle creature naming
-        if (document.getElementById('creatureNameInput')) {
-            this.autoPilotState.waitFrames = 10;
-            this.finalizeCreatureNaming();
-            return;
-        }
-
-        // Close any open UIs
-        const creatureUI = document.getElementById('creatureUI');
-        if (creatureUI && !creatureUI.classList.contains('hidden')) {
-            this.autoPilotState.waitFrames = 20;
-            creatureUI.classList.add('hidden');
-            return;
-        }
-
-        // Decision making based on plot phase
-        if (this.state === GameState.EXPLORING) {
-            this.autoPilotDecideAction();
-        }
-    }
-
-    autoPilotDecideAction() {
-        const currentTask = this.autoPilotState.currentTask;
-
-        // Determine task based on plot phase
-        if (this.plotPhase === PlotPhase.WAKE_UP) {
-            // Go talk to Keeper
-            const keeper = this.map.objects.find(obj => obj.id === 'keeper');
-            if (keeper) {
-                if (this.isAdjacentTo(keeper.x, keeper.y)) {
-                    this.autoPilotState.currentTask = 'talking_to_keeper';
-                    this.autoPilotState.waitFrames = 5;
-                    this.player.direction = this.getDirectionTo(keeper.x, keeper.y);
-                    this.interact();
-                } else {
-                    this.walkToTarget(keeper.x, keeper.y);
-                }
-            }
-        } else if (this.plotPhase === PlotPhase.FIND_CREATURE) {
-            // Go find Lumina
-            const lumina = this.map.objects.find(obj => obj.id === 'lumina');
-            if (lumina) {
-                if (Math.hypot(this.player.x - lumina.x, this.player.y - lumina.y) <= 3) {
-                    this.autoPilotState.currentTask = 'near_lumina';
-                    this.autoPilotState.waitFrames = 10;
-                    // Just wait, encounter will trigger automatically
-                } else {
-                    this.autoPilotState.currentTask = 'walking_to_lumina';
-                    this.walkToTarget(lumina.x, lumina.y);
-                }
-            }
-        } else if (this.plotPhase === PlotPhase.RETURN_TO_KEEPER) {
-            // Return to Keeper
-            const keeper = this.map.objects.find(obj => obj.id === 'keeper');
-            if (keeper) {
-                if (this.isAdjacentTo(keeper.x, keeper.y)) {
-                    this.autoPilotState.currentTask = 'returned_to_keeper';
-                    this.autoPilotState.waitFrames = 5;
-                    this.player.direction = this.getDirectionTo(keeper.x, keeper.y);
-                    this.interact();
-                } else {
-                    this.autoPilotState.currentTask = 'returning_to_keeper';
-                    this.walkToTarget(keeper.x, keeper.y);
-                }
-            }
-        }
-    }
-
-    walkToTarget(targetX, targetY) {
-        const dx = targetX - this.player.x;
-        const dy = targetY - this.player.y;
-
-        // Simple greedy pathfinding - move in the direction with greater distance
-        let moved = false;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            // Move horizontally
-            if (dx > 0) {
-                moved = this.tryMove(this.player.x + 1, this.player.y, 'right');
-            } else {
-                moved = this.tryMove(this.player.x - 1, this.player.y, 'left');
-            }
-        } else {
-            // Move vertically
-            if (dy > 0) {
-                moved = this.tryMove(this.player.x, this.player.y + 1, 'down');
-            } else {
-                moved = this.tryMove(this.player.x, this.player.y - 1, 'up');
-            }
-        }
-
-        // If blocked, try the other direction
-        if (!moved) {
-            if (Math.abs(dx) > Math.abs(dy)) {
-                if (dy > 0) {
-                    this.tryMove(this.player.x, this.player.y + 1, 'down');
-                } else if (dy < 0) {
-                    this.tryMove(this.player.x, this.player.y - 1, 'up');
-                }
-            } else {
-                if (dx > 0) {
-                    this.tryMove(this.player.x + 1, this.player.y, 'right');
-                } else if (dx < 0) {
-                    this.tryMove(this.player.x - 1, this.player.y, 'left');
-                }
-            }
-        }
-    }
-
-    tryMove(newX, newY, direction) {
-        if (this.canMoveTo(newX, newY)) {
-            this.player.x = newX;
-            this.player.y = newY;
-            this.player.direction = direction;
-            this.player.moving = true;
-            this.checkCreatureEncounter();
-            this.autoPilotState.waitFrames = 3; // Small delay between moves
-            return true;
-        }
-        return false;
-    }
-
-    isAdjacentTo(x, y) {
-        const dx = Math.abs(this.player.x - x);
-        const dy = Math.abs(this.player.y - y);
-        return (dx <= 1 && dy === 0) || (dx === 0 && dy <= 1);
-    }
-
-    getDirectionTo(x, y) {
-        const dx = x - this.player.x;
-        const dy = y - this.player.y;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            return dx > 0 ? 'right' : 'left';
-        } else {
-            return dy > 0 ? 'down' : 'up';
-        }
-    }
-}
-
-// Start game when page loads
-let game;
-window.addEventListener('load', () => {
     game = new LighthouseGame();
 });
