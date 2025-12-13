@@ -120,20 +120,25 @@ class DialogueSystem {
 
     showDialogueChoices() {
         const dialogContent = document.getElementById('dialogContent');
+        const dialogChoices = document.getElementById('dialogChoices');
         const dialogClose = document.getElementById('dialogClose');
+
+        // Keep the last message in dialogContent
+        dialogContent.textContent = this.game.dialogue.currentText;
 
         // Hide close button when showing choices
         if (dialogClose) {
             dialogClose.style.display = 'none';
         }
 
+        // Show choices in separate div
         let html = '<div class="dialogue-choices">';
         this.game.dialogue.choices.forEach((choice, index) => {
             const selected = index === this.game.dialogue.selectedChoice ? 'selected' : '';
             html += `<div class="choice ${selected}">${choice.text}</div>`;
         });
         html += '</div>';
-        dialogContent.innerHTML = html;
+        dialogChoices.innerHTML = html;
     }
 
     selectDialogueChoice() {
@@ -147,6 +152,16 @@ class DialogueSystem {
     endDialogue() {
         this.game.dialogue.active = false;
         this.game.state = GameState.EXPLORING;
+
+        // Clear dialogue content
+        const dialogContent = document.getElementById('dialogContent');
+        const dialogChoices = document.getElementById('dialogChoices');
+        const dialogClose = document.getElementById('dialogClose');
+
+        if (dialogContent) dialogContent.textContent = '';
+        if (dialogChoices) dialogChoices.innerHTML = '';
+        if (dialogClose) dialogClose.style.display = 'inline-block';
+
         document.getElementById('dialogBox').classList.add('hidden');
     }
 }
