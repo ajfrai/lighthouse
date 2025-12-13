@@ -188,6 +188,14 @@ class LighthouseGame {
     }
 
     setupInput() {
+        // Dialog close button click handler
+        const dialogClose = document.getElementById('dialogClose');
+        if (dialogClose) {
+            dialogClose.addEventListener('click', () => {
+                this.dialogueSystem.endDialogue();
+            });
+        }
+
         // Keyboard
         window.addEventListener('keydown', (e) => {
             // Track for single-press detection
@@ -275,17 +283,23 @@ class LighthouseGame {
         if (this.state === GameState.DIALOGUE) {
             if (key === ' ' || key === 'Enter') {
                 this.dialogueSystem.advanceDialogue();
+            } else if (key === 'Escape') {
+                this.dialogueSystem.endDialogue();
             }
         } else if (this.state === GameState.DIALOGUE_CHOICE) {
             if (key === 'ArrowUp') {
                 this.dialogue.selectedChoice = Math.max(0, this.dialogue.selectedChoice - 1);
+                this.dialogueSystem.showDialogueChoices();  // Refresh display
             } else if (key === 'ArrowDown') {
                 this.dialogue.selectedChoice = Math.min(
                     this.dialogue.choices.length - 1,
                     this.dialogue.selectedChoice + 1
                 );
+                this.dialogueSystem.showDialogueChoices();  // Refresh display
             } else if (key === ' ' || key === 'Enter') {
                 this.dialogueSystem.selectDialogueChoice();
+            } else if (key === 'Escape') {
+                this.dialogueSystem.endDialogue();
             }
         } else if (this.state === GameState.EXPLORING) {
             if (key === ' ' || key === 'Enter') {

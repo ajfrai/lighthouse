@@ -21,7 +21,7 @@ class RenderingSystem {
         this.renderObjects();
         this.game.questSystem.renderQuestMarkers(ctx);
         this.renderPlayer();
-        this.game.questSystem.renderQuestObjective(ctx, canvas.height, canvas.width);
+        // Quest objective banner removed - players should remember their goal
     }
 
     renderTerrain() {
