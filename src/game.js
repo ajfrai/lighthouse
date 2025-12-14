@@ -263,38 +263,8 @@ class LighthouseGame {
                 }
             });
 
-            // Also support click events for desktop testing
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const key = btn.dataset.key;
-                if (key) {
-                    this.handleKeyPress(key);
-                } else if (btn.id === 'btnAction') {
-                    // Dispatch real keyboard event so dialogueSystem can catch it
-                    console.log('[MobileControls] A button clicked - dispatching "a" keydown event');
-                    const keydownEvent = new KeyboardEvent('keydown', {
-                        key: 'a',
-                        code: 'KeyA',
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    document.dispatchEvent(keydownEvent);
-
-                    // CRITICAL: Dispatch keyup immediately after to prevent key staying "pressed"
-                    setTimeout(() => {
-                        const keyupEvent = new KeyboardEvent('keyup', {
-                            key: 'a',
-                            code: 'KeyA',
-                            bubbles: true,
-                            cancelable: true
-                        });
-                        document.dispatchEvent(keyupEvent);
-                        console.log('[MobileControls] Dispatched "a" keyup event (cleanup)');
-                    }, 50);
-
-                    this.handleKeyPress('Enter');
-                }
-            });
+            // MOBILE ONLY - No click handler needed
+            // touchstart/touchend handles everything
         });
     }
 
