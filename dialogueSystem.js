@@ -10,8 +10,11 @@
 
 class DialogueSystem {
     constructor(game) {
+        console.log('[DialogueSystem] Constructor called');
         this.game = game;
+        console.log('[DialogueSystem] game.state =', game.state);
         this.setupEventListeners();
+        console.log('[DialogueSystem] Initialization complete');
     }
 
     /**
@@ -19,6 +22,8 @@ class DialogueSystem {
      * This prevents the bug where choices have no click handlers
      */
     setupEventListeners() {
+        console.log('[DialogueSystem] Setting up event listeners...');
+
         const dialogBox = document.getElementById('dialogBox');
         const dialogChoices = document.getElementById('dialogChoices');
         const dialogClose = document.getElementById('dialogClose');
@@ -56,12 +61,17 @@ class DialogueSystem {
 
         // Keyboard support
         document.addEventListener('keydown', (e) => {
+            console.log(`[DialogueSystem] Keydown event: key="${e.key}", state=${this.game.state}, DIALOGUE=${GameState.DIALOGUE}`);
+
             if (this.game.state === GameState.DIALOGUE) {
+                console.log(`[DialogueSystem] In DIALOGUE state, checking if key matches...`);
                 // Space, Enter, or 'A' button to advance
                 if (e.key === ' ' || e.key === 'Enter' || e.key === 'a' || e.key === 'A') {
-                    console.log(`[DialogueSystem] Key "${e.key}" pressed in DIALOGUE state - advancing`);
+                    console.log(`[DialogueSystem] Key "${e.key}" MATCHED - advancing dialogue`);
                     e.preventDefault();
                     this.advanceDialogue();
+                } else {
+                    console.log(`[DialogueSystem] Key "${e.key}" did not match Space/Enter/a/A`);
                 }
             } else if (this.game.state === GameState.DIALOGUE_CHOICE) {
                 if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
