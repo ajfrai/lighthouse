@@ -111,7 +111,7 @@ class DialogueSystem {
                 const lines = Array.isArray(textContent) ? textContent : [textContent];
                 const onClose = dialogue.onClose || null;
 
-                this.startDialogue(lines, choices, onClose);
+                this.startDialogue(lines, choices, onClose, npc.name);  // Pass NPC name
             } else {
                 this.showDialog("...");
             }
@@ -138,20 +138,37 @@ class DialogueSystem {
         this.startDialogue([message]);
     }
 
-    startDialogue(lines, choices = null, onClose = null) {
+    startDialogue(lines, choices = null, onClose = null, npcName = null) {
         this.game.state = GameState.DIALOGUE;
         this.game.dialogue.active = true;
         this.game.dialogue.lines = Array.isArray(lines) ? lines : [lines];
+        this.game.dialogue.npcName = npcName;  // Store NPC name for default speaker
         this.game.dialogue.currentLine = 0;
         this.game.dialogue.textIndex = 0;
         this.game.dialogue.currentText = '';
-        this.game.dialogue.fullText = this.game.dialogue.lines[0];
+
+        // Extract text and speaker from first line
+        const firstLine = this.game.dialogue.lines[0];
+        if (typeof firstLine === 'object' && firstLine.text) {
+            this.game.dialogue.fullText = firstLine.text;
+            this.game.dialogue.currentSpeaker = firstLine.speaker || npcName || '???';
+        } else {
+            this.game.dialogue.fullText = firstLine;
+            this.game.dialogue.currentSpeaker = npcName || '???';
+        }
+
         this.game.dialogue.choices = choices;
         this.game.dialogue.selectedChoice = 0;
         this.game.dialogue.onClose = onClose;
 
         const dialogBox = document.getElementById('dialogBox');
         const dialogClose = document.getElementById('dialogClose');
+        const dialogSpeaker = document.getElementById('dialogSpeaker');
+
+        // Show speaker name
+        if (dialogSpeaker) {
+            dialogSpeaker.textContent = this.game.dialogue.currentSpeaker;
+        }
 
         // Show/hide close button based on whether there are choices
         if (dialogClose) {
@@ -195,7 +212,21 @@ class DialogueSystem {
             // Start next line
             this.game.dialogue.textIndex = 0;
             this.game.dialogue.currentText = '';
-            this.game.dialogue.fullText = this.game.dialogue.lines[this.game.dialogue.currentLine];
+
+            const nextLine = this.game.dialogue.lines[this.game.dialogue.currentLine];
+            if (typeof nextLine === 'object' && nextLine.text) {
+                this.game.dialogue.fullText = nextLine.text;
+                this.game.dialogue.currentSpeaker = nextLine.speaker || this.game.dialogue.npcName || '???';
+            } else {
+                this.game.dialogue.fullText = nextLine;
+                this.game.dialogue.currentSpeaker = this.game.dialogue.npcName || '???';
+            }
+
+            // Update speaker name in UI
+            const dialogSpeaker = document.getElementById('dialogSpeaker');
+            if (dialogSpeaker) {
+                dialogSpeaker.textContent = this.game.dialogue.currentSpeaker;
+            }
         } else if (this.game.dialogue.choices) {
             // Show choices
             this.game.state = GameState.DIALOGUE_CHOICE;

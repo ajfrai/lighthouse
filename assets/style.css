@@ -98,6 +98,15 @@ body {
     text-shadow: 1px 1px 0 #1a1a2e;
 }
 
+#dialogSpeaker {
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 #dialogContent, #jobQuestion {
     margin-bottom: 15px;
     line-height: 1.5;
