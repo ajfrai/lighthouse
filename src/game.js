@@ -221,11 +221,24 @@ class LighthouseGame {
                 e.preventDefault();
                 const key = btn.dataset.key;
                 if (key) {
+                    // Set key state for movement
                     if (!this.keys[key]) {
                         this.keysPressed[key] = true;
                     }
                     this.keys[key] = true;
                     this.handleKeyPress(key);
+
+                    // ALSO dispatch keyboard event for dialogue choice navigation
+                    console.log(`[MobileControls] D-pad ${key} pressed - dispatching event`);
+                    const keydownEvent = new KeyboardEvent('keydown', {
+                        key: key,
+                        code: key === 'ArrowUp' ? 'ArrowUp' :
+                              key === 'ArrowDown' ? 'ArrowDown' :
+                              key === 'ArrowLeft' ? 'ArrowLeft' : 'ArrowRight',
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    document.dispatchEvent(keydownEvent);
                 } else if (btn.id === 'btnAction') {
                     // Dispatch real keyboard event so dialogueSystem can catch it
                     console.log('[MobileControls] A button pressed - dispatching "a" keydown event');

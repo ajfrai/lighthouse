@@ -24,42 +24,10 @@ class DialogueSystem {
     setupEventListeners() {
         console.log('[DialogueSystem] Setting up event listeners...');
 
-        const dialogBox = document.getElementById('dialogBox');
-        const dialogChoices = document.getElementById('dialogChoices');
-        const dialogClose = document.getElementById('dialogClose');
+        // MOBILE ONLY - All interaction through D-pad/A button
+        // No clicking on dialogue box or choices
 
-        // Click anywhere on dialog box to advance (when not showing choices)
-        dialogBox.addEventListener('click', (e) => {
-            // Don't advance if clicking on a choice or close button
-            if (e.target.closest('.choice') || e.target === dialogClose) {
-                return;
-            }
-
-            if (this.game.state === GameState.DIALOGUE) {
-                this.advanceDialogue();
-            }
-        });
-
-        // Event delegation for choices - handle clicks on any .choice element
-        dialogChoices.addEventListener('click', (e) => {
-            const choiceElement = e.target.closest('.choice');
-            if (!choiceElement) return;
-
-            const choiceIndex = parseInt(choiceElement.dataset.index);
-            if (!isNaN(choiceIndex)) {
-                this.game.dialogue.selectedChoice = choiceIndex;
-                this.selectDialogueChoice();
-            }
-        });
-
-        // Close button
-        if (dialogClose) {
-            dialogClose.addEventListener('click', () => {
-                this.endDialogue();
-            });
-        }
-
-        // Keyboard support
+        // Keyboard support (mobile buttons dispatch keyboard events)
         document.addEventListener('keydown', (e) => {
             console.log(`[DialogueSystem] Keydown event: key="${e.key}", state=${this.game.state}, DIALOGUE=${GameState.DIALOGUE}`);
 
