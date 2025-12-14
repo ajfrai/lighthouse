@@ -472,17 +472,42 @@ class LighthouseGame {
     }
 
     showBoatDialogue() {
-        const progress = `${this.boatQuest.planks.collected}/${this.boatQuest.planks.required} planks, ${this.boatQuest.rope.collected}/${this.boatQuest.rope.required} rope`;
+        // Boat ready - departure time
+        if (this.plotPhase === 'boat_ready') {
+            this.showDialog("The boat is repaired and ready. Storm's coming—it's time to leave.");
+            return;
+        }
 
-        const dialogue = this.plotPhase === 'boat_ready'
-            ? "The boat is repaired and ready to sail! The storm approaches—it's time to depart."
-            : `The old fishing boat needs repairs before it can sail. You need: ${progress}. Earn coins from jobs to buy supplies at the shop.`;
+        // Narrative examination based on repair progress
+        const planksProgress = this.boatQuest.planks.collected / this.boatQuest.planks.required;
+        const ropeProgress = this.boatQuest.rope.collected / this.boatQuest.rope.required;
+
+        let dialogue;
+
+        if (planksProgress < 0.25 && ropeProgress < 0.25) {
+            // Early state - barely started
+            dialogue = "The boat's hull is cracked and weathered. Most of the planks are rotted through. The rigging is gone—you'd need rope, and a lot of it.";
+        } else if (planksProgress < 0.5) {
+            // Started on planks
+            dialogue = "You've replaced a few planks, but there's still a lot of work ahead. The hull won't hold without more.";
+        } else if (planksProgress < 0.75) {
+            // Good progress on planks
+            dialogue = "The hull is taking shape. You still need more planks, though. And all that rigging to replace.";
+        } else if (planksProgress >= 0.75 && ropeProgress < 0.5) {
+            // Planks almost done, rope needed
+            dialogue = "Most of the hull is repaired. Just a few more planks needed. But the rope situation—that'll take time.";
+        } else if (ropeProgress < 0.75) {
+            // Working on rope
+            dialogue = "The hull is solid now. You're making progress on the rigging, but you'll need more rope before this boat can sail.";
+        } else {
+            // Nearly complete
+            dialogue = "Almost there. Just a little more rope and Callum can finish the rigging. Won't be long now.";
+        }
 
         this.showDialog(dialogue);
     }
 
     showBoatQuestExplanation() {
-        // Called from Callum's dialogue to explain the boat quest
         this.startDialogue([
             "The boat. Everyone knows about the boat.",
             "Old ferry that runs up the coast. Been sitting broken for months.",
@@ -525,22 +550,13 @@ class LighthouseGame {
         }]);
     }
 
-    // New dialogue system with typewriter effect (delegated to dialogueSystem)
-    // Wrapper methods are defined later near updateUI()
-
-    // Old dialogue/quest methods removed - now in subsystems
-
-    // All dialogue and quest methods now in subsystems (dialogueSystem.js, questSystem.js)
-    // Legacy/shop/job methods below
-
+    // Menu system (placeholder - full implementation pending)
     openMenu() {
         this.state = GameState.MENU;
-        // TODO: Implement menu UI
     }
 
     closeMenu() {
         this.state = GameState.EXPLORING;
-        // TODO: Hide menu UI
     }
 
     closeShop() {
@@ -660,21 +676,14 @@ class LighthouseGame {
     }
 
     checkCreatureEncounter() {
-        // Scripted first encounter - narrative driven (only for Lumina)
+        // Scripted first encounter (Lumina in tall grass)
         if (this.plotPhase === PlotPhase.FIND_CREATURE && !this.firstEncounterTriggered) {
-            // Specific trigger zone in tall grass (center of tall grass area)
-            const triggerZone = {
-                x: 19,
-                y: 11,
-                width: 2,
-                height: 2
-            };
+            const FIRST_ENCOUNTER_ZONE = { x: 19, y: 11, width: 2, height: 2 };
 
-            // Check if player is in the trigger zone
-            if (this.player.x >= triggerZone.x &&
-                this.player.x < triggerZone.x + triggerZone.width &&
-                this.player.y >= triggerZone.y &&
-                this.player.y < triggerZone.y + triggerZone.height) {
+            if (this.player.x >= FIRST_ENCOUNTER_ZONE.x &&
+                this.player.x < FIRST_ENCOUNTER_ZONE.x + FIRST_ENCOUNTER_ZONE.width &&
+                this.player.y >= FIRST_ENCOUNTER_ZONE.y &&
+                this.player.y < FIRST_ENCOUNTER_ZONE.y + FIRST_ENCOUNTER_ZONE.height) {
 
                 this.firstEncounterTriggered = true;
                 this.startFirstCreatureEncounter();
@@ -682,8 +691,7 @@ class LighthouseGame {
             }
         }
 
-        // Habitat-based random encounters (for all creatures)
-        // Disabled during scripted encounter
+        // Random habitat-based encounters (disabled during scripted sequence)
         if (!this.encounterState || !this.encounterState.active) {
             this.checkRandomEncounter();
         }
@@ -777,14 +785,13 @@ class LighthouseGame {
         this.updateUI();
     }
 
-    // ===== FIRST CREATURE ENCOUNTER - NARRATIVE SEQUENCE =====
-
+    // First Creature Encounter - Narrative Sequence
     startFirstCreatureEncounter() {
         this.encounterState = {
             step: 'intro',
             choice: null,
             creatureName: '',
-            active: true  // Disable random encounters during scripted sequence
+            active: true
         };
 
         // Show first narrative sequence
