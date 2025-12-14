@@ -111,11 +111,25 @@ class DialogueSystem {
             this.game.dialogue.currentText = '';
             this.game.dialogue.fullText = this.game.dialogue.lines[this.game.dialogue.currentLine];
         } else if (this.game.dialogue.choices) {
-            // Show choices
-            this.game.state = GameState.DIALOGUE_CHOICE;
-            this.showDialogueChoices();
+            // Check for single choice - auto-advance after short delay
+            if (this.game.dialogue.choices.length === 1) {
+                this.game.state = GameState.DIALOGUE_CHOICE;
+                this.showDialogueChoices();
+                // Auto-select single choice after brief delay
+                setTimeout(() => {
+                    if (this.game.state === GameState.DIALOGUE_CHOICE &&
+                        this.game.dialogue.choices &&
+                        this.game.dialogue.choices.length === 1) {
+                        this.selectDialogueChoice();
+                    }
+                }, 300);
+            } else {
+                // Show choices for user to select
+                this.game.state = GameState.DIALOGUE_CHOICE;
+                this.showDialogueChoices();
+            }
         } else {
-            // End dialogue
+            // End dialogue - return to previous state
             this.endDialogue();
         }
     }
@@ -145,16 +159,44 @@ class DialogueSystem {
 
     selectDialogueChoice() {
         const choice = this.game.dialogue.choices[this.game.dialogue.selectedChoice];
+
+        // Store current dialogue state before action
+        const wasActive = this.game.dialogue.active;
+
+        // Execute action (might start new dialogue or change state)
         if (choice.action) {
             choice.action.call(this.game);
         }
-        this.endDialogue();
+
+        // Only end dialogue if action didn't start new dialogue
+        // This prevents race condition where endDialogue overwrites action's state changes
+        if (wasActive && !this.game.dialogue.active) {
+            // Action explicitly ended dialogue, respect that
+            this.clearDialogueUI();
+        } else if (wasActive && this.game.dialogue.active) {
+            // Action started new dialogue, let it continue
+            // Don't call endDialogue() - would override the new dialogue
+        } else {
+            // Normal case: close the dialogue
+            this.endDialogue();
+        }
     }
 
     endDialogue() {
+        // Mark dialogue as inactive
         this.game.dialogue.active = false;
-        this.game.state = GameState.EXPLORING;
 
+        // Only set state to EXPLORING if not already in another state
+        // This prevents overwriting state changes made by dialogue actions
+        if (this.game.state === GameState.DIALOGUE ||
+            this.game.state === GameState.DIALOGUE_CHOICE) {
+            this.game.state = GameState.EXPLORING;
+        }
+
+        this.clearDialogueUI();
+    }
+
+    clearDialogueUI() {
         // Clear dialogue content
         const dialogContent = document.getElementById('dialogContent');
         const dialogChoices = document.getElementById('dialogChoices');
