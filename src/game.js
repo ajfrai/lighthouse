@@ -250,6 +250,20 @@ class LighthouseGame {
                         cancelable: true
                     });
                     document.dispatchEvent(keydownEvent);
+
+                    // CRITICAL: Dispatch keyup immediately after to prevent key staying "pressed"
+                    // This prevents player from walking left after dialogue ends
+                    setTimeout(() => {
+                        const keyupEvent = new KeyboardEvent('keyup', {
+                            key: 'a',
+                            code: 'KeyA',
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        document.dispatchEvent(keyupEvent);
+                        console.log('[MobileControls] Dispatched "a" keyup event (cleanup)');
+                    }, 50);
+
                     this.handleKeyPress('Enter');
                 }
             });
@@ -279,6 +293,19 @@ class LighthouseGame {
                         cancelable: true
                     });
                     document.dispatchEvent(keydownEvent);
+
+                    // CRITICAL: Dispatch keyup immediately after to prevent key staying "pressed"
+                    setTimeout(() => {
+                        const keyupEvent = new KeyboardEvent('keyup', {
+                            key: 'a',
+                            code: 'KeyA',
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        document.dispatchEvent(keyupEvent);
+                        console.log('[MobileControls] Dispatched "a" keyup event (cleanup)');
+                    }, 50);
+
                     this.handleKeyPress('Enter');
                 }
             });
