@@ -61,6 +61,8 @@ class LighthouseGame {
         this.questObjective = null;  // Current objective text to display
         this.firstEncounterTriggered = false;  // Track first narrative encounter
         this.encounterState = null;  // State for narrative encounter sequence
+        this.hasInspectedBoat = false;  // Track if player has examined the boat
+        this.npcInteractions = new Map();  // Track NPC conversations: Map<npcId, Set<plotPhase>>
 
         // Debug/Speed Run Mode
         const urlParams = new URLSearchParams(window.location.search);
@@ -487,6 +489,12 @@ class LighthouseGame {
         if (this.plotPhase === 'boat_ready') {
             this.showDialog("The boat is repaired and ready. Storm's coming—it's time to leave.");
             return;
+        }
+
+        // Mark boat as inspected (unlocks exercises with Callum)
+        if (!this.hasInspectedBoat && this.plotPhase === 'boat_quest') {
+            this.hasInspectedBoat = true;
+            console.log('[Game] Boat inspected - exercises now unlocked');
         }
 
         // Narrative examination based on repair progress

@@ -65,6 +65,24 @@ class DialogueSystem {
             const dialogue = npc.dialogues.find(d => d.condition(this.game));
 
             if (dialogue) {
+                // Track NPC interactions per phase
+                const interactionKey = `${npcId}_${this.game.plotPhase}`;
+                if (!this.game.npcInteractions.has(interactionKey)) {
+                    this.game.npcInteractions.set(interactionKey, 0);
+                }
+                const timesSpoken = this.game.npcInteractions.get(interactionKey);
+
+                // If already spoken AND has repeatText AND no choices/onClose, show short version
+                if (timesSpoken > 0 && dialogue.repeatText && !dialogue.choices && !dialogue.onClose) {
+                    console.log(`[DialogueSystem] Repeat interaction with ${npcId} in ${this.game.plotPhase} - showing short message`);
+                    this.startDialogue([dialogue.repeatText], null, null, npc.name);
+                    return;
+                }
+
+                // Mark as spoken (increment counter)
+                this.game.npcInteractions.set(interactionKey, timesSpoken + 1);
+                console.log(`[DialogueSystem] First/important interaction with ${npcId} in ${this.game.plotPhase} - showing full dialogue`);
+
                 const choices = dialogue.choices ? dialogue.choices.map(choice => ({
                     text: choice.text,
                     action: () => choice.action(this.game)
