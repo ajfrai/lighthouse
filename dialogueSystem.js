@@ -59,6 +59,7 @@ class DialogueSystem {
             if (this.game.state === GameState.DIALOGUE) {
                 // Space, Enter, or 'A' button to advance
                 if (e.key === ' ' || e.key === 'Enter' || e.key === 'a' || e.key === 'A') {
+                    console.log(`[DialogueSystem] Key "${e.key}" pressed in DIALOGUE state - advancing`);
                     e.preventDefault();
                     this.advanceDialogue();
                 }
@@ -169,6 +170,7 @@ class DialogueSystem {
     advanceDialogue() {
         // If typewriter still going, complete it instantly
         if (this.game.dialogue.textIndex < this.game.dialogue.fullText.length) {
+            console.log(`[DialogueSystem] Completing typewriter: "${this.game.dialogue.fullText}"`);
             this.game.dialogue.textIndex = this.game.dialogue.fullText.length;
             this.game.dialogue.currentText = this.game.dialogue.fullText;
             document.getElementById('dialogContent').textContent = this.game.dialogue.currentText;
@@ -176,6 +178,7 @@ class DialogueSystem {
         }
 
         // Move to next line
+        console.log(`[DialogueSystem] Advancing to next line (current: ${this.game.dialogue.currentLine}/${this.game.dialogue.lines.length})`);
         this.game.dialogue.currentLine++;
 
         if (this.game.dialogue.currentLine < this.game.dialogue.lines.length) {
