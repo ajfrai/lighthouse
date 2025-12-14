@@ -1,0 +1,27 @@
+# Development files
+node_modules/
+*.pyc
+__pycache__/
+.DS_Store
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Environment
+.env
+.env.local
+
+# Test output
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
