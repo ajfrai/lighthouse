@@ -481,6 +481,50 @@ class LighthouseGame {
         this.showDialog(dialogue);
     }
 
+    showBoatQuestExplanation() {
+        // Called from Callum's dialogue to explain the boat quest
+        this.startDialogue([
+            "The boat. Everyone knows about the boat.",
+            "Old ferry that runs up the coast. Been sitting broken for months.",
+            "You want to leave this rock, you need that boat working.",
+            "I can help with repairs. But I'll need things. And I don't work for free.",
+            "Here's what we need:",
+            "Planks. Driftwood works—there's plenty on the north shore.",
+            "Rope. You can buy it from Marina's shop, or make it from cliff hemp if you're patient.",
+            "And a compass. Can't navigate the coast without one. Marina sells those too.",
+            "The compass alone is 50 coin. So you better start working."
+        ], [
+            {
+                text: "I'll do it.",
+                action: () => {
+                    this.finishBoatQuestExplanation(false);
+                }
+            },
+            {
+                text: "That's a lot...",
+                action: () => {
+                    this.finishBoatQuestExplanation(true);
+                }
+            }
+        ]);
+    }
+
+    finishBoatQuestExplanation(showDoubtResponse) {
+        const finalLines = showDoubtResponse
+            ? [
+                "The sea doesn't care what's easy. You want off this island or not?",
+                "Talk to me when you want work. I pay fair for honest counting."
+            ]
+            : ["Talk to me when you want work. I pay fair for honest counting."];
+
+        this.startDialogue(finalLines, [{
+            text: "Okay",
+            action: () => {
+                this.plotPhase = PlotPhase.BOAT_QUEST_START;
+            }
+        }]);
+    }
+
     // New dialogue system with typewriter effect (delegated to dialogueSystem)
     // Wrapper methods are defined later near updateUI()
 
