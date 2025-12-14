@@ -618,20 +618,31 @@ class LighthouseGame {
     checkCreatureEncounter() {
         // Scripted first encounter - narrative driven (only for Lumina)
         if (this.plotPhase === PlotPhase.FIND_CREATURE && !this.firstEncounterTriggered) {
-            // Check if player is in tall grass (where Lumina appears)
-            const terrain = this.getTerrainAt(this.player.x, this.player.y);
-            if (terrain === 'tallgrass') {
-                // Random chance to trigger first encounter in tall grass
-                if (Math.random() < 0.15) {  // 15% chance per step
-                    this.firstEncounterTriggered = true;
-                    this.startFirstCreatureEncounter();
-                    return;
-                }
+            // Specific trigger zone in tall grass (center of tall grass area)
+            const triggerZone = {
+                x: 19,
+                y: 11,
+                width: 2,
+                height: 2
+            };
+
+            // Check if player is in the trigger zone
+            if (this.player.x >= triggerZone.x &&
+                this.player.x < triggerZone.x + triggerZone.width &&
+                this.player.y >= triggerZone.y &&
+                this.player.y < triggerZone.y + triggerZone.height) {
+
+                this.firstEncounterTriggered = true;
+                this.startFirstCreatureEncounter();
+                return;
             }
         }
 
         // Habitat-based random encounters (for all creatures)
-        this.checkRandomEncounter();
+        // Disabled during scripted encounter
+        if (!this.encounterState || !this.encounterState.active) {
+            this.checkRandomEncounter();
+        }
     }
 
     checkRandomEncounter() {
@@ -728,7 +739,8 @@ class LighthouseGame {
         this.encounterState = {
             step: 'intro',
             choice: null,
-            creatureName: ''
+            creatureName: '',
+            active: true  // Disable random encounters during scripted sequence
         };
 
         // Show first narrative sequence
@@ -833,21 +845,44 @@ class LighthouseGame {
         const input = document.getElementById('creatureNameInput');
         let name = input ? input.value.trim() : 'Shimmer';
 
-        // Validate name (letters only)
-        if (!name || !/^[A-Za-z]+$/.test(name)) {
+        // Validate name (letters only, 1-12 characters)
+        if (!name || !/^[A-Za-z]+$/.test(name) || name.length > 12) {
             name = 'Shimmer';
         }
 
-        // Add creature to party with custom name
-        const lumina = { ...CREATURES['lumina'] };
-        lumina.customName = name;
-        this.party.push(lumina);
+        // Add creature to party with stats
+        const creature = {
+            id: 'lumina',
+            name: name,
+            species: CREATURES['lumina'].name,
+            emoji: CREATURES['lumina'].emoji,
+            description: CREATURES['lumina'].description,
+            fact: CREATURES['lumina'].fact,
+            stats: {
+                heart: 20,
+                maxHeart: 20,
+                power: 6,
+                guard: 4,
+                speed: 10
+            },
+            isStarter: true
+        };
+        this.party.push(creature);
 
         // Mark as discovered
-        this.discoverCreature('lumina');
+        this.discoveredCreatures.add('lumina');
+
+        // Update plot phase to return_to_keeper
+        this.plotPhase = PlotPhase.RETURN_TO_KEEPER;
+
+        // Mark encounter as complete
+        this.encounterState.active = false;
+
+        // Update UI
+        this.updateUI();
 
         // Show final message
-        this.showCreatureNarrative(`${name} looks up at you. You should tell the Keeper what you found.`, () => {
+        this.showCreatureNarrative(`${name} looks up at you. You should tell Marlowe what you found.`, () => {
             this.state = GameState.EXPLORING;
             document.getElementById('dialogBox').classList.add('hidden');
         });
