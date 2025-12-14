@@ -111,6 +111,7 @@ const MAP_DATA = {
         { type: 'npc', id: 'fisherman', x: 8, y: 7, sprite: 'down', charType: 'fisherman' },  // On the beach (west)
         { type: 'npc', id: 'scientist', x: 18, y: 24, sprite: 'up', charType: 'scientist' },  // In southern clearing
         { type: 'npc', id: 'mathTeacher', x: 9, y: 19, sprite: 'right', charType: 'teacher' },  // In western clearing
+        { type: 'npc', id: 'shopkeeper', x: 23, y: 20, sprite: 'down', charType: 'shopkeeper' },  // Near store
 
         // Store building (2x2 tiles)
         { type: 'store', x: 22, y: 18 },  // Near eastern path
@@ -503,27 +504,55 @@ const NPCS = {
                 text: [
                     "You're back. I can hear something with you.",
                     "What did you find?",
-                    "A creature? Interesting.",
-                    "There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light.",
-                    "Keep exploring—there may be more out there."
+                    // Next lines will be dynamically generated to show creature name
                 ],
                 choices: [
                     {
-                        text: "I'll keep looking",
+                        text: "Tell about the creature",
                         action: (game) => {
-                            game.plotPhase = 'meet_villager';
+                            // Get the creature's name from party
+                            const starter = game.party.find(c => c.isStarter);
+                            const creatureName = starter ? starter.name : 'Shimmer';
+
+                            // Show continuation with creature name
+                            game.startDialogue([
+                                `A creature. It was hurt. I think it trusts me now.`,
+                                "Injured and alone. Good thing you found it.",
+                                "What's its name?",
+                                `${creatureName}.`,
+                                `${creatureName}. A good name.`,
+                                "Listen—there's a fisherman in the village who might have work.",
+                                "We could use the coin. And you could use the experience.",
+                                "His name is Callum. Rough hands, good heart. Tell him I sent you.",
+                                "The village is south and west of here. Follow the path."
+                            ], [{
+                                text: "I'll go find him",
+                                action: () => {
+                                    game.plotPhase = 'meet_villager';
+                                }
+                            }]);
                         }
                     }
                 ]
             },
             {
-                condition: (game) => game.plotPhase === 'meet_villager' || game.plotPhase === 'boat_quest',
-                text: "The fisherman in the village might have work. He's rough but fair. Bring back what you earn—we'll need supplies for the boat.",
+                condition: (game) => game.plotPhase === 'meet_villager',
+                text: "The village is south and west. Look for Callum near the western clearing.",
                 choices: null
             },
             {
-                condition: (game) => game.plotPhase === 'working',
-                text: "The fisherman treats you fair? Good. Keep working—we'll need those coins for supplies.",
+                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.coins < 20,
+                text: "How's the work going? Money's tight, I know. One job at a time.",
+                choices: null
+            },
+            {
+                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.boatQuest && game.boatQuest.planks.collected >= 4,
+                text: "I heard you've been gathering driftwood. Good. That boat won't fix itself.",
+                choices: null
+            },
+            {
+                condition: (game) => game.plotPhase === 'boat_quest' || game.plotPhase === 'working',
+                text: "How's the work going? Callum's rough, but he's fair. Do good work and he'll pay honest.",
                 choices: null
             },
             {
@@ -544,9 +573,71 @@ const NPCS = {
         shop: true
     },
     mathTeacher: {
-        name: 'Callum the Fisherman',
-        type: 'quest_npc',
-        greeting: 'Ahoy! I need help with me fishing calculations.',
+        name: 'Callum',
+        type: 'dialogue_npc',
+        dialogues: [
+            {
+                condition: (game) => game.plotPhase === 'meet_villager',
+                text: [
+                    "Marlowe sent you? Hm. You're smaller than I expected.",
+                    "No matter. I've got work if you can count.",
+                    "But that's not why you're here, is it?"
+                ],
+                choices: [
+                    {
+                        text: "I need to earn money.",
+                        action: (game) => {
+                            game.showBoatQuestExplanation();
+                        }
+                    },
+                    {
+                        text: "Marlowe said you could help.",
+                        action: (game) => {
+                            game.showBoatQuestExplanation();
+                        }
+                    },
+                    {
+                        text: "What do you mean?",
+                        action: (game) => {
+                            game.showBoatQuestExplanation();
+                        }
+                    }
+                ]
+            },
+            {
+                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && (!game.completedQuests || game.completedQuests.size === 0),
+                text: "You want work? I've got fish that need counting.",
+                choices: [
+                    {
+                        text: "Show me the work",
+                        action: (game) => {
+                            game.questSystem.showQuestMenu('mathTeacher', NPCS.mathTeacher);
+                        }
+                    },
+                    {
+                        text: "Not right now",
+                        action: (game) => {}
+                    }
+                ]
+            },
+            {
+                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.completedQuests && game.completedQuests.size > 0,
+                text: "Back for more? Good. Let's see what we've got today.",
+                choices: [
+                    {
+                        text: "Show me the work",
+                        action: (game) => {
+                            game.questSystem.showQuestMenu('mathTeacher', NPCS.mathTeacher);
+                        }
+                    },
+                    {
+                        text: "Not right now",
+                        action: (game) => {}
+                    }
+                ]
+            }
+        ],
+        // Keep quest data for the quest system
         quests: {
             oneOff: ['fishing_crates', 'fishing_nets', 'fishing_baskets'],
             full: 'fishing_records'
