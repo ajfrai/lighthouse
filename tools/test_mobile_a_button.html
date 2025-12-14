@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile A Button Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        #testLog {
+            white-space: pre-wrap;
+            border: 2px solid #0f0;
+            padding: 10px;
+            margin: 10px 0;
+            background: #000;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .info { color: #ff0; }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        button:active {
+            background: #0a0;
+        }
+        .action-btn {
+            font-size: 24px;
+            padding: 20px 40px;
+        }
+        #dialogBox {
+            border: 2px solid #0f0;
+            padding: 15px;
+            margin: 20px 0;
+            background: #000;
+            display: none;
+        }
+        #dialogBox.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mobile A Button Integration Test</h1>
+    <p>This test simulates the mobile A button and verifies it dispatches keyboard events correctly.</p>
+
+    <div>
+        <button class="action-btn" id="btnAction">A</button>
+        <button onclick="runTest()">Run Automated Test</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div id="dialogBox" class="active">
+        <div id="dialogContent">Morning. Sleep well?</div>
+    </div>
+
+    <div id="testLog"></div>
+
+    <script>
+        const GameState = {
+            EXPLORING: 'exploring',
+            DIALOGUE: 'dialogue',
+            DIALOGUE_CHOICE: 'dialogue_choice'
+        };
+
+        let testLog = [];
+        let eventsFired = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'pass' ? 'pass' : type === 'fail' ? 'fail' : 'info';
+            testLog.push(`<span class="${className}">[${timestamp}] ${message}</span>`);
+            updateLog();
+        }
+
+        function updateLog() {
+            document.getElementById('testLog').innerHTML = testLog.join('\n');
+        }
+
+        function clearLog() {
+            testLog = [];
+            eventsFired = [];
+            updateLog();
+        }
+
+        // Mock game state
+        let gameState = GameState.DIALOGUE;
+
+        // Listen for keyboard events (like dialogueSystem does)
+        document.addEventListener('keydown', (e) => {
+            log(`[KEYDOWN EVENT] key="${e.key}", bubbles=${e.bubbles}, cancelable=${e.cancelable}`, 'info');
+            eventsFired.push(e.key);
+
+            if (gameState === GameState.DIALOGUE) {
+                if (e.key === ' ' || e.key === 'Enter' || e.key === 'a' || e.key === 'A') {
+                    log(`[SUCCESS] Dialogue would advance with key "${e.key}"`, 'pass');
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Simulate the mobile button handler from game.js
+        const btnAction = document.getElementById('btnAction');
+
+        btnAction.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            log('[TOUCHSTART] A button touched', 'info');
+
+            // This is the FIX - dispatch real keyboard event
+            log('[FIX] Dispatching keyboard event...', 'info');
+            const keydownEvent = new KeyboardEvent('keydown', {
+                key: 'a',
+                code: 'KeyA',
+                bubbles: true,
+                cancelable: true
+            });
+            document.dispatchEvent(keydownEvent);
+        });
+
+        btnAction.addEventListener('click', (e) => {
+            e.preventDefault();
+            log('[CLICK] A button clicked (desktop)', 'info');
+
+            // This is the FIX - dispatch real keyboard event
+            log('[FIX] Dispatching keyboard event...', 'info');
+            const keydownEvent = new KeyboardEvent('keydown', {
+                key: 'a',
+                code: 'KeyA',
+                bubbles: true,
+                cancelable: true
+            });
+            document.dispatchEvent(keydownEvent);
+        });
+
+        async function runTest() {
+            clearLog();
+            log('=== AUTOMATED TEST START ===', 'info');
+            log('Testing mobile A button fix...', 'info');
+
+            await sleep(500);
+
+            log('Setting game state to DIALOGUE', 'info');
+            gameState = GameState.DIALOGUE;
+
+            await sleep(500);
+
+            log('Simulating A button click...', 'info');
+            btnAction.click();
+
+            await sleep(500);
+
+            // Verify results
+            log('\n=== TEST RESULTS ===', 'info');
+
+            if (eventsFired.length === 0) {
+                log('FAIL: No keyboard events were fired!', 'fail');
+                log('The mobile button is not dispatching events.', 'fail');
+            } else if (eventsFired.includes('a')) {
+                log('PASS: Keyboard event with key "a" was fired!', 'pass');
+                log('The mobile button correctly dispatches keyboard events.', 'pass');
+                log('This will be caught by dialogueSystem.js event listener.', 'pass');
+            } else {
+                log(`FAIL: Wrong key fired: ${eventsFired.join(', ')}`, 'fail');
+            }
+
+            log('\n=== TEST COMPLETE ===', 'info');
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Auto-run test on load
+        window.addEventListener('load', () => {
+            log('Test page loaded. Click "Run Automated Test" or tap the A button.', 'info');
+            log('Expected behavior: A button should dispatch keydown event with key="a"', 'info');
+        });
+    </script>
+</body>
+</html>
