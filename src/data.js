@@ -478,6 +478,7 @@ const NPCS = {
             {
                 condition: (game) => game.plotPhase === 'find_creature',
                 text: "Find anything yet? The path leads to the tall grass. Something's out there, I'm certain.",
+                repeatText: "Still searching? Check the tall grass.",
                 choices: null  // Just dismisses
             },
             {
@@ -508,10 +509,10 @@ const NPCS = {
                         { speaker: "Marlowe", text: "Does it have a name?" },
                         { speaker: "You", text: `I call it ${creatureName}.` },
                         { speaker: "Marlowe", text: `${creatureName}. Good name.` },
-                        { speaker: "Marlowe", text: "Listen—there's a fisherman in the village who might have work." },
+                        { speaker: "Marlowe", text: "Listen—there's a fisherman nearby who might have work." },
                         { speaker: "Marlowe", text: "We could use the coin. You could use the experience." },
                         { speaker: "Marlowe", text: "His name is Callum. Rough hands, good heart." },
-                        { speaker: "Marlowe", text: "Tell him I sent you. The village is south and west of here." }
+                        { speaker: "Marlowe", text: "You'll find him just down the path from here." }
                     ];
                 },
                 choices: null,
@@ -522,31 +523,37 @@ const NPCS = {
             {
                 condition: (game) => game.plotPhase === 'meet_villager',
                 text: "The village is south and west. Look for Callum near the western clearing.",
+                repeatText: "Find Callum. He'll have work for you.",
                 choices: null
             },
             {
                 condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.coins < 20,
                 text: "How's the work going? Money's tight, I know. One job at a time.",
+                repeatText: "Keep working. The coin will come.",
                 choices: null
             },
             {
                 condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.boatQuest && game.boatQuest.planks.collected >= 4,
                 text: "I heard you've been gathering driftwood. Good. That boat won't fix itself.",
+                repeatText: "Good progress on those planks.",
                 choices: null
             },
             {
                 condition: (game) => game.plotPhase === 'boat_quest' || game.plotPhase === 'working',
                 text: "How's the work going? Callum's rough, but he's fair. Do good work and he'll pay honest.",
+                repeatText: "Keep at it. You're doing well.",
                 choices: null
             },
             {
                 condition: (game) => game.plotPhase === 'boat_ready',
                 text: "Storm's coming. I'd estimate three days, maybe four. Can you feel the pressure in the air? My ears tell me what my eyes can't.",
+                repeatText: "The storm's getting closer.",
                 choices: null
             },
             {
                 condition: (game) => game.plotPhase === 'departure',
                 text: "Time to set sail. The storm approaches, but we're ready.",
+                repeatText: "Time to leave this island behind.",
                 choices: null
             }
         ]
@@ -576,7 +583,13 @@ const NPCS = {
                 }
             },
             {
-                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && (!game.completedQuests || game.completedQuests.size === 0),
+                condition: (game) => game.plotPhase === 'boat_quest' && !game.hasInspectedBoat,
+                text: "Go take a look at the boat first. It's on the western shore. You'll see what we're working with.",
+                repeatText: "Check the boat on the western shore.",
+                choices: null
+            },
+            {
+                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.hasInspectedBoat && (!game.completedQuests || game.completedQuests.size === 0),
                 text: "You want work? I've got fish that need counting.",
                 choices: [
                     {
@@ -592,7 +605,7 @@ const NPCS = {
                 ]
             },
             {
-                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.completedQuests && game.completedQuests.size > 0,
+                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.hasInspectedBoat && game.completedQuests && game.completedQuests.size > 0,
                 text: "Back for more? Good. Let's see what we've got today.",
                 choices: [
                     {

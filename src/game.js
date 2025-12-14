@@ -61,6 +61,8 @@ class LighthouseGame {
         this.questObjective = null;  // Current objective text to display
         this.firstEncounterTriggered = false;  // Track first narrative encounter
         this.encounterState = null;  // State for narrative encounter sequence
+        this.hasInspectedBoat = false;  // Track if player has examined the boat
+        this.npcInteractions = new Map();  // Track NPC conversations: Map<npcId, Set<plotPhase>>
 
         // Debug/Speed Run Mode
         const urlParams = new URLSearchParams(window.location.search);
@@ -221,11 +223,24 @@ class LighthouseGame {
                 e.preventDefault();
                 const key = btn.dataset.key;
                 if (key) {
+                    // Set key state for movement
                     if (!this.keys[key]) {
                         this.keysPressed[key] = true;
                     }
                     this.keys[key] = true;
                     this.handleKeyPress(key);
+
+                    // ALSO dispatch keyboard event for dialogue choice navigation
+                    console.log(`[MobileControls] D-pad ${key} pressed - dispatching event`);
+                    const keydownEvent = new KeyboardEvent('keydown', {
+                        key: key,
+                        code: key === 'ArrowUp' ? 'ArrowUp' :
+                              key === 'ArrowDown' ? 'ArrowDown' :
+                              key === 'ArrowLeft' ? 'ArrowLeft' : 'ArrowRight',
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    document.dispatchEvent(keydownEvent);
                 } else if (btn.id === 'btnAction') {
                     // Dispatch real keyboard event so dialogueSystem can catch it
                     console.log('[MobileControls] A button pressed - dispatching "a" keydown event');
@@ -263,38 +278,8 @@ class LighthouseGame {
                 }
             });
 
-            // Also support click events for desktop testing
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const key = btn.dataset.key;
-                if (key) {
-                    this.handleKeyPress(key);
-                } else if (btn.id === 'btnAction') {
-                    // Dispatch real keyboard event so dialogueSystem can catch it
-                    console.log('[MobileControls] A button clicked - dispatching "a" keydown event');
-                    const keydownEvent = new KeyboardEvent('keydown', {
-                        key: 'a',
-                        code: 'KeyA',
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    document.dispatchEvent(keydownEvent);
-
-                    // CRITICAL: Dispatch keyup immediately after to prevent key staying "pressed"
-                    setTimeout(() => {
-                        const keyupEvent = new KeyboardEvent('keyup', {
-                            key: 'a',
-                            code: 'KeyA',
-                            bubbles: true,
-                            cancelable: true
-                        });
-                        document.dispatchEvent(keyupEvent);
-                        console.log('[MobileControls] Dispatched "a" keyup event (cleanup)');
-                    }, 50);
-
-                    this.handleKeyPress('Enter');
-                }
-            });
+            // MOBILE ONLY - No click handler needed
+            // touchstart/touchend handles everything
         });
     }
 
@@ -504,6 +489,12 @@ class LighthouseGame {
         if (this.plotPhase === 'boat_ready') {
             this.showDialog("The boat is repaired and ready. Storm's coming—it's time to leave.");
             return;
+        }
+
+        // Mark boat as inspected (unlocks exercises with Callum)
+        if (!this.hasInspectedBoat && this.plotPhase === 'boat_quest') {
+            this.hasInspectedBoat = true;
+            console.log('[Game] Boat inspected - exercises now unlocked');
         }
 
         // Narrative examination based on repair progress
