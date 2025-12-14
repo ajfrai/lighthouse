@@ -482,7 +482,6 @@ class LighthouseGame {
     }
 
     showBoatQuestExplanation() {
-        // Called from Callum's dialogue to explain the boat quest
         this.startDialogue([
             "The boat. Everyone knows about the boat.",
             "Old ferry that runs up the coast. Been sitting broken for months.",
@@ -525,22 +524,13 @@ class LighthouseGame {
         }]);
     }
 
-    // New dialogue system with typewriter effect (delegated to dialogueSystem)
-    // Wrapper methods are defined later near updateUI()
-
-    // Old dialogue/quest methods removed - now in subsystems
-
-    // All dialogue and quest methods now in subsystems (dialogueSystem.js, questSystem.js)
-    // Legacy/shop/job methods below
-
+    // Menu system (placeholder - full implementation pending)
     openMenu() {
         this.state = GameState.MENU;
-        // TODO: Implement menu UI
     }
 
     closeMenu() {
         this.state = GameState.EXPLORING;
-        // TODO: Hide menu UI
     }
 
     closeShop() {
@@ -660,21 +650,14 @@ class LighthouseGame {
     }
 
     checkCreatureEncounter() {
-        // Scripted first encounter - narrative driven (only for Lumina)
+        // Scripted first encounter (Lumina in tall grass)
         if (this.plotPhase === PlotPhase.FIND_CREATURE && !this.firstEncounterTriggered) {
-            // Specific trigger zone in tall grass (center of tall grass area)
-            const triggerZone = {
-                x: 19,
-                y: 11,
-                width: 2,
-                height: 2
-            };
+            const FIRST_ENCOUNTER_ZONE = { x: 19, y: 11, width: 2, height: 2 };
 
-            // Check if player is in the trigger zone
-            if (this.player.x >= triggerZone.x &&
-                this.player.x < triggerZone.x + triggerZone.width &&
-                this.player.y >= triggerZone.y &&
-                this.player.y < triggerZone.y + triggerZone.height) {
+            if (this.player.x >= FIRST_ENCOUNTER_ZONE.x &&
+                this.player.x < FIRST_ENCOUNTER_ZONE.x + FIRST_ENCOUNTER_ZONE.width &&
+                this.player.y >= FIRST_ENCOUNTER_ZONE.y &&
+                this.player.y < FIRST_ENCOUNTER_ZONE.y + FIRST_ENCOUNTER_ZONE.height) {
 
                 this.firstEncounterTriggered = true;
                 this.startFirstCreatureEncounter();
@@ -682,8 +665,7 @@ class LighthouseGame {
             }
         }
 
-        // Habitat-based random encounters (for all creatures)
-        // Disabled during scripted encounter
+        // Random habitat-based encounters (disabled during scripted sequence)
         if (!this.encounterState || !this.encounterState.active) {
             this.checkRandomEncounter();
         }
@@ -777,14 +759,13 @@ class LighthouseGame {
         this.updateUI();
     }
 
-    // ===== FIRST CREATURE ENCOUNTER - NARRATIVE SEQUENCE =====
-
+    // First Creature Encounter - Narrative Sequence
     startFirstCreatureEncounter() {
         this.encounterState = {
             step: 'intro',
             choice: null,
             creatureName: '',
-            active: true  // Disable random encounters during scripted sequence
+            active: true
         };
 
         // Show first narrative sequence

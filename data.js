@@ -503,8 +503,7 @@ const NPCS = {
                 condition: (game) => game.plotPhase === 'return_keeper',
                 text: [
                     "You're back. I can hear something with you.",
-                    "What did you find?",
-                    // Next lines will be dynamically generated to show creature name
+                    "What did you find?"
                 ],
                 choices: [
                     {
