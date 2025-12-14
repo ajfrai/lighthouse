@@ -61,12 +61,22 @@
         <!-- Debug Menu Button -->
         <div id="debugMenuBtn" class="debug-menu-btn">⚙️</div>
 
+        <!-- In-Game Debug Console (visible on screen) -->
+        <div id="debugConsole" class="debug-console hidden">
+            <div class="debug-console-header">
+                Debug Console
+                <button id="debugConsoleClose" class="debug-console-close">×</button>
+            </div>
+            <div id="debugConsoleContent"></div>
+        </div>
+
         <!-- Debug Menu Modal -->
         <div id="debugMenu" class="hidden">
             <h2>Debug Menu</h2>
             <div class="debug-controls">
                 <button id="toggleSpeedRun" class="debug-btn">Speed Run: OFF</button>
                 <button id="toggleDebugInfo" class="debug-btn">Debug Info: OFF</button>
+                <button id="toggleDebugConsole" class="debug-btn">Debug Console: OFF</button>
                 <button id="teleportLumina" class="debug-btn">Teleport to Lumina</button>
                 <div class="phase-jumps">
                     <h3>Jump to Phase:</h3>
@@ -85,6 +95,7 @@
         </div>
     </div>
 
+    <script src="src/debugLogger.js"></script>
     <script src="src/data.js"></script>
     <script src="src/spriteLoader.js"></script>
     <script src="src/questSystem.js"></script>
