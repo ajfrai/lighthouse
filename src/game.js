@@ -156,6 +156,21 @@ class LighthouseGame {
             this.updateDebugMenuButtons();
         });
 
+        // Debug Console toggle
+        document.getElementById('toggleDebugConsole').addEventListener('click', (e) => {
+            const enabled = debugLogger.toggle();
+            this.updateDebugMenuButtons();
+        });
+
+        // Debug Console close button
+        const debugConsoleClose = document.getElementById('debugConsoleClose');
+        if (debugConsoleClose) {
+            debugConsoleClose.addEventListener('click', () => {
+                debugLogger.toggle();
+                this.updateDebugMenuButtons();
+            });
+        }
+
         // Teleport to Lumina
         document.getElementById('teleportLumina').addEventListener('click', () => {
             const lumimaObj = this.map.objects.find(obj => obj.id === 'lumina');
@@ -170,12 +185,16 @@ class LighthouseGame {
     updateDebugMenuButtons() {
         const speedRunBtn = document.getElementById('toggleSpeedRun');
         const debugInfoBtn = document.getElementById('toggleDebugInfo');
+        const debugConsoleBtn = document.getElementById('toggleDebugConsole');
 
         speedRunBtn.textContent = `Speed Run: ${this.speedRunMode ? 'ON' : 'OFF'}`;
         speedRunBtn.classList.toggle('active', this.speedRunMode);
 
         debugInfoBtn.textContent = `Debug Info: ${this.showDebugInfo ? 'ON' : 'OFF'}`;
         debugInfoBtn.classList.toggle('active', this.showDebugInfo);
+
+        debugConsoleBtn.textContent = `Debug Console: ${debugLogger.enabled ? 'ON' : 'OFF'}`;
+        debugConsoleBtn.classList.toggle('active', debugLogger.enabled);
     }
 
     jumpToPhase(phaseIndex) {
