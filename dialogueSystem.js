@@ -57,7 +57,8 @@ class DialogueSystem {
         // Keyboard support
         document.addEventListener('keydown', (e) => {
             if (this.game.state === GameState.DIALOGUE) {
-                if (e.key === ' ' || e.key === 'Enter') {
+                // Space, Enter, or 'A' button to advance
+                if (e.key === ' ' || e.key === 'Enter' || e.key === 'a' || e.key === 'A') {
                     e.preventDefault();
                     this.advanceDialogue();
                 }
@@ -90,8 +91,16 @@ class DialogueSystem {
                     action: () => choice.action(this.game)
                 })) : null;
 
-                const lines = Array.isArray(dialogue.text) ? dialogue.text : [dialogue.text];
-                this.startDialogue(lines, choices);
+                // Support dynamic text (function that returns array/string)
+                let textContent = dialogue.text;
+                if (typeof textContent === 'function') {
+                    textContent = textContent(this.game);
+                }
+
+                const lines = Array.isArray(textContent) ? textContent : [textContent];
+                const onClose = dialogue.onClose || null;
+
+                this.startDialogue(lines, choices, onClose);
             } else {
                 this.showDialog("...");
             }
@@ -118,7 +127,7 @@ class DialogueSystem {
         this.startDialogue([message]);
     }
 
-    startDialogue(lines, choices = null) {
+    startDialogue(lines, choices = null, onClose = null) {
         this.game.state = GameState.DIALOGUE;
         this.game.dialogue.active = true;
         this.game.dialogue.lines = Array.isArray(lines) ? lines : [lines];
@@ -128,6 +137,7 @@ class DialogueSystem {
         this.game.dialogue.fullText = this.game.dialogue.lines[0];
         this.game.dialogue.choices = choices;
         this.game.dialogue.selectedChoice = 0;
+        this.game.dialogue.onClose = onClose;
 
         const dialogBox = document.getElementById('dialogBox');
         const dialogClose = document.getElementById('dialogClose');
@@ -246,6 +256,13 @@ class DialogueSystem {
     }
 
     endDialogue() {
+        // Execute onClose handler if present (before clearing state)
+        if (this.game.dialogue.onClose) {
+            const onCloseHandler = this.game.dialogue.onClose;
+            this.game.dialogue.onClose = null;  // Clear it first
+            onCloseHandler(this.game);
+        }
+
         this.game.dialogue.active = false;
 
         // Only set to EXPLORING if currently in dialogue

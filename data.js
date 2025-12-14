@@ -469,15 +469,11 @@ const NPCS = {
                     "Take the path toward the tall grass. Be careful.",
                     "Come back and tell me what you find."
                 ],
-                choices: [
-                    {
-                        text: "I'll go look for it",
-                        action: (game) => {
-                            game.plotPhase = 'find_creature';
-                            game.firstEncounterTriggered = false;
-                        }
-                    }
-                ]
+                choices: null,
+                onClose: (game) => {
+                    game.plotPhase = 'find_creature';
+                    game.firstEncounterTriggered = false;
+                }
             },
             {
                 condition: (game) => game.plotPhase === 'find_creature',
@@ -490,49 +486,36 @@ const NPCS = {
                     "You found something, didn't you? I can tell by your footsteps.",
                     "Tell me about it."
                 ],
-                choices: [
-                    {
-                        text: "I found a creature!",
-                        action: (game) => {
-                            game.plotPhase = 'return_keeper';
-                        }
-                    }
-                ]
+                choices: null,
+                onClose: (game) => {
+                    game.plotPhase = 'return_keeper';
+                }
             },
             {
                 condition: (game) => game.plotPhase === 'return_keeper',
-                text: [
-                    "You're back. I can hear something with you.",
-                    "What did you find?"
-                ],
-                choices: [
-                    {
-                        text: "Tell about the creature",
-                        action: (game) => {
-                            // Get the creature's name from party
-                            const starter = game.party.find(c => c.isStarter);
-                            const creatureName = starter ? starter.name : 'Shimmer';
+                text: (game) => {
+                    // Get the creature's name from party
+                    const starter = game.party.find(c => c.isStarter);
+                    const creatureName = starter ? starter.name : 'Shimmer';
 
-                            // Show continuation with creature name
-                            game.startDialogue([
-                                `A creature. It was hurt. I think it trusts me now.`,
-                                "Injured and alone. Good thing you found it.",
-                                "What's its name?",
-                                `${creatureName}.`,
-                                `${creatureName}. A good name.`,
-                                "Listen—there's a fisherman in the village who might have work.",
-                                "We could use the coin. And you could use the experience.",
-                                "His name is Callum. Rough hands, good heart. Tell him I sent you.",
-                                "The village is south and west of here. Follow the path."
-                            ], [{
-                                text: "I'll go find him",
-                                action: () => {
-                                    game.plotPhase = 'meet_villager';
-                                }
-                            }]);
-                        }
-                    }
-                ]
+                    return [
+                        "You're back. I can hear something with you.",
+                        "What did you find?",
+                        "You tell Marlowe about the injured creature.",
+                        "Injured and alone. Good thing you found it.",
+                        "What's its name?",
+                        `${creatureName}.`,
+                        `${creatureName}. A good name.`,
+                        "Listen—there's a fisherman in the village who might have work.",
+                        "We could use the coin. And you could use the experience.",
+                        "His name is Callum. Rough hands, good heart. Tell him I sent you.",
+                        "The village is south and west of here. Follow the path."
+                    ];
+                },
+                choices: null,
+                onClose: (game) => {
+                    game.plotPhase = 'meet_villager';
+                }
             },
             {
                 condition: (game) => game.plotPhase === 'meet_villager',
@@ -583,14 +566,10 @@ const NPCS = {
                     "But that's not why you're here, is it?",
                     "You need to leave the island. Everyone does, eventually."
                 ],
-                choices: [
-                    {
-                        text: "How do I get off the island?",
-                        action: (game) => {
-                            game.showBoatQuestExplanation();
-                        }
-                    }
-                ]
+                choices: null,
+                onClose: (game) => {
+                    game.showBoatQuestExplanation();
+                }
             },
             {
                 condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && (!game.completedQuests || game.completedQuests.size === 0),
