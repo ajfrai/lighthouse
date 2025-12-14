@@ -403,7 +403,7 @@ const QUESTS = {
         steps: [
             {
                 type: 'visit_location',
-                description: 'Go WEST to the beach nets (pulsing 🎣 marker shows the way)',
+                description: 'Check the nets on the western beach',
                 location: { x: 6, y: 8 },
                 radius: 2,
                 markerText: '🎣',
@@ -419,7 +419,7 @@ const QUESTS = {
             },
             {
                 type: 'visit_location',
-                description: 'Go EAST to the shore nets (pulsing 🎣 marker shows the way)',
+                description: 'Check the nets on the eastern shore',
                 location: { x: 25, y: 8 },
                 radius: 2,
                 markerText: '🎣',
@@ -435,7 +435,7 @@ const QUESTS = {
             },
             {
                 type: 'visit_location',
-                description: 'Check the boat storage on WEST beach (pulsing 📦 marker shows the way)',
+                description: 'Check the storage in the boat on the western beach',
                 location: { x: 5, y: 7 },
                 radius: 2,
                 markerText: '📦',
@@ -580,23 +580,12 @@ const NPCS = {
                 text: [
                     "Marlowe sent you? Hm. You're smaller than I expected.",
                     "No matter. I've got work if you can count.",
-                    "But that's not why you're here, is it?"
+                    "But that's not why you're here, is it?",
+                    "You need to leave the island. Everyone does, eventually."
                 ],
                 choices: [
                     {
-                        text: "I need to earn money.",
-                        action: (game) => {
-                            game.showBoatQuestExplanation();
-                        }
-                    },
-                    {
-                        text: "Marlowe said you could help.",
-                        action: (game) => {
-                            game.showBoatQuestExplanation();
-                        }
-                    },
-                    {
-                        text: "What do you mean?",
+                        text: "How do I get off the island?",
                         action: (game) => {
                             game.showBoatQuestExplanation();
                         }

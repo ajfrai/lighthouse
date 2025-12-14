@@ -472,11 +472,37 @@ class LighthouseGame {
     }
 
     showBoatDialogue() {
-        const progress = `${this.boatQuest.planks.collected}/${this.boatQuest.planks.required} planks, ${this.boatQuest.rope.collected}/${this.boatQuest.rope.required} rope`;
+        // Boat ready - departure time
+        if (this.plotPhase === 'boat_ready') {
+            this.showDialog("The boat is repaired and ready. Storm's coming—it's time to leave.");
+            return;
+        }
 
-        const dialogue = this.plotPhase === 'boat_ready'
-            ? "The boat is repaired and ready to sail! The storm approaches—it's time to depart."
-            : `The old fishing boat needs repairs before it can sail. You need: ${progress}. Earn coins from jobs to buy supplies at the shop.`;
+        // Narrative examination based on repair progress
+        const planksProgress = this.boatQuest.planks.collected / this.boatQuest.planks.required;
+        const ropeProgress = this.boatQuest.rope.collected / this.boatQuest.rope.required;
+
+        let dialogue;
+
+        if (planksProgress < 0.25 && ropeProgress < 0.25) {
+            // Early state - barely started
+            dialogue = "The boat's hull is cracked and weathered. Most of the planks are rotted through. The rigging is gone—you'd need rope, and a lot of it.";
+        } else if (planksProgress < 0.5) {
+            // Started on planks
+            dialogue = "You've replaced a few planks, but there's still a lot of work ahead. The hull won't hold without more.";
+        } else if (planksProgress < 0.75) {
+            // Good progress on planks
+            dialogue = "The hull is taking shape. You still need more planks, though. And all that rigging to replace.";
+        } else if (planksProgress >= 0.75 && ropeProgress < 0.5) {
+            // Planks almost done, rope needed
+            dialogue = "Most of the hull is repaired. Just a few more planks needed. But the rope situation—that'll take time.";
+        } else if (ropeProgress < 0.75) {
+            // Working on rope
+            dialogue = "The hull is solid now. You're making progress on the rigging, but you'll need more rope before this boat can sail.";
+        } else {
+            // Nearly complete
+            dialogue = "Almost there. Just a little more rope and Callum can finish the rigging. Won't be long now.";
+        }
 
         this.showDialog(dialogue);
     }
