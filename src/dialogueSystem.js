@@ -111,7 +111,7 @@ class DialogueSystem {
                 const lines = Array.isArray(textContent) ? textContent : [textContent];
                 const onClose = dialogue.onClose || null;
 
-                this.startDialogue(lines, choices, onClose);
+                this.startDialogue(lines, choices, onClose, npc.name);  // Pass NPC name
             } else {
                 this.showDialog("...");
             }
@@ -138,20 +138,37 @@ class DialogueSystem {
         this.startDialogue([message]);
     }
 
-    startDialogue(lines, choices = null, onClose = null) {
+    startDialogue(lines, choices = null, onClose = null, npcName = null) {
         this.game.state = GameState.DIALOGUE;
         this.game.dialogue.active = true;
         this.game.dialogue.lines = Array.isArray(lines) ? lines : [lines];
+        this.game.dialogue.npcName = npcName;  // Store NPC name for default speaker
         this.game.dialogue.currentLine = 0;
         this.game.dialogue.textIndex = 0;
         this.game.dialogue.currentText = '';
-        this.game.dialogue.fullText = this.game.dialogue.lines[0];
+
+        // Extract text and speaker from first line
+        const firstLine = this.game.dialogue.lines[0];
+        if (typeof firstLine === 'object' && firstLine.text) {
+            this.game.dialogue.fullText = firstLine.text;
+            this.game.dialogue.currentSpeaker = firstLine.speaker || npcName || '???';
+        } else {
+            this.game.dialogue.fullText = firstLine;
+            this.game.dialogue.currentSpeaker = npcName || '???';
+        }
+
         this.game.dialogue.choices = choices;
         this.game.dialogue.selectedChoice = 0;
         this.game.dialogue.onClose = onClose;
 
         const dialogBox = document.getElementById('dialogBox');
         const dialogClose = document.getElementById('dialogClose');
+        const dialogSpeaker = document.getElementById('dialogSpeaker');
+
+        // Show speaker name
+        if (dialogSpeaker) {
+            dialogSpeaker.textContent = this.game.dialogue.currentSpeaker;
+        }
 
         // Show/hide close button based on whether there are choices
         if (dialogClose) {
@@ -178,13 +195,19 @@ class DialogueSystem {
     }
 
     advanceDialogue() {
+        console.log(`[DialogueSystem] advanceDialogue() called`);
+        console.log(`[DialogueSystem] - active: ${this.game.dialogue.active}`);
+        console.log(`[DialogueSystem] - textIndex: ${this.game.dialogue.textIndex}, fullText.length: ${this.game.dialogue.fullText.length}`);
+        console.log(`[DialogueSystem] - currentLine: ${this.game.dialogue.currentLine}, total lines: ${this.game.dialogue.lines.length}`);
+
         // If typewriter still going, complete it instantly
         if (this.game.dialogue.textIndex < this.game.dialogue.fullText.length) {
             console.log(`[DialogueSystem] Completing typewriter: "${this.game.dialogue.fullText}"`);
             this.game.dialogue.textIndex = this.game.dialogue.fullText.length;
             this.game.dialogue.currentText = this.game.dialogue.fullText;
             document.getElementById('dialogContent').textContent = this.game.dialogue.currentText;
-            return;
+            console.log(`[DialogueSystem] Typewriter completed, RETURNING (double-tap mode)`);
+            return;  // Keep double-tap behavior: first tap completes, second tap advances
         }
 
         // Move to next line
@@ -193,9 +216,30 @@ class DialogueSystem {
 
         if (this.game.dialogue.currentLine < this.game.dialogue.lines.length) {
             // Start next line
+            console.log(`[DialogueSystem] Starting next line (line ${this.game.dialogue.currentLine})`);
             this.game.dialogue.textIndex = 0;
             this.game.dialogue.currentText = '';
-            this.game.dialogue.fullText = this.game.dialogue.lines[this.game.dialogue.currentLine];
+
+            const nextLine = this.game.dialogue.lines[this.game.dialogue.currentLine];
+            console.log(`[DialogueSystem] nextLine type: ${typeof nextLine}`, nextLine);
+
+            if (typeof nextLine === 'object' && nextLine.text) {
+                this.game.dialogue.fullText = nextLine.text;
+                this.game.dialogue.currentSpeaker = nextLine.speaker || this.game.dialogue.npcName || '???';
+                console.log(`[DialogueSystem] Object format - speaker: "${this.game.dialogue.currentSpeaker}", text: "${this.game.dialogue.fullText}"`);
+            } else {
+                this.game.dialogue.fullText = nextLine;
+                this.game.dialogue.currentSpeaker = this.game.dialogue.npcName || '???';
+                console.log(`[DialogueSystem] String format - speaker: "${this.game.dialogue.currentSpeaker}", text: "${this.game.dialogue.fullText}"`);
+            }
+
+            // Update speaker name in UI
+            const dialogSpeaker = document.getElementById('dialogSpeaker');
+            if (dialogSpeaker) {
+                dialogSpeaker.textContent = this.game.dialogue.currentSpeaker;
+                console.log(`[DialogueSystem] Updated speaker display to: "${this.game.dialogue.currentSpeaker}"`);
+            }
+            console.log(`[DialogueSystem] Next line setup complete, typewriter will start on next update cycle`);
         } else if (this.game.dialogue.choices) {
             // Show choices
             this.game.state = GameState.DIALOGUE_CHOICE;

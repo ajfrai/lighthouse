@@ -463,11 +463,11 @@ const NPCS = {
             {
                 condition: (game) => game.plotPhase === 'wake_up',
                 text: [
-                    "Morning. Sleep well?",
-                    "I heard something on the rocks last night. Sounded small... maybe hurt.",
-                    "My eyes aren't what they were. Would you go look for me?",
-                    "Take the path toward the tall grass. Be careful.",
-                    "Come back and tell me what you find."
+                    { speaker: "Marlowe", text: "Morning. Sleep well?" },
+                    { speaker: "Marlowe", text: "I heard something on the rocks last night. Sounded small... maybe hurt." },
+                    { speaker: "Marlowe", text: "My eyes aren't what they were. Would you go look for me?" },
+                    { speaker: "Marlowe", text: "Take the path toward the tall grass. Be careful." },
+                    { speaker: "Marlowe", text: "Come back and tell me what you find." }
                 ],
                 choices: null,
                 onClose: (game) => {
@@ -483,11 +483,11 @@ const NPCS = {
             {
                 condition: (game) => game.plotPhase === 'creature_found',
                 text: [
-                    "You found something, didn't you? I can tell by your footsteps.",
-                    "I did. A small creature, injured.",
-                    "Hurt? Tell me more.",
-                    "It was alone in the tall grass. I think it needs help.",
-                    "Bring it here. Let me hear it."
+                    { speaker: "Marlowe", text: "You found something, didn't you? I can tell by your footsteps." },
+                    { speaker: "You", text: "I did. A small creature, injured." },
+                    { speaker: "Marlowe", text: "Hurt? Tell me more." },
+                    { speaker: "You", text: "It was alone in the tall grass. I think it needs help." },
+                    { speaker: "Marlowe", text: "Bring it here. Let me hear it." }
                 ],
                 choices: null,
                 onClose: (game) => {
@@ -502,16 +502,16 @@ const NPCS = {
                     const creatureName = starter ? starter.name : 'Shimmer';
 
                     return [
-                        "You're back. I can hear something with you.",
-                        "A creature. It was hurt. I found it in the tall grass.",
-                        "Injured and alone. Good thing you found it.",
-                        "Does it have a name?",
-                        `I call it ${creatureName}.`,
-                        `${creatureName}. Good name.`,
-                        "Listen—there's a fisherman in the village who might have work.",
-                        "We could use the coin. You could use the experience.",
-                        "His name is Callum. Rough hands, good heart.",
-                        "Tell him I sent you. The village is south and west of here."
+                        { speaker: "Marlowe", text: "You're back. I can hear something with you." },
+                        { speaker: "You", text: "A creature. It was hurt. I found it in the tall grass." },
+                        { speaker: "Marlowe", text: "Injured and alone. Good thing you found it." },
+                        { speaker: "Marlowe", text: "Does it have a name?" },
+                        { speaker: "You", text: `I call it ${creatureName}.` },
+                        { speaker: "Marlowe", text: `${creatureName}. Good name.` },
+                        { speaker: "Marlowe", text: "Listen—there's a fisherman in the village who might have work." },
+                        { speaker: "Marlowe", text: "We could use the coin. You could use the experience." },
+                        { speaker: "Marlowe", text: "His name is Callum. Rough hands, good heart." },
+                        { speaker: "Marlowe", text: "Tell him I sent you. The village is south and west of here." }
                     ];
                 },
                 choices: null,
@@ -563,12 +563,12 @@ const NPCS = {
             {
                 condition: (game) => game.plotPhase === 'meet_villager',
                 text: [
-                    "Marlowe sent you? Hm. You're smaller than I expected.",
-                    "He said you might have work.",
-                    "I've got work if you can count.",
-                    "But that's not the real reason you're here, is it?",
-                    "I... I need to leave the island.",
-                    "Everyone does, eventually. Lucky for you, there's a boat."
+                    { speaker: "Callum", text: "Marlowe sent you? Hm. You're smaller than I expected." },
+                    { speaker: "You", text: "He said you might have work." },
+                    { speaker: "Callum", text: "I've got work if you can count." },
+                    { speaker: "Callum", text: "But that's not the real reason you're here, is it?" },
+                    { speaker: "You", text: "I... I need to leave the island." },
+                    { speaker: "Callum", text: "Everyone does, eventually. Lucky for you, there's a boat." }
                 ],
                 choices: null,
                 onClose: (game) => {

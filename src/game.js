@@ -241,6 +241,15 @@ class LighthouseGame {
                     this.keys[key] = true;
                     this.handleKeyPress(key);
                 } else if (btn.id === 'btnAction') {
+                    // Dispatch real keyboard event so dialogueSystem can catch it
+                    console.log('[MobileControls] A button pressed - dispatching "a" keydown event');
+                    const keydownEvent = new KeyboardEvent('keydown', {
+                        key: 'a',
+                        code: 'KeyA',
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    document.dispatchEvent(keydownEvent);
                     this.handleKeyPress('Enter');
                 }
             });
@@ -251,6 +260,26 @@ class LighthouseGame {
                 if (key) {
                     this.keys[key] = false;
                     this.keysPressed[key] = false;
+                }
+            });
+
+            // Also support click events for desktop testing
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const key = btn.dataset.key;
+                if (key) {
+                    this.handleKeyPress(key);
+                } else if (btn.id === 'btnAction') {
+                    // Dispatch real keyboard event so dialogueSystem can catch it
+                    console.log('[MobileControls] A button clicked - dispatching "a" keydown event');
+                    const keydownEvent = new KeyboardEvent('keydown', {
+                        key: 'a',
+                        code: 'KeyA',
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    document.dispatchEvent(keydownEvent);
+                    this.handleKeyPress('Enter');
                 }
             });
         });

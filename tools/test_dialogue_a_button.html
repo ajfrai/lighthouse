@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialogue A Button Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        #testResults {
+            white-space: pre-wrap;
+            border: 2px solid #0f0;
+            padding: 10px;
+            margin: 10px 0;
+            background: #000;
+        }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .info { color: #ff0; }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #0f0;
+            opacity: 0.8;
+        }
+        #dialogBox, #dialogChoices {
+            border: 2px solid #0f0;
+            padding: 10px;
+            margin: 10px 0;
+            background: #000;
+        }
+        .choice {
+            padding: 5px;
+            margin: 5px 0;
+            cursor: pointer;
+            background: #003300;
+        }
+        .choice:hover {
+            background: #005500;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dialogue A Button Test Suite</h1>
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
+    <div id="testResults"></div>
+
+    <!-- Mock game UI -->
+    <div id="dialogBox" style="display: none;"></div>
+    <div id="dialogChoices" style="display: none;"></div>
+
+    <script>
+        // Test results container
+        let testLog = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'pass' ? 'pass' : type === 'fail' ? 'fail' : 'info';
+            testLog.push(`<span class="${className}">[${timestamp}] ${message}</span>`);
+            updateResults();
+        }
+
+        function updateResults() {
+            document.getElementById('testResults').innerHTML = testLog.join('\n');
+        }
+
+        function clearResults() {
+            testLog = [];
+            updateResults();
+        }
+
+        // Mock GameState enum
+        const GameState = {
+            EXPLORING: 'exploring',
+            DIALOGUE: 'dialogue',
+            DIALOGUE_CHOICE: 'dialogue_choice'
+        };
+
+        // Mock game object
+        class MockGame {
+            constructor() {
+                this.state = GameState.EXPLORING;
+                this.dialogue = {
+                    active: false,
+                    lines: [],
+                    currentLine: 0,
+                    choices: null,
+                    selectedChoice: 0,
+                    onClose: null
+                };
+                this.advanceCount = 0;
+            }
+
+            reset() {
+                this.state = GameState.EXPLORING;
+                this.dialogue = {
+                    active: false,
+                    lines: [],
+                    currentLine: 0,
+                    choices: null,
+                    selectedChoice: 0,
+                    onClose: null
+                };
+                this.advanceCount = 0;
+            }
+        }
+
+        // Simplified DialogueSystem for testing
+        class TestDialogueSystem {
+            constructor(game) {
+                this.game = game;
+                this.setupEventListeners();
+                log('DialogueSystem initialized');
+            }
+
+            setupEventListeners() {
+                const dialogBox = document.getElementById('dialogBox');
+                const dialogChoices = document.getElementById('dialogChoices');
+
+                // Keyboard support - CRITICAL TEST POINT
+                document.addEventListener('keydown', (e) => {
+                    log(`[KEYDOWN] key="${e.key}", state=${this.game.state}`, 'info');
+
+                    if (this.game.state === GameState.DIALOGUE) {
+                        log(`[KEYDOWN] In DIALOGUE state, checking key...`, 'info');
+
+                        // Space, Enter, or 'A' button to advance
+                        if (e.key === ' ' || e.key === 'Enter' || e.key === 'a' || e.key === 'A') {
+                            log(`[KEYDOWN] Key "${e.key}" MATCHED - calling advanceDialogue()`, 'pass');
+                            e.preventDefault();
+                            this.advanceDialogue();
+                        } else {
+                            log(`[KEYDOWN] Key "${e.key}" did NOT match advance keys`, 'fail');
+                        }
+                    } else if (this.game.state === GameState.DIALOGUE_CHOICE) {
+                        log(`[KEYDOWN] In DIALOGUE_CHOICE state (choices visible)`, 'info');
+                    } else {
+                        log(`[KEYDOWN] In ${this.game.state} state (not dialogue)`, 'info');
+                    }
+                });
+
+                // Event delegation for choices
+                dialogChoices.addEventListener('click', (e) => {
+                    const choiceElement = e.target.closest('.choice');
+                    if (!choiceElement) return;
+
+                    const choiceIndex = parseInt(choiceElement.dataset.index);
+                    if (!isNaN(choiceIndex)) {
+                        this.game.dialogue.selectedChoice = choiceIndex;
+                        this.selectDialogueChoice();
+                    }
+                });
+
+                log('Event listeners attached');
+            }
+
+            startDialogue(lines, choices = null, onClose = null) {
+                log(`Starting dialogue with ${lines.length} lines`, 'info');
+
+                this.game.dialogue.active = true;
+                this.game.dialogue.lines = lines;
+                this.game.dialogue.currentLine = 0;
+                this.game.dialogue.choices = choices;
+                this.game.dialogue.onClose = onClose;
+                this.game.state = GameState.DIALOGUE;
+
+                this.showCurrentLine();
+            }
+
+            showCurrentLine() {
+                const line = this.game.dialogue.lines[this.game.dialogue.currentLine];
+                const dialogBox = document.getElementById('dialogBox');
+                dialogBox.style.display = 'block';
+                dialogBox.textContent = line;
+
+                log(`Showing line ${this.game.dialogue.currentLine + 1}/${this.game.dialogue.lines.length}: "${line}"`, 'info');
+            }
+
+            advanceDialogue() {
+                log(`advanceDialogue() called - currentLine=${this.game.dialogue.currentLine}, totalLines=${this.game.dialogue.lines.length}`, 'pass');
+                this.game.advanceCount++;
+
+                this.game.dialogue.currentLine++;
+
+                if (this.game.dialogue.currentLine >= this.game.dialogue.lines.length) {
+                    log('Reached end of dialogue lines', 'info');
+
+                    if (this.game.dialogue.choices) {
+                        log('Showing choices', 'info');
+                        this.game.state = GameState.DIALOGUE_CHOICE;
+                        this.showDialogueChoices();
+
+                        if (this.game.dialogue.choices.length === 1) {
+                            log('Single choice - auto-advancing', 'pass');
+                            this.selectDialogueChoice();
+                        }
+                    } else {
+                        log('No choices - ending dialogue', 'info');
+                        this.endDialogue();
+                    }
+                } else {
+                    this.showCurrentLine();
+                }
+            }
+
+            showDialogueChoices() {
+                const dialogChoices = document.getElementById('dialogChoices');
+                dialogChoices.style.display = 'block';
+
+                let html = '';
+                this.game.dialogue.choices.forEach((choice, index) => {
+                    html += `<div class="choice" data-index="${index}">${choice.text}</div>`;
+                });
+                dialogChoices.innerHTML = html;
+            }
+
+            selectDialogueChoice() {
+                const choice = this.game.dialogue.choices[this.game.dialogue.selectedChoice];
+                log(`Selected choice: ${choice.text}`, 'pass');
+
+                if (choice.action) {
+                    choice.action(this.game);
+                }
+
+                this.endDialogue();
+            }
+
+            endDialogue() {
+                log('Ending dialogue', 'info');
+
+                if (this.game.dialogue.onClose) {
+                    this.game.dialogue.onClose(this.game);
+                }
+
+                this.game.dialogue.active = false;
+                this.game.state = GameState.EXPLORING;
+
+                document.getElementById('dialogBox').style.display = 'none';
+                document.getElementById('dialogChoices').style.display = 'none';
+            }
+        }
+
+        // Test Suite
+        let game;
+        let dialogueSystem;
+
+        function setupTest() {
+            game = new MockGame();
+            dialogueSystem = new TestDialogueSystem(game);
+            log('=== Test setup complete ===', 'info');
+        }
+
+        async function test_a_button_advances_dialogue() {
+            log('\n=== TEST: A button advances dialogue ===', 'info');
+            setupTest();
+
+            // Start a simple dialogue
+            dialogueSystem.startDialogue([
+                "Morning. Sleep well?",
+                "I heard something on the rocks last night.",
+                "Would you go look for me?"
+            ]);
+
+            // Verify initial state
+            if (game.state !== GameState.DIALOGUE) {
+                log('FAIL: Game state is not DIALOGUE after starting dialogue', 'fail');
+                return false;
+            }
+            log('PASS: Game state is DIALOGUE', 'pass');
+
+            if (game.dialogue.currentLine !== 0) {
+                log('FAIL: Current line is not 0', 'fail');
+                return false;
+            }
+            log('PASS: Current line is 0', 'pass');
+
+            // Simulate pressing 'a' key
+            log('Simulating keydown event for "a" key...', 'info');
+            const event = new KeyboardEvent('keydown', { key: 'a' });
+            document.dispatchEvent(event);
+
+            // Check if dialogue advanced
+            await sleep(100); // Small delay to allow event processing
+
+            if (game.advanceCount === 0) {
+                log('FAIL: advanceDialogue() was NOT called - "a" button did not work!', 'fail');
+                return false;
+            }
+            log(`PASS: advanceDialogue() was called ${game.advanceCount} time(s)`, 'pass');
+
+            if (game.dialogue.currentLine !== 1) {
+                log(`FAIL: Current line is ${game.dialogue.currentLine}, expected 1`, 'fail');
+                return false;
+            }
+            log('PASS: Dialogue advanced to line 1', 'pass');
+
+            return true;
+        }
+
+        async function test_space_advances_dialogue() {
+            log('\n=== TEST: Space bar advances dialogue ===', 'info');
+            setupTest();
+
+            dialogueSystem.startDialogue([
+                "Test line 1",
+                "Test line 2"
+            ]);
+
+            const event = new KeyboardEvent('keydown', { key: ' ' });
+            document.dispatchEvent(event);
+
+            await sleep(100);
+
+            if (game.advanceCount === 0) {
+                log('FAIL: Space bar did not advance dialogue', 'fail');
+                return false;
+            }
+            log('PASS: Space bar advanced dialogue', 'pass');
+
+            return true;
+        }
+
+        async function test_a_button_when_not_in_dialogue() {
+            log('\n=== TEST: A button does nothing when not in dialogue ===', 'info');
+            setupTest();
+
+            // Start in EXPLORING state
+            game.state = GameState.EXPLORING;
+
+            const event = new KeyboardEvent('keydown', { key: 'a' });
+            document.dispatchEvent(event);
+
+            await sleep(100);
+
+            if (game.advanceCount > 0) {
+                log('FAIL: advanceDialogue() was called when not in dialogue state', 'fail');
+                return false;
+            }
+            log('PASS: A button correctly ignored when not in dialogue', 'pass');
+
+            return true;
+        }
+
+        async function test_multiline_dialogue_flow() {
+            log('\n=== TEST: Multi-line dialogue flows correctly with A button ===', 'info');
+            setupTest();
+
+            dialogueSystem.startDialogue([
+                "Line 1",
+                "Line 2",
+                "Line 3"
+            ]);
+
+            // Press 'a' three times
+            for (let i = 0; i < 3; i++) {
+                log(`Pressing 'a' (press ${i + 1}/3)...`, 'info');
+                const event = new KeyboardEvent('keydown', { key: 'a' });
+                document.dispatchEvent(event);
+                await sleep(100);
+            }
+
+            if (game.advanceCount !== 3) {
+                log(`FAIL: Expected 3 advances, got ${game.advanceCount}`, 'fail');
+                return false;
+            }
+            log('PASS: All 3 lines advanced correctly', 'pass');
+
+            if (game.dialogue.active !== false) {
+                log('FAIL: Dialogue should have ended', 'fail');
+                return false;
+            }
+            log('PASS: Dialogue ended after last line', 'pass');
+
+            if (game.state !== GameState.EXPLORING) {
+                log(`FAIL: State should be EXPLORING, got ${game.state}`, 'fail');
+                return false;
+            }
+            log('PASS: State returned to EXPLORING', 'pass');
+
+            return true;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runAllTests() {
+            clearResults();
+            log('=================================', 'info');
+            log('DIALOGUE A BUTTON TEST SUITE', 'info');
+            log('=================================', 'info');
+
+            const tests = [
+                test_a_button_advances_dialogue,
+                test_space_advances_dialogue,
+                test_a_button_when_not_in_dialogue,
+                test_multiline_dialogue_flow
+            ];
+
+            let passed = 0;
+            let failed = 0;
+
+            for (const test of tests) {
+                try {
+                    const result = await test();
+                    if (result) {
+                        passed++;
+                    } else {
+                        failed++;
+                    }
+                } catch (error) {
+                    log(`ERROR in test: ${error.message}`, 'fail');
+                    failed++;
+                }
+            }
+
+            log('\n=================================', 'info');
+            log(`RESULTS: ${passed} passed, ${failed} failed`, passed === tests.length ? 'pass' : 'fail');
+            log('=================================', 'info');
+        }
+    </script>
+</body>
+</html>
