@@ -210,23 +210,9 @@ class LighthouseGame {
         // Event listeners for dialogue are now in dialogueSystem.js
         // to prevent duplicate handlers and race conditions
 
-        // Keyboard
-        window.addEventListener('keydown', (e) => {
-            // Track for single-press detection
-            if (!this.keys[e.key]) {
-                this.keysPressed[e.key] = true;
-            }
-            this.keys[e.key] = true;
-
-            // Handle state-specific single-press keys
-            this.handleKeyPress(e.key);
-            e.preventDefault();
-        });
-
-        window.addEventListener('keyup', (e) => {
-            this.keys[e.key] = false;
-            this.keysPressed[e.key] = false;
-        });
+        // MOBILE ONLY - No desktop keyboard support
+        // The mobile A button dispatches keyboard events that dialogueSystem.js catches
+        // All movement is handled by mobile touch controls below
 
         // Mobile controls
         const buttons = document.querySelectorAll('.dpad-btn, .action-btn');
@@ -250,6 +236,20 @@ class LighthouseGame {
                         cancelable: true
                     });
                     document.dispatchEvent(keydownEvent);
+
+                    // CRITICAL: Dispatch keyup immediately after to prevent key staying "pressed"
+                    // This prevents player from walking left after dialogue ends
+                    setTimeout(() => {
+                        const keyupEvent = new KeyboardEvent('keyup', {
+                            key: 'a',
+                            code: 'KeyA',
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        document.dispatchEvent(keyupEvent);
+                        console.log('[MobileControls] Dispatched "a" keyup event (cleanup)');
+                    }, 50);
+
                     this.handleKeyPress('Enter');
                 }
             });
@@ -279,6 +279,19 @@ class LighthouseGame {
                         cancelable: true
                     });
                     document.dispatchEvent(keydownEvent);
+
+                    // CRITICAL: Dispatch keyup immediately after to prevent key staying "pressed"
+                    setTimeout(() => {
+                        const keyupEvent = new KeyboardEvent('keyup', {
+                            key: 'a',
+                            code: 'KeyA',
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        document.dispatchEvent(keyupEvent);
+                        console.log('[MobileControls] Dispatched "a" keyup event (cleanup)');
+                    }, 50);
+
                     this.handleKeyPress('Enter');
                 }
             });
@@ -322,23 +335,15 @@ class LighthouseGame {
             return;
         }
 
-        // State-specific single-press key handling
+        // State-specific single-press key handling (MOBILE ONLY)
         // (Dialogue keyboard handling now in dialogueSystem.js to prevent race conditions)
         if (this.state === GameState.EXPLORING) {
-            if (key === ' ' || key === 'Enter') {
+            // Enter key from mobile A button
+            if (key === 'Enter') {
                 this.interact();
-            } else if (key === 'Escape' || key === 'm' || key === 'M') {
-                this.openMenu();
-            }
-        } else if (this.state === GameState.MENU) {
-            if (key === 'Escape' || key === 'm' || key === 'M') {
-                this.closeMenu();
-            }
-        } else if (this.state === GameState.SHOP) {
-            if (key === 'Escape') {
-                this.closeShop();
             }
         }
+        // Menu/Shop handling removed - mobile only uses on-screen buttons
     }
 
     handleInput(deltaTime) {
@@ -360,17 +365,17 @@ class LighthouseGame {
         let dx = 0, dy = 0;
         let newDirection = this.player.direction;
 
-        // Check arrow keys and WASD
-        if (this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) {
+        // Check mobile controls (using arrow key names from data-key attributes)
+        if (this.keys['ArrowUp']) {
             dy = -1;
             newDirection = 'up';
-        } else if (this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) {
+        } else if (this.keys['ArrowDown']) {
             dy = 1;
             newDirection = 'down';
-        } else if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) {
+        } else if (this.keys['ArrowLeft']) {
             dx = -1;
             newDirection = 'left';
-        } else if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) {
+        } else if (this.keys['ArrowRight']) {
             dx = 1;
             newDirection = 'right';
         }

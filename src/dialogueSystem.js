@@ -313,22 +313,33 @@ class DialogueSystem {
     }
 
     endDialogue() {
+        console.log('[DialogueSystem] endDialogue() called');
+        console.log(`[DialogueSystem] - Has onClose handler: ${!!this.game.dialogue.onClose}`);
+
         // Execute onClose handler if present (before clearing state)
         if (this.game.dialogue.onClose) {
+            console.log('[DialogueSystem] Executing onClose handler...');
             const onCloseHandler = this.game.dialogue.onClose;
             this.game.dialogue.onClose = null;  // Clear it first
             onCloseHandler(this.game);
+            console.log('[DialogueSystem] onClose handler executed');
         }
 
+        console.log('[DialogueSystem] Setting dialogue.active = false');
         this.game.dialogue.active = false;
 
         // Only set to EXPLORING if currently in dialogue
         if (this.game.state === GameState.DIALOGUE ||
             this.game.state === GameState.DIALOGUE_CHOICE) {
+            console.log(`[DialogueSystem] Changing state from ${this.game.state} to EXPLORING`);
             this.game.state = GameState.EXPLORING;
+        } else {
+            console.log(`[DialogueSystem] NOT changing state (current: ${this.game.state})`);
         }
 
+        console.log('[DialogueSystem] Clearing dialogue UI');
         this.clearDialogueUI();
+        console.log('[DialogueSystem] endDialogue() complete');
     }
 
     clearDialogueUI() {
