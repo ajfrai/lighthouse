@@ -23,7 +23,7 @@ class SpriteLoader {
         const promises = sprites.map(async (sprite) => {
             // Load image
             const img = new Image();
-            img.src = `static/sprites/${sprite.name}.png`;
+            img.src = `assets/sprites/${sprite.name}.png`;
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
                 img.onerror = reject;
@@ -32,7 +32,7 @@ class SpriteLoader {
 
             // Load index JSON if it exists
             if (sprite.hasIndex) {
-                const response = await fetch(`static/sprites/${sprite.name}.json`);
+                const response = await fetch(`assets/sprites/${sprite.name}.json`);
                 this.indexes[sprite.name] = await response.json();
             }
         });
