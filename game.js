@@ -188,13 +188,8 @@ class LighthouseGame {
     }
 
     setupInput() {
-        // Dialog close button click handler
-        const dialogClose = document.getElementById('dialogClose');
-        if (dialogClose) {
-            dialogClose.addEventListener('click', () => {
-                this.dialogueSystem.endDialogue();
-            });
-        }
+        // Event listeners for dialogue are now in dialogueSystem.js
+        // to prevent duplicate handlers and race conditions
 
         // Keyboard
         window.addEventListener('keydown', (e) => {
@@ -280,28 +275,8 @@ class LighthouseGame {
         }
 
         // State-specific single-press key handling
-        if (this.state === GameState.DIALOGUE) {
-            if (key === ' ' || key === 'Enter') {
-                this.dialogueSystem.advanceDialogue();
-            } else if (key === 'Escape') {
-                this.dialogueSystem.endDialogue();
-            }
-        } else if (this.state === GameState.DIALOGUE_CHOICE) {
-            if (key === 'ArrowUp') {
-                this.dialogue.selectedChoice = Math.max(0, this.dialogue.selectedChoice - 1);
-                this.dialogueSystem.showDialogueChoices();  // Refresh display
-            } else if (key === 'ArrowDown') {
-                this.dialogue.selectedChoice = Math.min(
-                    this.dialogue.choices.length - 1,
-                    this.dialogue.selectedChoice + 1
-                );
-                this.dialogueSystem.showDialogueChoices();  // Refresh display
-            } else if (key === ' ' || key === 'Enter') {
-                this.dialogueSystem.selectDialogueChoice();
-            } else if (key === 'Escape') {
-                this.dialogueSystem.endDialogue();
-            }
-        } else if (this.state === GameState.EXPLORING) {
+        // (Dialogue keyboard handling now in dialogueSystem.js to prevent race conditions)
+        if (this.state === GameState.EXPLORING) {
             if (key === ' ' || key === 'Enter') {
                 this.interact();
             } else if (key === 'Escape' || key === 'm' || key === 'M') {

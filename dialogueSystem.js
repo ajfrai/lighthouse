@@ -1,11 +1,79 @@
 /**
- * Dialogue System - Handles all dialogue and NPC interaction
- * Extracted from main game engine for modularity
+ * Dialogue System - Completely rebuilt for simplicity and reliability
+ *
+ * Design principles:
+ * 1. Single choices NEVER require clicking - auto-advance immediately
+ * 2. Click handlers registered once with event delegation - never recreated
+ * 3. No race conditions - clear order of operations
+ * 4. Simple state machine - only 3 states: typing, waiting, choices
  */
 
 class DialogueSystem {
     constructor(game) {
         this.game = game;
+        this.setupEventListeners();
+    }
+
+    /**
+     * Set up event listeners ONCE - use event delegation
+     * This prevents the bug where choices have no click handlers
+     */
+    setupEventListeners() {
+        const dialogBox = document.getElementById('dialogBox');
+        const dialogChoices = document.getElementById('dialogChoices');
+        const dialogClose = document.getElementById('dialogClose');
+
+        // Click anywhere on dialog box to advance (when not showing choices)
+        dialogBox.addEventListener('click', (e) => {
+            // Don't advance if clicking on a choice or close button
+            if (e.target.closest('.choice') || e.target === dialogClose) {
+                return;
+            }
+
+            if (this.game.state === GameState.DIALOGUE) {
+                this.advanceDialogue();
+            }
+        });
+
+        // Event delegation for choices - handle clicks on any .choice element
+        dialogChoices.addEventListener('click', (e) => {
+            const choiceElement = e.target.closest('.choice');
+            if (!choiceElement) return;
+
+            const choiceIndex = parseInt(choiceElement.dataset.index);
+            if (!isNaN(choiceIndex)) {
+                this.game.dialogue.selectedChoice = choiceIndex;
+                this.selectDialogueChoice();
+            }
+        });
+
+        // Close button
+        if (dialogClose) {
+            dialogClose.addEventListener('click', () => {
+                this.endDialogue();
+            });
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (this.game.state === GameState.DIALOGUE) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.advanceDialogue();
+                }
+            } else if (this.game.state === GameState.DIALOGUE_CHOICE) {
+                if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                    e.preventDefault();
+                    this.moveChoiceSelection(-1);
+                } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                    e.preventDefault();
+                    this.moveChoiceSelection(1);
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.selectDialogueChoice();
+                }
+            }
+        });
     }
 
     showNPCDialog(npcId) {
@@ -14,21 +82,17 @@ class DialogueSystem {
 
         // Framework-based dialogue system
         if (npc.type === 'dialogue_npc' && npc.dialogues) {
-            // Find the first matching dialogue based on conditions
             const dialogue = npc.dialogues.find(d => d.condition(this.game));
 
             if (dialogue) {
-                // Convert framework choices to game choices
                 const choices = dialogue.choices ? dialogue.choices.map(choice => ({
                     text: choice.text,
                     action: () => choice.action(this.game)
                 })) : null;
 
-                // Support both single text string and array of lines
                 const lines = Array.isArray(dialogue.text) ? dialogue.text : [dialogue.text];
-                this.game.startDialogue(lines, choices);
+                this.startDialogue(lines, choices);
             } else {
-                // Fallback if no dialogue matches
                 this.showDialog("...");
             }
             return;
@@ -40,7 +104,7 @@ class DialogueSystem {
             return;
         }
 
-        // Legacy system for other NPCs
+        // Legacy system
         if (npc.shop) {
             this.game.openShop();
         } else if (npc.job) {
@@ -51,7 +115,7 @@ class DialogueSystem {
     }
 
     showDialog(message) {
-        this.game.startDialogue([message]);
+        this.startDialogue([message]);
     }
 
     startDialogue(lines, choices = null) {
@@ -87,7 +151,6 @@ class DialogueSystem {
             this.game.dialogue.currentText = this.game.dialogue.fullText.substring(0, this.game.dialogue.textIndex);
             this.game.dialogue.lastTypewriterUpdate = timestamp;
 
-            // Update UI
             const dialogContent = document.getElementById('dialogContent');
             dialogContent.textContent = this.game.dialogue.currentText;
         }
@@ -111,25 +174,18 @@ class DialogueSystem {
             this.game.dialogue.currentText = '';
             this.game.dialogue.fullText = this.game.dialogue.lines[this.game.dialogue.currentLine];
         } else if (this.game.dialogue.choices) {
-            // Check for single choice - auto-advance after short delay
+            // Show choices
+            this.game.state = GameState.DIALOGUE_CHOICE;
+            this.showDialogueChoices();
+
+            // CRITICAL: Single choices auto-advance IMMEDIATELY
+            // No timeout, no delay - just do it
             if (this.game.dialogue.choices.length === 1) {
-                this.game.state = GameState.DIALOGUE_CHOICE;
-                this.showDialogueChoices();
-                // Auto-select single choice after brief delay
-                setTimeout(() => {
-                    if (this.game.state === GameState.DIALOGUE_CHOICE &&
-                        this.game.dialogue.choices &&
-                        this.game.dialogue.choices.length === 1) {
-                        this.selectDialogueChoice();
-                    }
-                }, 300);
-            } else {
-                // Show choices for user to select
-                this.game.state = GameState.DIALOGUE_CHOICE;
-                this.showDialogueChoices();
+                // Execute the single choice immediately
+                this.selectDialogueChoice();
             }
         } else {
-            // End dialogue - return to previous state
+            // End dialogue
             this.endDialogue();
         }
     }
@@ -147,47 +203,52 @@ class DialogueSystem {
             dialogClose.style.display = 'none';
         }
 
-        // Show choices in separate div
+        // Build choices HTML with data-index for click handling
         let html = '<div class="dialogue-choices">';
         this.game.dialogue.choices.forEach((choice, index) => {
             const selected = index === this.game.dialogue.selectedChoice ? 'selected' : '';
-            html += `<div class="choice ${selected}">${choice.text}</div>`;
+            // CRITICAL: Include data-index so click handler knows which choice was clicked
+            html += `<div class="choice ${selected}" data-index="${index}">${choice.text}</div>`;
         });
         html += '</div>';
         dialogChoices.innerHTML = html;
     }
 
+    moveChoiceSelection(direction) {
+        const numChoices = this.game.dialogue.choices.length;
+        this.game.dialogue.selectedChoice = (this.game.dialogue.selectedChoice + direction + numChoices) % numChoices;
+        this.showDialogueChoices();
+    }
+
     selectDialogueChoice() {
         const choice = this.game.dialogue.choices[this.game.dialogue.selectedChoice];
 
-        // Store current dialogue state before action
-        const wasActive = this.game.dialogue.active;
+        // Clear dialogue state FIRST
+        this.game.dialogue.active = false;
 
-        // Execute action (might start new dialogue or change state)
+        // Execute action
         if (choice.action) {
             choice.action.call(this.game);
         }
 
-        // Only end dialogue if action didn't start new dialogue
-        // This prevents race condition where endDialogue overwrites action's state changes
-        if (wasActive && !this.game.dialogue.active) {
-            // Action explicitly ended dialogue, respect that
+        // Clean up UI
+        // If action started new dialogue, this does nothing (dialogue.active is true again)
+        // If action didn't start new dialogue, this cleans up properly
+        if (!this.game.dialogue.active) {
             this.clearDialogueUI();
-        } else if (wasActive && this.game.dialogue.active) {
-            // Action started new dialogue, let it continue
-            // Don't call endDialogue() - would override the new dialogue
-        } else {
-            // Normal case: close the dialogue
-            this.endDialogue();
+
+            // Only set to EXPLORING if we're still in dialogue state
+            if (this.game.state === GameState.DIALOGUE ||
+                this.game.state === GameState.DIALOGUE_CHOICE) {
+                this.game.state = GameState.EXPLORING;
+            }
         }
     }
 
     endDialogue() {
-        // Mark dialogue as inactive
         this.game.dialogue.active = false;
 
-        // Only set state to EXPLORING if not already in another state
-        // This prevents overwriting state changes made by dialogue actions
+        // Only set to EXPLORING if currently in dialogue
         if (this.game.state === GameState.DIALOGUE ||
             this.game.state === GameState.DIALOGUE_CHOICE) {
             this.game.state = GameState.EXPLORING;
@@ -197,7 +258,6 @@ class DialogueSystem {
     }
 
     clearDialogueUI() {
-        // Clear dialogue content
         const dialogContent = document.getElementById('dialogContent');
         const dialogChoices = document.getElementById('dialogChoices');
         const dialogClose = document.getElementById('dialogClose');
