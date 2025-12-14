@@ -484,7 +484,10 @@ const NPCS = {
                 condition: (game) => game.plotPhase === 'creature_found',
                 text: [
                     "You found something, didn't you? I can tell by your footsteps.",
-                    "Tell me about it."
+                    "I did. A small creature, injured.",
+                    "Hurt? Tell me more.",
+                    "It was alone in the tall grass. I think it needs help.",
+                    "Bring it here. Let me hear it."
                 ],
                 choices: null,
                 onClose: (game) => {
@@ -500,16 +503,15 @@ const NPCS = {
 
                     return [
                         "You're back. I can hear something with you.",
-                        "What did you find?",
-                        "You tell Marlowe about the injured creature.",
+                        "A creature. It was hurt. I found it in the tall grass.",
                         "Injured and alone. Good thing you found it.",
-                        "What's its name?",
-                        `${creatureName}.`,
-                        `${creatureName}. A good name.`,
+                        "Does it have a name?",
+                        `I call it ${creatureName}.`,
+                        `${creatureName}. Good name.`,
                         "Listen—there's a fisherman in the village who might have work.",
-                        "We could use the coin. And you could use the experience.",
-                        "His name is Callum. Rough hands, good heart. Tell him I sent you.",
-                        "The village is south and west of here. Follow the path."
+                        "We could use the coin. You could use the experience.",
+                        "His name is Callum. Rough hands, good heart.",
+                        "Tell him I sent you. The village is south and west of here."
                     ];
                 },
                 choices: null,
@@ -562,9 +564,11 @@ const NPCS = {
                 condition: (game) => game.plotPhase === 'meet_villager',
                 text: [
                     "Marlowe sent you? Hm. You're smaller than I expected.",
-                    "No matter. I've got work if you can count.",
-                    "But that's not why you're here, is it?",
-                    "You need to leave the island. Everyone does, eventually."
+                    "He said you might have work.",
+                    "I've got work if you can count.",
+                    "But that's not the real reason you're here, is it?",
+                    "I... I need to leave the island.",
+                    "Everyone does, eventually. Lucky for you, there's a boat."
                 ],
                 choices: null,
                 onClose: (game) => {
