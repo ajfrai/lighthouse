@@ -24,7 +24,9 @@ class DialogueSystem {
                     action: () => choice.action(this.game)
                 })) : null;
 
-                this.game.startDialogue([dialogue.text], choices);
+                // Support both single text string and array of lines
+                const lines = Array.isArray(dialogue.text) ? dialogue.text : [dialogue.text];
+                this.game.startDialogue(lines, choices);
             } else {
                 // Fallback if no dialogue matches
                 this.showDialog("...");

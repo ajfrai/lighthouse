@@ -456,12 +456,18 @@ const QUESTS = {
 // Each NPC has dialogue entries with conditions, text, and optional choices
 const NPCS = {
     keeper: {
-        name: 'The Keeper',
+        name: 'Marlowe',
         type: 'dialogue_npc',
         dialogues: [
             {
                 condition: (game) => game.plotPhase === 'wake_up',
-                text: "Morning. I heard something on the rocks last night. Sounded small, maybe hurt. Would you go look? Take the path toward the tall grass, but be careful.",
+                text: [
+                    "Morning. Sleep well?",
+                    "I heard something on the rocks last night. Sounded small... maybe hurt.",
+                    "My eyes aren't what they were. Would you go look for me?",
+                    "Take the path toward the tall grass. Be careful.",
+                    "Come back and tell me what you find."
+                ],
                 choices: [
                     {
                         text: "I'll go look for it",
@@ -479,12 +485,28 @@ const NPCS = {
             },
             {
                 condition: (game) => game.plotPhase === 'creature_found',
-                text: "What did you find out there? Tell me about it when you're ready.",
-                choices: null
+                text: [
+                    "You found something, didn't you? I can tell by your footsteps.",
+                    "Tell me about it."
+                ],
+                choices: [
+                    {
+                        text: "I found a creature!",
+                        action: (game) => {
+                            game.plotPhase = 'return_keeper';
+                        }
+                    }
+                ]
             },
             {
                 condition: (game) => game.plotPhase === 'return_keeper',
-                text: "You're back. What did you find? ...A creature? Interesting. There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light. Keep exploring—there may be more out there.",
+                text: [
+                    "You're back. I can hear something with you.",
+                    "What did you find?",
+                    "A creature? Interesting.",
+                    "There have always been stories about strange beings near the lighthouse. Maybe they're drawn to the light.",
+                    "Keep exploring—there may be more out there."
+                ],
                 choices: [
                     {
                         text: "I'll keep looking",

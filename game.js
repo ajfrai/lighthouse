@@ -691,7 +691,7 @@ class LighthouseGame {
 
         // Progress plot phase after first creature
         if (this.plotPhase === PlotPhase.FIND_CREATURE && this.discoveredCreatures.size === 1) {
-            this.plotPhase = PlotPhase.RETURN_TO_KEEPER;
+            this.plotPhase = PlotPhase.CREATURE_ENCOUNTER;
         }
 
         // Progress to working phase after 3 creatures
