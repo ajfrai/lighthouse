@@ -132,36 +132,31 @@ class QuestSystem {
     }
 
     showQuestProblem(problem, npcName, problemNum = null, totalProblems = null) {
-        const jobUI = document.getElementById('jobUI');
-        const jobTitle = document.getElementById('jobTitle');
-        const jobQuestion = document.getElementById('jobQuestion');
-        const jobAnswers = document.getElementById('jobAnswers');
-
-        // Show problem number for multi-problem quests
+        // Build title with problem number if multi-problem quest
         const titleText = problemNum ? `${npcName} - Problem ${problemNum}/${totalProblems}` : npcName;
-        jobTitle.textContent = titleText;
-        jobQuestion.textContent = problem.question;
-        jobAnswers.innerHTML = '';
 
-        problem.answers.forEach(answer => {
-            const btn = document.createElement('button');
-            btn.textContent = answer;
-            btn.onclick = () => this.submitQuestAnswer(answer);
-            jobAnswers.appendChild(btn);
+        // Convert answers to dialogue choices (D-pad compatible)
+        const choices = problem.answers.map(answer => ({
+            text: answer,
+            action: () => this.submitQuestAnswer(answer)
+        }));
+
+        // Add cancel option
+        choices.push({
+            text: 'Cancel',
+            action: () => {
+                this.game.activeQuest = null;
+                this.game.questObjective = null;
+            }
         });
 
-        // Add cancel button
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'job-cancel';
-        cancelBtn.onclick = () => {
-            jobUI.classList.add('hidden');
-            this.game.state = GameState.EXPLORING;
-            this.game.activeQuest = null;
-        };
-        jobAnswers.appendChild(cancelBtn);
-
-        jobUI.classList.remove('hidden');
+        // Show as dialogue (fully D-pad controlled)
+        this.game.dialogueSystem.startDialogue(
+            [problem.question],
+            choices,
+            null,
+            titleText
+        );
     }
 
     submitQuestAnswer(answer) {
