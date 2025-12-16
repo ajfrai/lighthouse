@@ -598,34 +598,48 @@ class LighthouseGame {
     }
 
     showShop() {
-        const shopUI = document.getElementById('shopUI');
-        const shopItems = document.getElementById('shopItems');
-        shopItems.innerHTML = '';
+        // Build shop choices (D-pad compatible)
+        const choices = [];
 
         SHOP_ITEMS.forEach(item => {
             const owned = this.inventory.has(item.id);
             const canAfford = this.coins >= item.price;
 
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'shop-item';
-            itemDiv.innerHTML = `
-                <div class="shop-item-header">
-                    <span class="shop-item-icon">${item.icon}</span>
-                    <span class="shop-item-name">${item.name}</span>
-                    <span class="shop-item-price">${item.price} coins</span>
-                </div>
-                <p class="shop-item-desc">${item.description}</p>
-                ${owned ? '<button disabled>Owned</button>' :
-                  canAfford ? `<button onclick="game.buyItem('${item.id}', ${item.price})">Buy</button>` :
-                  '<button disabled>Not enough coins</button>'}
-            `;
-            shopItems.appendChild(itemDiv);
+            if (owned) {
+                choices.push({
+                    text: `${item.icon} ${item.name} (Owned)`,
+                    action: () => {
+                        this.showDialog(`You already own ${item.name}.`);
+                    }
+                });
+            } else if (canAfford) {
+                choices.push({
+                    text: `${item.icon} ${item.name} (${item.price} coins)`,
+                    action: () => this.buyItem(item.id, item.price)
+                });
+            } else {
+                choices.push({
+                    text: `${item.icon} ${item.name} (Need ${item.price} coins)`,
+                    action: () => {
+                        this.showDialog(`You need ${item.price} coins to buy ${item.name}.`);
+                    }
+                });
+            }
         });
 
-        shopUI.classList.remove('hidden');
-        document.getElementById('shopClose').onclick = () => {
-            this.closeShop();
-        };
+        // Add close option
+        choices.push({
+            text: 'Leave shop',
+            action: () => {}  // Just dismiss
+        });
+
+        // Show as dialogue (D-pad controlled)
+        this.dialogueSystem.startDialogue(
+            ["Welcome to Marina's shop! What would you like?"],
+            choices,
+            null,
+            'Marina'
+        );
     }
 
     buyItem(itemId, price) {
@@ -638,39 +652,31 @@ class LighthouseGame {
     }
 
     showJob(npcId, npc) {
-        this.state = GameState.JOB;  // Set state to prevent movement
-        const jobUI = document.getElementById('jobUI');
-        const jobTitle = document.getElementById('jobTitle');
-        const jobQuestion = document.getElementById('jobQuestion');
-        const jobAnswers = document.getElementById('jobAnswers');
-
         // Generate job
         const job = JOBS[npc.job]();
         this.currentJob = { ...job, payment: npc.payment, npcId };
 
-        jobTitle.textContent = `${npc.name} - ${npc.jobDescription}`;
-        jobQuestion.textContent = job.question;
-        jobAnswers.innerHTML = '';
+        // Convert answers to dialogue choices (D-pad compatible)
+        const choices = job.answers.map(answer => ({
+            text: answer,
+            action: () => this.submitJobAnswer(answer)
+        }));
 
-        job.answers.forEach(answer => {
-            const btn = document.createElement('button');
-            btn.textContent = answer;
-            btn.onclick = () => this.submitJobAnswer(answer);
-            jobAnswers.appendChild(btn);
+        // Add cancel option
+        choices.push({
+            text: 'Cancel',
+            action: () => {
+                this.currentJob = null;
+            }
         });
 
-        // Add cancel button
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'job-cancel';
-        cancelBtn.onclick = () => {
-            jobUI.classList.add('hidden');
-            this.state = GameState.EXPLORING;
-            this.currentJob = null;
-        };
-        jobAnswers.appendChild(cancelBtn);
-
-        jobUI.classList.remove('hidden');
+        // Show as dialogue (D-pad controlled)
+        this.dialogueSystem.startDialogue(
+            [job.question],
+            choices,
+            null,
+            `${npc.name} - ${npc.jobDescription}`
+        );
     }
 
     submitJobAnswer(answer) {
@@ -762,16 +768,20 @@ class LighthouseGame {
         const creatureUI = document.getElementById('creatureUI');
         const creatureInfo = document.getElementById('creatureInfo');
 
-        creatureInfo.innerHTML = `
-            <h3>${creature.emoji} ${creature.name}</h3>
-            <p>${creature.description}</p>
-            <p class="fact"><strong>Fun Fact:</strong> ${creature.fact}</p>
-        `;
-
-        creatureUI.classList.remove('hidden');
-        document.getElementById('creatureClose').onclick = () => {
-            creatureUI.classList.add('hidden');
-        };
+        // Show as dialogue (D-pad controlled)
+        this.dialogueSystem.startDialogue(
+            [
+                `${creature.emoji} ${creature.name}`,
+                creature.description,
+                `Fun Fact: ${creature.fact}`
+            ],
+            [{
+                text: 'Continue',
+                action: () => {}  // Just dismiss
+            }],
+            null,
+            'Creature Info'
+        );
     }
 
     discoverCreature(creatureId) {
@@ -795,20 +805,20 @@ class LighthouseGame {
             this.plotPhase = PlotPhase.BOAT_READY;
         }
 
-        const creatureUI = document.getElementById('creatureUI');
-        const creatureInfo = document.getElementById('creatureInfo');
-
-        creatureInfo.innerHTML = `
-            <div class="creature-icon">${creature.emoji}</div>
-            <h3>${creature.name}</h3>
-            <p>${creature.description}</p>
-            <p class="creature-fact"><strong>Did you know?</strong> ${creature.fact}</p>
-        `;
-
-        creatureUI.classList.remove('hidden');
-        document.getElementById('creatureClose').onclick = () => {
-            creatureUI.classList.add('hidden');
-        };
+        // Show discovery as dialogue (D-pad controlled)
+        this.dialogueSystem.startDialogue(
+            [
+                `${creature.emoji} ${creature.name}`,
+                creature.description,
+                `Did you know? ${creature.fact}`
+            ],
+            [{
+                text: 'Continue',
+                action: () => {}  // Just dismiss
+            }],
+            null,
+            'New Discovery!'
+        );
 
         this.updateUI();
     }
