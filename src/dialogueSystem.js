@@ -48,7 +48,7 @@ class DialogueSystem {
                 } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
                     e.preventDefault();
                     this.moveChoiceSelection(1);
-                } else if (e.key === 'Enter' || e.key === ' ') {
+                } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'a' || e.key === 'A') {
                     e.preventDefault();
                     this.selectDialogueChoice();
                 }
