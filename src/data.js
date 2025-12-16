@@ -485,28 +485,14 @@ const NPCS = {
             },
             {
                 condition: (game) => game.plotPhase === 'creature_found',
-                text: [
-                    { speaker: "Marlowe", text: "You found something, didn't you? I can tell by your footsteps." },
-                    { speaker: "You", text: "I did. A small creature, injured." },
-                    { speaker: "Marlowe", text: "Hurt? Tell me more." },
-                    { speaker: "You", text: "It was alone in the tall grass. I think it needs help." },
-                    { speaker: "Marlowe", text: "Bring it here. Let me hear it." }
-                ],
-                choices: null,
-                onClose: (game) => {
-                    game.plotPhase = 'return_keeper';
-                }
-            },
-            {
-                condition: (game) => game.plotPhase === 'return_keeper',
                 text: (game) => {
                     // Get the creature's name from party
                     const starter = game.party.find(c => c.isStarter);
                     const creatureName = starter ? starter.name : 'Shimmer';
 
                     return [
-                        { speaker: "Marlowe", text: "You're back. I can hear something with you." },
-                        { speaker: "You", text: "A creature. It was hurt. I found it in the tall grass." },
+                        { speaker: "Marlowe", text: "You found something, didn't you? I can tell by your footsteps." },
+                        { speaker: "You", text: "I did. A small creature, injured." },
                         { speaker: "Marlowe", text: "Injured and alone. Good thing you found it." },
                         { speaker: "Marlowe", text: "Does it have a name?" },
                         { speaker: "You", text: `I call it ${creatureName}.` },
