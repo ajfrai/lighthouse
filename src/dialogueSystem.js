@@ -294,6 +294,9 @@ class DialogueSystem {
             if (this.game.state === GameState.DIALOGUE ||
                 this.game.state === GameState.DIALOGUE_CHOICE) {
                 this.game.state = GameState.EXPLORING;
+
+                // Set timestamp to prevent immediate re-interaction
+                this.game.lastDialogueEndTime = Date.now();
             }
         }
     }
@@ -319,6 +322,9 @@ class DialogueSystem {
             this.game.state === GameState.DIALOGUE_CHOICE) {
             console.log(`[DialogueSystem] Changing state from ${this.game.state} to EXPLORING`);
             this.game.state = GameState.EXPLORING;
+
+            // Set timestamp to prevent immediate re-interaction
+            this.game.lastDialogueEndTime = Date.now();
         } else {
             console.log(`[DialogueSystem] NOT changing state (current: ${this.game.state})`);
         }

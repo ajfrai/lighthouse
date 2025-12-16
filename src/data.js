@@ -107,11 +107,11 @@ const MAP_DATA = {
         { type: 'tallgrass', x: 21, y: 14 },
 
         // NPCs positioned in story-meaningful locations
-        { type: 'npc', id: 'keeper', x: 15, y: 17, sprite: 'down', charType: 'teacher' },  // Just south of lighthouse
+        { type: 'npc', id: 'marlowe', x: 15, y: 17, sprite: 'down', charType: 'teacher' },  // Just south of lighthouse
         { type: 'npc', id: 'fisherman', x: 8, y: 7, sprite: 'down', charType: 'fisherman' },  // On the beach (west)
-        { type: 'npc', id: 'scientist', x: 18, y: 24, sprite: 'up', charType: 'scientist' },  // In southern clearing
-        { type: 'npc', id: 'mathTeacher', x: 9, y: 19, sprite: 'right', charType: 'teacher' },  // In western clearing
-        { type: 'npc', id: 'shopkeeper', x: 23, y: 20, sprite: 'down', charType: 'shopkeeper' },  // Near store
+        { type: 'npc', id: 'dr_nova', x: 18, y: 24, sprite: 'up', charType: 'scientist' },  // In southern clearing
+        { type: 'npc', id: 'callum', x: 9, y: 19, sprite: 'right', charType: 'teacher' },  // In western clearing
+        { type: 'npc', id: 'marina', x: 23, y: 20, sprite: 'down', charType: 'shopkeeper' },  // Near store
 
         // Store building (2x2 tiles)
         { type: 'store', x: 22, y: 18 },  // Near eastern path
@@ -456,8 +456,10 @@ const QUESTS = {
 // NPC dialogues - framework-based system
 // Each NPC has dialogue entries with conditions, text, and optional choices
 const NPCS = {
-    keeper: {
+    marlowe: {
+        id: 'marlowe',
         name: 'Marlowe',
+        role: 'keeper',
         type: 'dialogue_npc',
         dialogues: [
             {
@@ -558,13 +560,17 @@ const NPCS = {
             }
         ]
     },
-    shopkeeper: {
-        name: 'Marina the Shopkeeper',
+    marina: {
+        id: 'marina',
+        name: 'Marina',
+        role: 'shopkeeper',
         greeting: 'Welcome to the Lighthouse Shop! I sell helpful items.',
         shop: true
     },
-    mathTeacher: {
+    callum: {
+        id: 'callum',
         name: 'Callum',
+        role: 'fisherman',
         type: 'dialogue_npc',
         dialogues: [
             {
@@ -595,7 +601,7 @@ const NPCS = {
                     {
                         text: "Show me the work",
                         action: (game) => {
-                            game.questSystem.showQuestMenu('mathTeacher', NPCS.mathTeacher);
+                            game.questSystem.showQuestMenu('callum', NPCS.callum);
                         }
                     },
                     {
@@ -611,7 +617,7 @@ const NPCS = {
                     {
                         text: "Show me the work",
                         action: (game) => {
-                            game.questSystem.showQuestMenu('mathTeacher', NPCS.mathTeacher);
+                            game.questSystem.showQuestMenu('callum', NPCS.callum);
                         }
                     },
                     {
@@ -627,15 +633,19 @@ const NPCS = {
             full: 'fishing_records'
         }
     },
-    scientist: {
+    dr_nova: {
+        id: 'dr_nova',
         name: 'Dr. Nova',
+        role: 'scientist',
         greeting: 'Greetings! I study creatures and need help with multiplication.',
         job: 'multiplication',
         jobDescription: 'Help me with multiplication and earn 10 coins!',
         payment: 10
     },
     fisherman: {
+        id: 'fisherman',
         name: 'Old Salt',
+        role: 'fisherman',
         greeting: 'Ahoy! Help me count my catch and I\'ll pay ye well.',
         job: 'counting',
         jobDescription: 'Count the fish correctly for 3 coins!',

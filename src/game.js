@@ -63,6 +63,7 @@ class LighthouseGame {
         this.encounterState = null;  // State for narrative encounter sequence
         this.hasInspectedBoat = false;  // Track if player has examined the boat
         this.npcInteractions = new Map();  // Track NPC conversations: Map<npcId, Set<plotPhase>>
+        this.lastDialogueEndTime = 0;  // Prevent double-interaction after dialogue ends
 
         // Debug/Speed Run Mode
         const urlParams = new URLSearchParams(window.location.search);
@@ -449,6 +450,13 @@ class LighthouseGame {
     }
 
     interact() {
+        // Prevent double-interaction: don't allow interaction immediately after dialogue ends
+        const now = Date.now();
+        if (now - this.lastDialogueEndTime < 300) {
+            console.log('[Game] Interaction blocked - dialogue just ended');
+            return;
+        }
+
         // Check for nearby NPCs and buildings
         const directions = {
             up: [0, -1],
