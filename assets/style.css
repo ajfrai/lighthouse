@@ -78,7 +78,7 @@ body {
 }
 
 #dialogBox, #shopUI, #jobUI, #creatureUI {
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -87,6 +87,8 @@ body {
     padding: 20px;
     min-width: 300px;
     max-width: 90%;
+    max-height: calc(100vh - 200px);  /* Leave space for mobile controls */
+    overflow-y: auto;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
     z-index: 100;
 }

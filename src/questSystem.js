@@ -9,16 +9,6 @@ class QuestSystem {
     }
 
     showQuestMenu(npcId, npc) {
-        this.game.state = GameState.JOB;  // Reuse JOB state for quest menu
-        const jobUI = document.getElementById('jobUI');
-        const jobTitle = document.getElementById('jobTitle');
-        const jobQuestion = document.getElementById('jobQuestion');
-        const jobAnswers = document.getElementById('jobAnswers');
-
-        jobTitle.textContent = npc.name;
-        jobQuestion.textContent = npc.greeting;
-        jobAnswers.innerHTML = '';
-
         // Count completed one-off quests
         let completedOneOffs = 0;
         npc.quests.oneOff.forEach(questId => {
@@ -30,44 +20,43 @@ class QuestSystem {
         // Check if full quest is completed
         const fullQuestCompleted = this.game.completedQuests.has(npc.quests.full);
 
-        // One-off problem button
-        const oneOffBtn = document.createElement('button');
-        oneOffBtn.className = 'quest-menu-btn';
-        if (completedOneOffs >= npc.quests.oneOff.length) {
-            oneOffBtn.textContent = `Quick Problem (${completedOneOffs}/${npc.quests.oneOff.length} completed)`;
-            oneOffBtn.disabled = true;
-        } else {
+        // Build choice list
+        const choices = [];
+
+        // One-off problem choice
+        if (completedOneOffs < npc.quests.oneOff.length) {
             const nextQuestId = npc.quests.oneOff.find(qId => !this.game.completedQuests.has(qId));
             const nextQuest = QUESTS[nextQuestId];
-            oneOffBtn.textContent = `Quick Problem (${nextQuest.reward} coins) - ${completedOneOffs}/${npc.quests.oneOff.length} done`;
-            oneOffBtn.onclick = () => this.startQuest(nextQuestId);
+            choices.push({
+                text: `Quick Problem (${nextQuest.reward} coins) - ${completedOneOffs}/${npc.quests.oneOff.length}`,
+                action: () => this.startQuest(nextQuestId)
+            });
         }
-        jobAnswers.appendChild(oneOffBtn);
 
-        // Full quest button
-        const fullQuest = QUESTS[npc.quests.full];
-        const fullQuestBtn = document.createElement('button');
-        fullQuestBtn.className = 'quest-menu-btn';
-        if (fullQuestCompleted) {
-            fullQuestBtn.textContent = `${fullQuest.name} (Completed)`;
-            fullQuestBtn.disabled = true;
-        } else {
-            fullQuestBtn.textContent = `${fullQuest.name} (${fullQuest.reward} coins)`;
-            fullQuestBtn.onclick = () => this.startQuest(npc.quests.full);
+        // Full quest choice
+        if (!fullQuestCompleted) {
+            const fullQuest = QUESTS[npc.quests.full];
+            choices.push({
+                text: `${fullQuest.name} (${fullQuest.reward} coins)`,
+                action: () => this.startQuest(npc.quests.full)
+            });
         }
-        jobAnswers.appendChild(fullQuestBtn);
 
-        // Add cancel button
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'job-cancel';
-        cancelBtn.onclick = () => {
-            jobUI.classList.add('hidden');
-            this.game.state = GameState.EXPLORING;
-        };
-        jobAnswers.appendChild(cancelBtn);
+        // Always add cancel option
+        choices.push({
+            text: 'Not right now',
+            action: () => {
+                // Just dismiss, return to EXPLORING
+            }
+        });
 
-        jobUI.classList.remove('hidden');
+        // Show as dialogue with choices (D-pad compatible)
+        this.game.dialogueSystem.startDialogue(
+            [npc.greeting || "What can I help you with?"],
+            choices,
+            null,
+            npc.name
+        );
     }
 
     startQuest(questId) {

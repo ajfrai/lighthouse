@@ -897,37 +897,19 @@ class LighthouseGame {
     }
 
     showCreatureNaming() {
-        // Show naming UI using dialogue box
-        this.state = GameState.DIALOGUE;
-        const dialogBox = document.getElementById('dialogBox');
-        const dialogContent = document.getElementById('dialogContent');
-        const dialogChoices = document.getElementById('dialogChoices');
+        // Show naming choices using dialogue system (D-pad compatible)
+        const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
 
-        dialogContent.textContent = "It needs a name.";
-        dialogChoices.innerHTML = `
-            <div class="naming-container">
-                <input type="text" id="creatureNameInput" placeholder="Shimmer" maxlength="12" value="Shimmer" />
-                <button onclick="game.finalizeCreatureNaming()">Confirm Name</button>
-            </div>
-        `;
-
-        // Focus input after a short delay
-        setTimeout(() => {
-            const input = document.getElementById('creatureNameInput');
-            if (input) input.focus();
-        }, 100);
-
-        dialogBox.classList.remove('hidden');
+        this.startDialogue(
+            ["It needs a name."],
+            nameOptions.map(name => ({
+                text: name,
+                action: () => this.finalizeCreatureNaming(name)
+            }))
+        );
     }
 
-    finalizeCreatureNaming() {
-        const input = document.getElementById('creatureNameInput');
-        let name = input ? input.value.trim() : 'Shimmer';
-
-        // Validate name (letters only, 1-12 characters)
-        if (!name || !/^[A-Za-z]+$/.test(name) || name.length > 12) {
-            name = 'Shimmer';
-        }
+    finalizeCreatureNaming(name = 'Shimmer') {
 
         // Add creature to party with stats
         const creature = {
@@ -951,8 +933,8 @@ class LighthouseGame {
         // Mark as discovered
         this.discoveredCreatures.add('lumina');
 
-        // Update plot phase to return_to_keeper
-        this.plotPhase = PlotPhase.RETURN_TO_KEEPER;
+        // Update plot phase to creature_found (will trigger keeper dialogue)
+        this.plotPhase = 'creature_found';
 
         // Mark encounter as complete
         this.encounterState.active = false;
