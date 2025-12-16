@@ -14,16 +14,18 @@ class DebugLogger {
     setupLogger() {
         // Override console.log to capture messages
         const self = this;
+        const originalLog = this.originalConsoleLog.bind(console);
+
         console.log = function(...args) {
-            // Call original console.log
-            self.originalConsoleLog.apply(console, args);
+            // Call original console.log with proper binding
+            originalLog(...args);
 
             // If debug console enabled, add to visual log
             if (self.enabled) {
                 const message = args.map(arg => {
                     if (typeof arg === 'object') {
                         try {
-                            return JSON.stringify(arg);
+                            return JSON.stringify(arg, null, 2);
                         } catch (e) {
                             return String(arg);
                         }
