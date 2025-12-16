@@ -584,7 +584,10 @@ const NPCS = {
                     { speaker: "Callum", text: "Everyone does, eventually. Lucky for you, there's a boat." }
                 ],
                 choices: null,
+                repeatText: "We should talk about that boat.",
                 onClose: (game) => {
+                    // Change phase FIRST so we don't get stuck in meet_villager
+                    game.plotPhase = 'boat_quest';
                     game.showBoatQuestExplanation();
                 }
             },

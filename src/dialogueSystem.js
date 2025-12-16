@@ -72,8 +72,8 @@ class DialogueSystem {
                 }
                 const timesSpoken = this.game.npcInteractions.get(interactionKey);
 
-                // If already spoken AND has repeatText AND no choices/onClose, show short version
-                if (timesSpoken > 0 && dialogue.repeatText && !dialogue.choices && !dialogue.onClose) {
+                // If already spoken AND has repeatText, show short version (skip onClose/choices)
+                if (timesSpoken > 0 && dialogue.repeatText) {
                     console.log(`[DialogueSystem] Repeat interaction with ${npcId} in ${this.game.plotPhase} - showing short message`);
                     this.startDialogue([dialogue.repeatText], null, null, npc.name);
                     return;
