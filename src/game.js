@@ -558,7 +558,7 @@ class LighthouseGame {
                     this.finishBoatQuestExplanation(true);
                 }
             }
-        ]);
+        ], null, 'Callum');
     }
 
     finishBoatQuestExplanation(showDoubtResponse) {
@@ -572,9 +572,10 @@ class LighthouseGame {
         this.startDialogue(finalLines, [{
             text: "Okay",
             action: () => {
-                this.plotPhase = PlotPhase.BOAT_QUEST_START;
+                // Phase already set by meet_villager onClose
+                // Just dismiss the dialogue
             }
-        }]);
+        }], null, 'Callum');
     }
 
     // Menu system (placeholder - full implementation pending)
