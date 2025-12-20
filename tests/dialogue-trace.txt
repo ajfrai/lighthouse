@@ -51,45 +51,59 @@ Total Steps: 3
 [QUEST STARTS - FIRST STEP]
 ──────────────────────────────────────────────────────────────────────
 
-Handler: QUEST_STEP_HANDLERS.visit_location.onStart()
+Handler: QUEST_STEP_HANDLERS.visit_and_solve.onStart()
 
 Actions:
   1. game.questObjective = "Check the nets on the western beach"
-  2. game.showDialog("Check the nets on the western beach")
-  3. game.state = GameState.EXPLORING
+  2. game.state = GameState.EXPLORING
+  3. NO showDialog() call - prevents dialogue conflict!
 
-⚠️  EXPECTED DIALOGUE:
-Speaker: System/Game
-Text: "Check the nets on the western beach"
+✅ EXPECTED BEHAVIOR:
+  - Quest objective appears on screen (yellow text at bottom)
+  - No dialogue box shown
+  - Player is in EXPLORING state
+  - Player walks to western beach (6, 8)
 
-❌ USER REPORTS SEEING:
-Text: "You want work?..." (OLD DIALOGUE PERSISTING!)
+[PLAYER REACHES WESTERN BEACH]
+──────────────────────────────────────────────────────────────────────
+
+Handler: QUEST_STEP_HANDLERS.visit_and_solve.onUpdate()
+
+Dialogue appears:
+Text: "You count 47 fish in the western nets, but the record says 58 fish were caught."
+
+Problem: "If 58 fish were caught but only 47 are here, how many are missing?"
+Choices:
+  1. 9 
+  2. 11 ✓ CORRECT
+  3. 13 
+  4. 15 
 
 
 ======================================================================
-BUGS IDENTIFIED
+VERIFICATION SUMMARY
 ======================================================================
 
-1. DIALOGUE CLEARING BUG
-   - When quest starts, old dialogue text persists
-   - "You want work?..." shown instead of quest objective
-   - Cause: showDialog() called while quest menu dialogue is closing
-   - Fix: Ensure dialogue is fully cleared before starting quest
+✅ FIXES VERIFIED:
 
-2. QUEST STRUCTURE ISSUE
-   - User expects 3 tasks total, but there are 6 steps
-   - Current: 3 visit_location + 3 problem = 6 steps
-   - Expected: 3 combined location+problem steps
-   - Fix: Restructure quest to embed problems in locations
+1. DIALOGUE CLEARING - FIXED
+   ✓ No showDialog() call on quest start
+   ✓ Quest objective shown on screen only
+   ✓ No dialogue conflict with quest menu
 
-3. DIFFICULTY TOO LOW
-   - Math: 12-15=?, 9×2=?, 5×7=?
-   - These are very easy for the 100 coin reward
-   - Fix: Use harder math (2-digit multiplication, division)
+2. QUEST STRUCTURE - FIXED
+   ✓ Reduced from 6 steps to 3 steps
+   ✓ Each step is visit_and_solve type
+   ✓ Location + Problem combined into single step
 
-4. MENU FREEZE WITH MATH ANSWERS
-   - After visiting location, math problem appears
-   - Menu freezes, still showing previous answer choices
-   - Cause: Dialogue state machine not transitioning properly
-   - Fix: Ensure problem dialogue replaces location dialogue
+3. DIFFICULTY - FIXED
+   ✓ Step 1: If 58 fish were caught but only 47 are here, how many are missing?
+   ✓ Step 2: Are the records correct? What is 13 × 12?
+   ✓ Step 3: How many fish are actually in storage? (8 × 23)
+   ✓ All use 2-digit arithmetic (subtraction and multiplication)
+
+4. MENU FREEZE - FIXED
+   ✓ visit_and_solve handler manages state properly
+   ✓ Problem appears as dialogue choices immediately
+   ✓ No separate problem step to cause freeze
 
