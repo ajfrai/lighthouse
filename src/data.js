@@ -688,12 +688,25 @@ const NPCS = {
             },
             {
                 condition: (game) => {
-                    // Only shown if player HAS completed at least one of CALLUM's quests
+                    // Shown when player has completed ALL of Callum's quests
                     const callumsQuests = ['fishing_crates', 'fishing_nets', 'fishing_baskets', 'fishing_records'];
                     const completedCallumsQuests = callumsQuests.filter(q => game.completedQuests && game.completedQuests.has(q));
                     return (game.plotPhase === 'boat_quest' || game.plotPhase === 'working')
                         && game.hasInspectedBoat
-                        && completedCallumsQuests.length > 0;
+                        && completedCallumsQuests.length === callumsQuests.length;
+                },
+                text: "You've finished all my work. Not bad. Talk to Marlowe—he'll have the next steps for you.",
+                choices: null  // No choices, just acknowledgment
+            },
+            {
+                condition: (game) => {
+                    // Shown if player HAS completed SOME (but not all) of Callum's quests
+                    const callumsQuests = ['fishing_crates', 'fishing_nets', 'fishing_baskets', 'fishing_records'];
+                    const completedCallumsQuests = callumsQuests.filter(q => game.completedQuests && game.completedQuests.has(q));
+                    return (game.plotPhase === 'boat_quest' || game.plotPhase === 'working')
+                        && game.hasInspectedBoat
+                        && completedCallumsQuests.length > 0
+                        && completedCallumsQuests.length < callumsQuests.length;
                 },
                 text: "Back for more? Good. Let's see what we've got today.",
                 choices: [
