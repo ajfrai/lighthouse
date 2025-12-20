@@ -74,7 +74,16 @@ console.log(`Total Steps: ${fullQuest.steps.length}`);
 console.log(`\n┌─ QUEST FLOW ────────────────────────────────────────────┐`);
 fullQuest.steps.forEach((step, i) => {
     console.log(`│ Step ${i + 1}: ${step.type.toUpperCase()}`);
-    if (step.type === 'visit_location') {
+    if (step.type === 'visit_and_solve') {
+        console.log(`│   Task: ${step.description}`);
+        console.log(`│   Location: (${step.location.x}, ${step.location.y}) ${step.markerText}`);
+        console.log(`│   Arrival: "${step.onArrive.message}"`);
+        if (step.onArrive.problem) {
+            console.log(`│   Problem: "${step.onArrive.problem.question}"`);
+            console.log(`│   Answers: [${step.onArrive.problem.answers.join(', ')}]`);
+            console.log(`│   Correct: ${step.onArrive.problem.correct}`);
+        }
+    } else if (step.type === 'visit_location') {
         console.log(`│   Description: ${step.description}`);
         console.log(`│   Location: (${step.location.x}, ${step.location.y})`);
         console.log(`│   On Arrive: "${step.onArrive.message}"`);
