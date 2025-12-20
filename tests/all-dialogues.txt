@@ -1,0 +1,201 @@
+╔═══════════════════════════════════════════════════════╗
+║      COMPLETE DIALOGUE TREE UNROLL - ALL NPCS        ║
+╚═══════════════════════════════════════════════════════╝
+
+
+======================================================================
+MARLOWE DIALOGUE TREE
+======================================================================
+
+[STATE 1: plotPhase=wake_up]
+──────────────────────────────────────────────────────────────────────
+Speaker: Marlowe
+Text (5 lines):
+  1. [Marlowe]: "Morning. Sleep well?"
+  2. [Marlowe]: "I heard something on the rocks last night. Sounded small... maybe hurt."
+  3. [Marlowe]: "My eyes aren't what they were. Would you go look for me?"
+  4. [Marlowe]: "Head west to the beach. Check near the rocks. Be careful."
+  5. [Marlowe]: "Come back and tell me what you find."
+
+No choices (auto-advance dialogue)
+Has onClose handler: Yes
+
+[STATE 2: plotPhase=find_creature]
+──────────────────────────────────────────────────────────────────────
+Speaker: Marlowe
+Text: "Find anything yet? Head west to the beach. Check near the rocks. Something's out there, I'm certain."
+
+No choices (auto-advance dialogue)
+
+[STATE 3: plotPhase=creature_found]
+──────────────────────────────────────────────────────────────────────
+Speaker: Marlowe
+Text: "(game) => {
+                    // Get the creature's name from party
+                    const starter = game.party.find(c => c.isStarter);
+                    const creatureName = starter ? starter.name : 'Shimmer';
+
+                    return [
+                        { speaker: "Marlowe", text: "You found something, didn't you? I can tell by your footsteps." },
+                        { speaker: "You", text: "I did. A small creature, injured." },
+                        { speaker: "Marlowe", text: "Injured and alone. Good thing you found it." },
+                        { speaker: "Marlowe", text: "Does it have a name?" },
+                        { speaker: "You", text: `I call it ${creatureName}.` },
+                        { speaker: "Marlowe", text: `${creatureName}. Good name.` },
+                        { speaker: "Marlowe", text: "Listen—there's a fisherman nearby who might have work." },
+                        { speaker: "Marlowe", text: "We could use the coin. You could use the experience." },
+                        { speaker: "Marlowe", text: "His name is Callum. Rough hands, good heart." },
+                        { speaker: "Marlowe", text: "You'll find him just down the path from here." }
+                    ];
+                }"
+
+No choices (auto-advance dialogue)
+Has onClose handler: Yes
+
+[STATE 4: plotPhase=meet_villager]
+──────────────────────────────────────────────────────────────────────
+Speaker: Marlowe
+Text: "The village is south and west. Look for Callum near the western clearing."
+
+No choices (auto-advance dialogue)
+
+[STATE 5: plotPhase=boat_quest]
+──────────────────────────────────────────────────────────────────────
+Speaker: Marlowe
+Text: "How's the work going? Callum's rough, but he's fair. Do good work and he'll pay honest."
+
+No choices (auto-advance dialogue)
+
+
+======================================================================
+CALLUM DIALOGUE TREE & QUEST FLOW
+======================================================================
+
+[TEST 1: First interaction - No quests completed]
+──────────────────────────────────────────────────────────────────────
+
+Step 1: Player presses A near Callum
+Speaker: Callum
+Text: "You want work? I've got fish that need counting."
+Choices:
+  1. "Show me the work"
+  2. "Not right now"
+
+Step 2: Player selects "Show me the work"
+
+Executing choice action...
+
+📝 EVENTS TRIGGERED:
+  ✓ showQuestMenu('callum') called
+  ✓ startDialogue() called
+    - Speaker: Callum
+    - Text lines: 1
+    - Choices: 1
+    - Text: "Choose a task:"
+
+📝 STATE CHANGES:
+  ✓ game.state: exploring → choice
+
+📊 CURRENT STATE:
+  game.state = choice
+  dialogue.active = true
+
+⚠️  BUG CHECK #1: Double-click A to display tasks
+   Current state: choice
+   Dialogue active: true
+   Expected: Quest menu should be visible immediately
+   Actual: If state is DIALOGUE_CHOICE and dialogue.active=true, quest menu IS showing
+   Issue: If A button handler checks for EXPLORING state, it won't work!
+
+
+Step 3: Player selects "Check the Catch Records (100 coins)"
+──────────────────────────────────────────────────────────────────────
+
+📝 EVENTS TRIGGERED:
+  ✓ startQuest('fishing_records') called
+  ✓ endDialogue() called - Quest menu closed
+
+📝 STATE CHANGES:
+  ✓ game.state: choice → exploring
+  ✓ game.state: exploring → exploring
+
+📊 FINAL STATE:
+  game.state = exploring
+  game.questObjective = "Check the nets on the western beach"
+  game.activeQuest = Set
+
+⚠️  BUG CHECK #2: Tasks aren't explained after selection
+   Quest objective: "Check the nets on the western beach"
+   Expected: Should show "Check the nets on the western beach"
+   This IS being set! So the objective should appear on screen.
+
+
+Step 4: Player reaches western beach and answers correctly
+──────────────────────────────────────────────────────────────────────
+
+Player at (6, 8)
+Calling handler.onUpdate()...
+
+📝 HANDLER RETURNED:
+  completed: true
+  message: "You count 47 fish in the western nets, but the record says 58 fish were caught.
+
+If 58 fish were caught but only 47 are here, how many are missing?"
+  choices: 4
+
+Choices returned:
+  1. "9" 
+  2. "11" ✓ CORRECT
+  3. "13" 
+  4. "15" 
+
+Step 5: Player selects correct answer (11)
+──────────────────────────────────────────────────────────────────────
+
+Executing correct answer's action...
+
+📝 EVENTS TRIGGERED:
+  ✓ showDialog("Correct! The records have been updated.")
+
+📊 FINAL STATE:
+  game.activeQuest.currentStep = 1
+  game.questObjective = null
+  game.state = exploring
+
+⚠️  BUG CHECK #3: Menu freezes after correct answer
+   The action calls showDialog() then setTimeout(() => advanceQuestStep())
+   Problem: setTimeout won't execute in this test environment!
+   In real game, if dialogue isn't properly closed, menu could freeze.
+
+
+======================================================================
+VERIFICATION SUMMARY
+======================================================================
+
+✅ DIALOGUE TREES MAPPED:
+   ✓ Marlowe: 5 states tested
+   ✓ Callum: Quest flow traced end-to-end
+
+⚠️  POTENTIAL BUGS IDENTIFIED:
+
+1. DOUBLE-CLICK A BUG:
+   Root cause: Quest menu puts game in DIALOGUE_CHOICE state.
+   If A button handler only works in EXPLORING state, player must:
+     - Press A once to close dialogue (back to EXPLORING)
+     - Press A again to advance
+
+   Fix: A button should work in DIALOGUE_CHOICE for advancing choices
+
+2. TASKS NOT EXPLAINED BUG:
+   Quest objective IS being set: "null"
+   If it's not showing on screen, the issue is in rendering, not logic.
+
+   Check: Does renderingSystem.js show questObjective text?
+
+3. MENU FREEZE BUG:
+   Choice action calls showDialog("Correct!") then setTimeout
+   Problem: If dialogue closes after setTimeout, timing issue
+
+   Fix: Don't use setTimeout - immediately call advanceQuestStep()
+        or ensure dialogue properly chains
+

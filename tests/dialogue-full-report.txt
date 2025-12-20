@@ -1,0 +1,115 @@
+╔═══════════════════════════════════════════════════════╗
+║     SCALABLE DIALOGUE UNROLLER - FULL COVERAGE       ║
+╚═══════════════════════════════════════════════════════╝
+
+Discovering NPCs and Quests...
+
+Found 5 NPCs:
+  - marlowe (Marlowe) - dialogue_npc
+  - marina (Marina) - undefined
+  - callum (Callum) - dialogue_npc
+  - dr_nova (Dr. Nova) - undefined
+  - fisherman (Old Salt) - undefined
+
+Found 4 Quests:
+  - fishing_crates (Count the Crates) - one_off
+  - fishing_nets (Calculate the Nets) - one_off
+  - fishing_baskets (Pack the Lobsters) - one_off
+  - fishing_records (Check the Catch Records) - multi_step (3 steps)
+
+======================================================================
+TESTING DIALOGUE NPCS
+======================================================================
+
+Marlowe (marlowe)
+  Dialogues: 9
+  States tested: 6
+
+  State 1: {"npcId":"marlowe","plotPhase":"wake_up"}
+    ✓ Matched dialogue
+      Text: "[5 lines]"
+      Choices: 0
+
+  State 2: {"npcId":"marlowe","plotPhase":"find_creature"}
+    ✓ Matched dialogue
+      Text: "Find anything yet? Head west to the beach. Check n"
+      Choices: 0
+
+  State 3: {"npcId":"marlowe","plotPhase":"creature_found"}
+    ✓ Matched dialogue
+      Text: "[complex dialogue]"
+      Choices: 0
+
+  State 4: {"npcId":"marlowe","plotPhase":"meet_villager"}
+    ✓ Matched dialogue
+      Text: "The village is south and west. Look for Callum nea"
+      Choices: 0
+
+  State 5: {"npcId":"marlowe","plotPhase":"boat_quest"}
+    ✓ Matched dialogue
+      Text: "How's the work going? Callum's rough, but he's fai"
+      Choices: 0
+
+  State 6: {"npcId":"marlowe","plotPhase":"working"}
+    ✓ Matched dialogue
+      Text: "How's the work going? Callum's rough, but he's fai"
+      Choices: 0
+
+Callum (callum)
+  Dialogues: 4
+  States tested: 6
+
+  State 1: {"npcId":"callum","plotPhase":"wake_up"}
+    ⚠️  No matching dialogue
+
+  State 2: {"npcId":"callum","plotPhase":"find_creature"}
+    ⚠️  No matching dialogue
+
+  State 3: {"npcId":"callum","plotPhase":"creature_found"}
+    ⚠️  No matching dialogue
+
+  State 4: {"npcId":"callum","plotPhase":"meet_villager"}
+    ✓ Matched dialogue
+      Text: "[6 lines]"
+      Choices: 0
+
+  State 5: {"npcId":"callum","plotPhase":"boat_quest"}
+    ✓ Matched dialogue
+      Text: "Go take a look at the boat first. It's on the west"
+      Choices: 0
+
+  State 6: {"npcId":"callum","plotPhase":"working"}
+    ⚠️  No matching dialogue
+
+======================================================================
+TESTING QUEST NPCS
+======================================================================
+
+======================================================================
+TESTING QUEST HANDLERS
+======================================================================
+
+Handlers tested: 3
+Issues found: 0
+
+Handler types in use:
+  visit_and_solve: 3 step(s)
+
+======================================================================
+SUMMARY
+======================================================================
+
+NPCs: 5
+  - Dialogue NPCs: 2 (13 total dialogues)
+  - Quest NPCs: 0
+
+Quests: 4
+  - Multi-step: 1
+  - One-off: 3
+
+Quest Handlers: 5
+  - Used: 1
+  - Issues: 0
+
+✅ ALL TESTS PASSED!
+
