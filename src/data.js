@@ -209,7 +209,8 @@ const QUEST_STEP_HANDLERS = {
         // Called when step becomes active
         onStart: (game, step) => {
             game.questObjective = step.description;
-            game.showDialog(step.description);
+            // Don't show dialog - just set objective (shown on screen)
+            // This prevents dialogue conflict when starting from quest menu
             game.state = GameState.EXPLORING;
         },
 
@@ -288,6 +289,81 @@ const QUEST_STEP_HANDLERS = {
 
         onRender: (game, step) => {
             // No rendering needed for problems
+        }
+    },
+
+    'visit_and_solve': {
+        onStart: (game, step) => {
+            game.questObjective = step.description;
+            game.state = GameState.EXPLORING;
+        },
+
+        onUpdate: (game, step) => {
+            // Check if player reached location
+            const dx = game.player.x - step.location.x;
+            const dy = game.player.y - step.location.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= step.radius) {
+                // Player arrived - show message and problem
+                const problem = step.onArrive.problem;
+                const choices = problem.answers.map(answer => ({
+                    text: String(answer),
+                    action: () => {
+                        if (answer === problem.correct) {
+                            // Correct! Advance to next step
+                            game.activeQuest.currentStep++;
+                            game.questObjective = null;
+                            game.showDialog("Correct! The records have been updated.");
+                            // After dialog closes, advance quest
+                            setTimeout(() => {
+                                if (game.activeQuest.currentStep >= game.activeQuest.quest.steps.length) {
+                                    game.questSystem.completeQuest();
+                                } else {
+                                    game.questSystem.advanceQuestStep();
+                                }
+                            }, 100);
+                        } else {
+                            // Wrong answer
+                            game.showDialog("That's not quite right. Let me review the records again.");
+                            // Don't advance step - player can try again by revisiting
+                        }
+                    }
+                }));
+
+                return {
+                    completed: true,
+                    message: step.onArrive.message + "\n\n" + problem.question,
+                    choices: choices
+                };
+            }
+            return { completed: false };
+        },
+
+        onRender: (game, step) => {
+            // Same rendering as visit_location
+            const tileSize = game.map.tileSize;
+            const x = step.location.x * tileSize + tileSize / 2;
+            const y = step.location.y * tileSize + tileSize / 2;
+
+            const time = Date.now() / 1000;
+            const pulse = Math.sin(time * 3) * 0.2 + 0.8;
+
+            game.ctx.save();
+            game.ctx.globalAlpha = pulse;
+            game.ctx.font = '24px Arial';
+            game.ctx.textAlign = 'center';
+            game.ctx.textBaseline = 'middle';
+            game.ctx.fillText(step.markerText, x, y);
+            game.ctx.restore();
+
+            game.ctx.save();
+            game.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+            game.ctx.lineWidth = 2;
+            game.ctx.beginPath();
+            game.ctx.arc(x, y, step.radius * tileSize, 0, Math.PI * 2);
+            game.ctx.stroke();
+            game.ctx.restore();
         }
     },
 
@@ -405,52 +481,49 @@ const QUESTS = {
         description: "Help me verify the daily catch records by checking the nets around the island!",
         steps: [
             {
-                type: 'visit_location',
+                type: 'visit_and_solve',
                 description: 'Check the nets on the western beach',
                 location: { x: 6, y: 8 },
                 radius: 2,
                 markerText: '🎣',
                 onArrive: {
-                    message: "You count the fish in the nets here. There are 12 fish, but the record says 15..."
+                    message: "You count 47 fish in the western nets, but the record says 58 fish were caught.",
+                    problem: {
+                        question: "If 58 fish were caught but only 47 are here, how many are missing?",
+                        answers: [9, 11, 13, 15],
+                        correct: 11
+                    }
                 }
             },
             {
-                type: 'problem',
-                question: "The western nets had 12 fish but the record says 15. What's the difference?",
-                answers: [2, 3, 4, 5],
-                correct: 3
-            },
-            {
-                type: 'visit_location',
+                type: 'visit_and_solve',
                 description: 'Check the nets on the eastern shore',
                 location: { x: 25, y: 8 },
                 radius: 2,
                 markerText: '🎣',
                 onArrive: {
-                    message: "The eastern nets have 18 fish. The record says 9 nets with 2 fish each..."
+                    message: "The eastern nets have 13 sections, each holds 12 fish. The record says 144 total.",
+                    problem: {
+                        question: "Are the records correct? What is 13 × 12?",
+                        answers: [144, 156, 132, 148],
+                        correct: 156
+                    }
                 }
             },
             {
-                type: 'problem',
-                question: "If there are 9 nets with 2 fish each, how many fish should there be total?",
-                answers: [11, 16, 18, 20],
-                correct: 18
-            },
-            {
-                type: 'visit_location',
-                description: 'Check the storage in the boat on the western beach',
+                type: 'visit_and_solve',
+                description: 'Check the storage in the boat',
                 location: { x: 5, y: 7 },
                 radius: 2,
                 markerText: '📦',
                 onArrive: {
-                    message: "The boat has 5 crates with 7 fish in each. Let me verify this matches the records..."
+                    message: "The boat has 8 crates. Each crate holds 23 fish. Records show 184 fish stored.",
+                    problem: {
+                        question: "How many fish are actually in storage? (8 × 23)",
+                        answers: [164, 184, 204, 189],
+                        correct: 184
+                    }
                 }
-            },
-            {
-                type: 'problem',
-                question: "How many fish total are stored in the boat? (5 crates × 7 fish each)",
-                answers: [30, 35, 40, 42],
-                correct: 35
             }
         ]
     }
