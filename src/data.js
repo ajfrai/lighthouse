@@ -314,19 +314,23 @@ const QUEST_STEP_HANDLERS = {
                             // Correct! Advance to next step
                             game.activeQuest.currentStep++;
                             game.questObjective = null;
-                            game.showDialog("Correct! The records have been updated.");
-                            // After dialog closes, advance quest
-                            setTimeout(() => {
-                                if (game.activeQuest.currentStep >= game.activeQuest.quest.steps.length) {
-                                    game.questSystem.completeQuest();
-                                } else {
-                                    game.questSystem.advanceQuestStep();
+
+                            // Use startDialogue with onClose handler instead of setTimeout
+                            // This properly advances quest AFTER dialogue closes, preventing menu freeze
+                            game.dialogueSystem.startDialogue(
+                                ["Correct! The records have been updated."],
+                                null,
+                                () => {
+                                    if (game.activeQuest.currentStep >= game.activeQuest.quest.steps.length) {
+                                        game.questSystem.completeQuest();
+                                    } else {
+                                        game.questSystem.advanceQuestStep();
+                                    }
                                 }
-                            }, 100);
+                            );
                         } else {
-                            // Wrong answer
+                            // Wrong answer - don't advance step, player can try again
                             game.showDialog("That's not quite right. Let me review the records again.");
-                            // Don't advance step - player can try again by revisiting
                         }
                     }
                 }));

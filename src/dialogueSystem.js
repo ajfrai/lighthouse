@@ -162,6 +162,21 @@ class DialogueSystem {
         }
 
         dialogBox.classList.remove('hidden');
+
+        // CRITICAL FIX: If this dialogue has choices (like quest menu),
+        // skip typewriter effect and show choices immediately
+        // This prevents the bug where first A press skips typewriter instead of selecting choice
+        if (choices && choices.length > 0) {
+            this.game.dialogue.textIndex = this.game.dialogue.fullText.length;
+            this.game.dialogue.currentText = this.game.dialogue.fullText;
+            this.game.state = GameState.DIALOGUE_CHOICE;
+            this.showDialogueChoices();
+
+            // Auto-select single choices immediately
+            if (choices.length === 1) {
+                this.selectDialogueChoice();
+            }
+        }
     }
 
     updateDialogue(timestamp) {
