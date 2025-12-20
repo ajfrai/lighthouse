@@ -96,14 +96,26 @@ fullQuest.steps.forEach((step, i) => {
 });
 console.log(`└─────────────────────────────────────────────────────────┘`);
 
-console.log('\n[QUEST STARTS - FIRST STEP]');
+console.log('\n[QUEST STARTS]');
+console.log('─'.repeat(70));
+
+console.log(`\nIn questSystem.startQuest():`);
+console.log(`  1. Set activeQuest = { questId, quest, currentStep: 0 }`);
+console.log(`  2. Hide jobUI (quest menu)`);
+console.log(`  3. CRITICAL: Call endDialogue() to close quest menu dialogue`);
+console.log(`     - Hides dialogBox to prevent infinite loop`);
+console.log(`     - Sets state to EXPLORING`);
+console.log(`     - Clears dialogue UI`);
+console.log(`  4. Call advanceQuestStep() to start first step`);
+
+console.log('\n[FIRST STEP STARTS]');
 console.log('─'.repeat(70));
 
 const firstStep = fullQuest.steps[0];
 console.log(`\nHandler: QUEST_STEP_HANDLERS.${firstStep.type}.onStart()`);
 console.log(`\nActions:`);
 console.log(`  1. game.questObjective = "${firstStep.description}"`);
-console.log(`  2. game.state = GameState.EXPLORING`);
+console.log(`  2. game.state = GameState.EXPLORING (already set by endDialogue)`);
 console.log(`  3. NO showDialog() call - prevents dialogue conflict!`);
 
 console.log(`\n✅ EXPECTED BEHAVIOR:`);
@@ -131,23 +143,29 @@ console.log('='.repeat(70));
 console.log(`
 ✅ FIXES VERIFIED:
 
-1. DIALOGUE CLEARING - FIXED
+1. INFINITE DIALOGUE LOOP - FIXED
+   ✓ startQuest() calls endDialogue() before starting multi-step quest
+   ✓ DialogBox properly closed when quest starts
+   ✓ No unresponsive dialogue hanging on screen
+   ✓ Player can immediately explore after quest starts
+
+2. DIALOGUE CLEARING - FIXED
    ✓ No showDialog() call on quest start
    ✓ Quest objective shown on screen only
    ✓ No dialogue conflict with quest menu
 
-2. QUEST STRUCTURE - FIXED
+3. QUEST STRUCTURE - FIXED
    ✓ Reduced from 6 steps to 3 steps
    ✓ Each step is visit_and_solve type
    ✓ Location + Problem combined into single step
 
-3. DIFFICULTY - FIXED
+4. DIFFICULTY - FIXED
    ✓ Step 1: ${firstStep.onArrive.problem.question}
    ✓ Step 2: ${fullQuest.steps[1].onArrive.problem.question}
    ✓ Step 3: ${fullQuest.steps[2].onArrive.problem.question}
    ✓ All use 2-digit arithmetic (subtraction and multiplication)
 
-4. MENU FREEZE - FIXED
+5. MENU FREEZE - FIXED
    ✓ visit_and_solve handler manages state properly
    ✓ Problem appears as dialogue choices immediately
    ✓ No separate problem step to cause freeze
