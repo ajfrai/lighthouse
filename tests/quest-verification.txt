@@ -1,0 +1,95 @@
+╔═══════════════════════════════════════════════════════╗
+║         COMPLETE DIALOGUE TREE UNROLL                ║
+╚═══════════════════════════════════════════════════════╝
+
+
+======================================================================
+CALLUM - FIRST QUEST INTERACTION (100 COIN QUEST)
+======================================================================
+
+[PLAYER APPROACHES CALLUM AND PRESSES A]
+──────────────────────────────────────────────────────────────────────
+Speaker: Callum
+Text: "You want work? I've got fish that need counting."
+
+Choices:
+  1. Show me the work
+  2. Not right now
+
+[PLAYER SELECTS "Show me the work"]
+──────────────────────────────────────────────────────────────────────
+
+Action: game.questSystem.showQuestMenu('callum', NPCS.callum)
+
+Quest Menu Opens:
+Speaker: Callum
+Text: "Choose a task:" (questGreeting fallback)
+
+Quest Choices:
+  1. Quick Problem (5 coins) - 0/3
+  2. Quick Problem (5 coins) - 0/3
+  3. Quick Problem (5 coins) - 0/3
+  4. Check the Catch Records (100 coins) ← 100 COIN QUEST
+  5. Not right now
+
+[PLAYER SELECTS "Check the Catch Records (100 coins)"]
+──────────────────────────────────────────────────────────────────────
+
+Quest: Check the Catch Records
+Type: multi_step
+Reward: 100 coins
+Total Steps: 3
+
+┌─ QUEST FLOW ────────────────────────────────────────────┐
+│ Step 1: VISIT_AND_SOLVE
+│
+│ Step 2: VISIT_AND_SOLVE
+│
+│ Step 3: VISIT_AND_SOLVE
+└─────────────────────────────────────────────────────────┘
+
+[QUEST STARTS - FIRST STEP]
+──────────────────────────────────────────────────────────────────────
+
+Handler: QUEST_STEP_HANDLERS.visit_location.onStart()
+
+Actions:
+  1. game.questObjective = "Check the nets on the western beach"
+  2. game.showDialog("Check the nets on the western beach")
+  3. game.state = GameState.EXPLORING
+
+⚠️  EXPECTED DIALOGUE:
+Speaker: System/Game
+Text: "Check the nets on the western beach"
+
+❌ USER REPORTS SEEING:
+Text: "You want work?..." (OLD DIALOGUE PERSISTING!)
+
+
+======================================================================
+BUGS IDENTIFIED
+======================================================================
+
+1. DIALOGUE CLEARING BUG
+   - When quest starts, old dialogue text persists
+   - "You want work?..." shown instead of quest objective
+   - Cause: showDialog() called while quest menu dialogue is closing
+   - Fix: Ensure dialogue is fully cleared before starting quest
+
+2. QUEST STRUCTURE ISSUE
+   - User expects 3 tasks total, but there are 6 steps
+   - Current: 3 visit_location + 3 problem = 6 steps
+   - Expected: 3 combined location+problem steps
+   - Fix: Restructure quest to embed problems in locations
+
+3. DIFFICULTY TOO LOW
+   - Math: 12-15=?, 9×2=?, 5×7=?
+   - These are very easy for the 100 coin reward
+   - Fix: Use harder math (2-digit multiplication, division)
+
+4. MENU FREEZE WITH MATH ANSWERS
+   - After visiting location, math problem appears
+   - Menu freezes, still showing previous answer choices
+   - Cause: Dialogue state machine not transitioning properly
+   - Fix: Ensure problem dialogue replaces location dialogue
+

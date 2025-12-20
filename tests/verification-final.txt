@@ -1,0 +1,127 @@
+╔═══════════════════════════════════════════════════════╗
+║         COMPLETE DIALOGUE TREE UNROLL                ║
+╚═══════════════════════════════════════════════════════╝
+
+
+======================================================================
+CALLUM - FIRST QUEST INTERACTION (100 COIN QUEST)
+======================================================================
+
+[PLAYER APPROACHES CALLUM AND PRESSES A]
+──────────────────────────────────────────────────────────────────────
+Speaker: Callum
+Text: "You want work? I've got fish that need counting."
+
+Choices:
+  1. Show me the work
+  2. Not right now
+
+[PLAYER SELECTS "Show me the work"]
+──────────────────────────────────────────────────────────────────────
+
+Action: game.questSystem.showQuestMenu('callum', NPCS.callum)
+
+Quest Menu Opens:
+Speaker: Callum
+Text: "Choose a task:" (questGreeting fallback)
+
+Quest Choices:
+  1. Quick Problem (5 coins) - 0/3
+  2. Quick Problem (5 coins) - 0/3
+  3. Quick Problem (5 coins) - 0/3
+  4. Check the Catch Records (100 coins) ← 100 COIN QUEST
+  5. Not right now
+
+[PLAYER SELECTS "Check the Catch Records (100 coins)"]
+──────────────────────────────────────────────────────────────────────
+
+Quest: Check the Catch Records
+Type: multi_step
+Reward: 100 coins
+Total Steps: 3
+
+┌─ QUEST FLOW ────────────────────────────────────────────┐
+│ Step 1: VISIT_AND_SOLVE
+│   Task: Check the nets on the western beach
+│   Location: (6, 8) 🎣
+│   Arrival: "You count 47 fish in the western nets, but the record says 58 fish were caught."
+│   Problem: "If 58 fish were caught but only 47 are here, how many are missing?"
+│   Answers: [9, 11, 13, 15]
+│   Correct: 11
+│
+│ Step 2: VISIT_AND_SOLVE
+│   Task: Check the nets on the eastern shore
+│   Location: (25, 8) 🎣
+│   Arrival: "The eastern nets have 13 sections, each holds 12 fish. The record says 144 total."
+│   Problem: "Are the records correct? What is 13 × 12?"
+│   Answers: [144, 156, 132, 148]
+│   Correct: 156
+│
+│ Step 3: VISIT_AND_SOLVE
+│   Task: Check the storage in the boat
+│   Location: (5, 7) 📦
+│   Arrival: "The boat has 8 crates. Each crate holds 23 fish. Records show 184 fish stored."
+│   Problem: "How many fish are actually in storage? (8 × 23)"
+│   Answers: [164, 184, 204, 189]
+│   Correct: 184
+└─────────────────────────────────────────────────────────┘
+
+[QUEST STARTS - FIRST STEP]
+──────────────────────────────────────────────────────────────────────
+
+Handler: QUEST_STEP_HANDLERS.visit_and_solve.onStart()
+
+Actions:
+  1. game.questObjective = "Check the nets on the western beach"
+  2. game.state = GameState.EXPLORING
+  3. NO showDialog() call - prevents dialogue conflict!
+
+✅ EXPECTED BEHAVIOR:
+  - Quest objective appears on screen (yellow text at bottom)
+  - No dialogue box shown
+  - Player is in EXPLORING state
+  - Player walks to western beach (6, 8)
+
+[PLAYER REACHES WESTERN BEACH]
+──────────────────────────────────────────────────────────────────────
+
+Handler: QUEST_STEP_HANDLERS.visit_and_solve.onUpdate()
+
+Dialogue appears:
+Text: "You count 47 fish in the western nets, but the record says 58 fish were caught."
+
+Problem: "If 58 fish were caught but only 47 are here, how many are missing?"
+Choices:
+  1. 9 
+  2. 11 ✓ CORRECT
+  3. 13 
+  4. 15 
+
+
+======================================================================
+VERIFICATION SUMMARY
+======================================================================
+
+✅ FIXES VERIFIED:
+
+1. DIALOGUE CLEARING - FIXED
+   ✓ No showDialog() call on quest start
+   ✓ Quest objective shown on screen only
+   ✓ No dialogue conflict with quest menu
+
+2. QUEST STRUCTURE - FIXED
+   ✓ Reduced from 6 steps to 3 steps
+   ✓ Each step is visit_and_solve type
+   ✓ Location + Problem combined into single step
+
+3. DIFFICULTY - FIXED
+   ✓ Step 1: If 58 fish were caught but only 47 are here, how many are missing?
+   ✓ Step 2: Are the records correct? What is 13 × 12?
+   ✓ Step 3: How many fish are actually in storage? (8 × 23)
+   ✓ All use 2-digit arithmetic (subtraction and multiplication)
+
+4. MENU FREEZE - FIXED
+   ✓ visit_and_solve handler manages state properly
+   ✓ Problem appears as dialogue choices immediately
+   ✓ No separate problem step to cause freeze
+
