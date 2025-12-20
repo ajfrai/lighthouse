@@ -16,24 +16,34 @@ class SpriteLoader {
         const sprites = [
             { name: 'tileset', hasIndex: true },
             { name: 'characters', hasIndex: true },
+            { name: 'creatures', hasIndex: true },
             { name: 'tree', hasIndex: false },
             { name: 'lighthouse', hasIndex: false }
         ];
 
         const promises = sprites.map(async (sprite) => {
-            // Load image
-            const img = new Image();
-            img.src = `assets/sprites/${sprite.name}.png`;
-            await new Promise((resolve, reject) => {
-                img.onload = resolve;
-                img.onerror = reject;
-            });
-            this.images[sprite.name] = img;
+            try {
+                // Load image
+                const img = new Image();
+                img.src = `assets/sprites/${sprite.name}.png`;
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                });
+                this.images[sprite.name] = img;
 
-            // Load index JSON if it exists
-            if (sprite.hasIndex) {
-                const response = await fetch(`assets/sprites/${sprite.name}.json`);
-                this.indexes[sprite.name] = await response.json();
+                // Load index JSON if it exists
+                if (sprite.hasIndex) {
+                    const response = await fetch(`assets/sprites/${sprite.name}.json`);
+                    this.indexes[sprite.name] = await response.json();
+                }
+            } catch (error) {
+                // Creatures use programmatic rendering, so missing sprite files are OK
+                if (sprite.name === 'creatures') {
+                    console.log('✓ Creatures will use programmatic rendering');
+                } else {
+                    throw error;
+                }
             }
         });
 
@@ -317,6 +327,62 @@ class SpriteLoader {
     getTileVariant(baseName, x, y, variantCount) {
         const variant = (x * 7 + y * 13) % variantCount;
         return `${baseName}_${variant}`;
+    }
+
+    /**
+     * Draw creature sprite programmatically
+     * NOTE: Using programmatic pixel art instead of emoji for important game moments
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {string} creatureId - Creature ID ('lumina', etc)
+     * @param {number} dx - Destination X
+     * @param {number} dy - Destination Y
+     */
+    drawCreature(ctx, creatureId, dx, dy) {
+        ctx.save();
+
+        if (creatureId === 'lumina') {
+            // Lumina - A wounded glowing moth with pixel art detail
+            // Draw as 16x16 pixel art sprite
+
+            // Moth body (soft brown/beige)
+            ctx.fillStyle = '#8B7355';
+            this.drawPixel(ctx, dx + 7, dy + 6, 2, 4);  // Body center
+
+            // Left wing (damaged - folded/broken)
+            ctx.fillStyle = '#FFE4B5';
+            this.drawPixel(ctx, dx + 3, dy + 6, 3, 3);  // Wing base
+            ctx.fillStyle = '#87CEEB';  // Glowing blue accent
+            this.drawPixel(ctx, dx + 4, dy + 7, 1, 1);  // Wing spot
+
+            // Right wing (healthy - spread)
+            ctx.fillStyle = '#FFE4B5';
+            this.drawPixel(ctx, dx + 10, dy + 5, 4, 4);  // Wing
+            ctx.fillStyle = '#87CEEB';  // Glowing accent
+            this.drawPixel(ctx, dx + 11, dy + 6, 2, 2);  // Wing spot
+            this.drawPixel(ctx, dx + 12, dy + 7, 1, 1);  // Detail
+
+            // Head
+            ctx.fillStyle = '#6B5345';
+            this.drawPixel(ctx, dx + 7, dy + 5, 2, 1);  // Head
+
+            // Antennae
+            ctx.fillStyle = '#4A3C30';
+            this.drawPixel(ctx, dx + 7, dy + 4, 1, 1);
+            this.drawPixel(ctx, dx + 8, dy + 4, 1, 1);
+
+            // Subtle glow effect
+            ctx.fillStyle = 'rgba(135, 206, 235, 0.3)';
+            this.drawPixel(ctx, dx + 6, dy + 6, 4, 5);
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Helper to draw a pixel block
+     */
+    drawPixel(ctx, x, y, width, height) {
+        ctx.fillRect(x, y, width, height);
     }
 }
 

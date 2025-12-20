@@ -51,8 +51,10 @@ class QuestSystem {
         });
 
         // Show as dialogue with choices (D-pad compatible)
+        // Use quest-specific greeting if available, otherwise a contextual default
+        const questGreeting = npc.questGreeting || "Choose a task:";
         this.game.dialogueSystem.startDialogue(
-            [npc.greeting || "What can I help you with?"],
+            [questGreeting],
             choices,
             null,
             npc.name
