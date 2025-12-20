@@ -1,0 +1,125 @@
+╔═══════════════════════════════════════════════════════╗
+║    DIALOGUE TREE UNROLL - EXERCISING CODEBASE        ║
+╚═══════════════════════════════════════════════════════╝
+
+
+======================================================================
+CALLUM - FIRST QUEST INTERACTION (100 COIN QUEST)
+======================================================================
+
+[PLAYER APPROACHES CALLUM AND PRESSES A]
+──────────────────────────────────────────────────────────────────────
+Speaker: Callum
+Text: "You want work? I've got fish that need counting."
+
+Choices:
+  1. Show me the work
+  2. Not right now
+
+[PLAYER SELECTS "Show me the work"]
+──────────────────────────────────────────────────────────────────────
+
+Action: game.questSystem.showQuestMenu('callum', NPCS.callum)
+
+Quest Menu Opens:
+Speaker: Callum
+Text: "Choose a task:" (questGreeting fallback)
+
+Quest Choices:
+  1. Quick Problem (5 coins) - 0/3
+  2. Quick Problem (5 coins) - 0/3
+  3. Quick Problem (5 coins) - 0/3
+  4. Check the Catch Records (100 coins) ← 100 COIN QUEST
+  5. Not right now
+
+[PLAYER SELECTS "Check the Catch Records (100 coins)"]
+──────────────────────────────────────────────────────────────────────
+
+Quest: Check the Catch Records
+Type: multi_step
+Reward: 100 coins
+Total Steps: 3
+
+┌─ QUEST FLOW ────────────────────────────────────────────┐
+│ Step 1: VISIT_AND_SOLVE
+│   Task: Check the nets on the western beach
+│   Location: (6, 8) 🎣
+│   Arrival: "You count 47 fish in the western nets, but the record says 58 fish were caught."
+│   Problem: "If 58 fish were caught but only 47 are here, how many are missing?"
+│   Answers: [9, 11, 13, 15]
+│   Correct: 11
+│
+│ Step 2: VISIT_AND_SOLVE
+│   Task: Check the nets on the eastern shore
+│   Location: (25, 8) 🎣
+│   Arrival: "The eastern nets have 13 sections, each holds 12 fish. The record says 144 total."
+│   Problem: "Are the records correct? What is 13 × 12?"
+│   Answers: [144, 156, 132, 148]
+│   Correct: 156
+│
+│ Step 3: VISIT_AND_SOLVE
+│   Task: Check the storage in the boat
+│   Location: (5, 7) 📦
+│   Arrival: "The boat has 8 crates. Each crate holds 23 fish. Records show 184 fish stored."
+│   Problem: "How many fish are actually in storage? (8 × 23)"
+│   Answers: [164, 184, 204, 189]
+│   Correct: 184
+└─────────────────────────────────────────────────────────┘
+
+[SIMULATING: startQuest() called]
+──────────────────────────────────────────────────────────────────────
+
+Calling: game.dialogueSystem.endDialogue()
+
+📝 STATE CHANGES:
+  ✓ endDialogue() called
+  ✓ game.state changed: exploring → exploring
+
+[SIMULATING: advanceQuestStep() - First step]
+──────────────────────────────────────────────────────────────────────
+
+✓ Handler found: QUEST_STEP_HANDLERS['visit_and_solve']
+
+Calling: handler.onStart(game, step)
+
+📝 STATE CHANGES:
+  ✓ game.state changed: exploring → exploring
+
+📊 FINAL STATE:
+  game.state = exploring
+  game.questObjective = "Check the nets on the western beach"
+  game.activeQuest.currentStep = 0
+
+✅ EXPECTED: Player can explore, quest objective shown on screen
+   Player walks to (6, 8)
+
+[SIMULATING: Player reaches western beach]
+──────────────────────────────────────────────────────────────────────
+
+Player position: (6, 8)
+
+Calling: handler.onUpdate(game, step)
+
+📝 HANDLER RETURNED:
+  completed: true
+  message: "You count 47 fish in the western nets, but the record says 58 fish were caught.
+
+If 58 fish were caught but only 47 are here, how many are missing?"
+  choices: 4 choices
+    1. 9 
+    2. 11 ✓ CORRECT
+    3. 13 
+    4. 15 
+
+
+======================================================================
+VERIFICATION SUMMARY
+======================================================================
+
+✅ VERIFIED:
+   ✓ visit_and_solve handler exists
+   ✓ Quest objective set correctly: "Check the nets on the western beach"
+   ✓ Handler.onUpdate() returns completed=true at location
+   ✓ Choices provided: 4 options
+
+🎉 ALL CHECKS PASSED - Codebase working as expected!

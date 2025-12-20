@@ -82,6 +82,10 @@ class QuestSystem {
             // Simple one-problem quest
             this.showQuestProblem(quest.problem, quest.name);
         } else if (quest.type === 'multi_step') {
+            // CRITICAL: Close quest menu dialogue before starting multi-step quest
+            // This prevents infinite dialogue loop where dialogBox is visible but unresponsive
+            this.game.dialogueSystem.endDialogue();
+
             // Start multi-step quest
             this.advanceQuestStep();
         }
