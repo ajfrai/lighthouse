@@ -443,6 +443,13 @@ class LighthouseGame {
                 if (x === obj.x && y === obj.y) {
                     return false;
                 }
+            } else if (obj.type === 'creature') {
+                // First creature (Lumina) - only blocks during find_creature phase
+                if (obj.id === 'lumina_first' && this.plotPhase === PlotPhase.FIND_CREATURE) {
+                    if (x === obj.x && y === obj.y) {
+                        return false;
+                    }
+                }
             }
         }
 
@@ -469,9 +476,16 @@ class LighthouseGame {
         const checkX = this.player.x + dx;
         const checkY = this.player.y + dy;
 
-        // Find NPC or building at interaction position
+        // Find NPC, creature, or building at interaction position
         for (const obj of this.map.objects) {
-            if (obj.type === 'npc' && obj.x === checkX && obj.y === checkY) {
+            if (obj.type === 'creature' && obj.x === checkX && obj.y === checkY) {
+                // Trigger first creature encounter
+                if (obj.id === 'lumina_first' && this.plotPhase === PlotPhase.FIND_CREATURE) {
+                    this.firstEncounterTriggered = true;
+                    this.startFirstCreatureEncounter();
+                }
+                return;
+            } else if (obj.type === 'npc' && obj.x === checkX && obj.y === checkY) {
                 this.dialogueSystem.showNPCDialog(obj.id);
                 return;
             } else if (obj.type === 'store') {
@@ -710,9 +724,9 @@ class LighthouseGame {
     }
 
     checkCreatureEncounter() {
-        // Scripted first encounter (Lumina in tall grass)
+        // Scripted first encounter (Lumina on beach near rocks)
         if (this.plotPhase === PlotPhase.FIND_CREATURE && !this.firstEncounterTriggered) {
-            const FIRST_ENCOUNTER_ZONE = { x: 19, y: 11, width: 2, height: 2 };
+            const FIRST_ENCOUNTER_ZONE = { x: 7, y: 7, width: 2, height: 2 };  // Western beach, near rocks
 
             if (this.player.x >= FIRST_ENCOUNTER_ZONE.x &&
                 this.player.x < FIRST_ENCOUNTER_ZONE.x + FIRST_ENCOUNTER_ZONE.width &&

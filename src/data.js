@@ -106,6 +106,9 @@ const MAP_DATA = {
         { type: 'tallgrass', x: 20, y: 14 },
         { type: 'tallgrass', x: 21, y: 14 },
 
+        // First creature (Lumina) - visible on beach during find_creature phase
+        { type: 'creature', id: 'lumina_first', x: 7, y: 8, emoji: '🦋' },  // Western beach, near rocks
+
         // NPCs positioned in story-meaningful locations
         { type: 'npc', id: 'marlowe', x: 15, y: 17, sprite: 'down', charType: 'teacher' },  // Just south of lighthouse
         { type: 'npc', id: 'fisherman', x: 8, y: 7, sprite: 'down', charType: 'fisherman' },  // On the beach (west)
@@ -131,7 +134,7 @@ const CREATURES = {
         description: 'A glowing moth that appears near lighthouses on foggy nights.',
         fact: 'Lumina can see ultraviolet light invisible to humans!',
         emoji: '🦋',
-        habitats: ['tallgrass'],
+        habitats: ['sand'],  // Changed from tallgrass - first creature found on beach
         encounterRate: 0.15,  // 15% chance per step (first creature - higher rate)
         requiresAbility: null
     },
@@ -468,7 +471,7 @@ const NPCS = {
                     { speaker: "Marlowe", text: "Morning. Sleep well?" },
                     { speaker: "Marlowe", text: "I heard something on the rocks last night. Sounded small... maybe hurt." },
                     { speaker: "Marlowe", text: "My eyes aren't what they were. Would you go look for me?" },
-                    { speaker: "Marlowe", text: "Take the path toward the tall grass. Be careful." },
+                    { speaker: "Marlowe", text: "Head west to the beach. Check near the rocks. Be careful." },
                     { speaker: "Marlowe", text: "Come back and tell me what you find." }
                 ],
                 choices: null,
@@ -479,8 +482,8 @@ const NPCS = {
             },
             {
                 condition: (game) => game.plotPhase === 'find_creature',
-                text: "Find anything yet? The path leads to the tall grass. Something's out there, I'm certain.",
-                repeatText: "Still searching? Check the tall grass.",
+                text: "Find anything yet? Head west to the beach. Check near the rocks. Something's out there, I'm certain.",
+                repeatText: "Still searching? Check the beach, near the rocks.",
                 choices: null  // Just dismisses
             },
             {

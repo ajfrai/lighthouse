@@ -105,8 +105,17 @@ class RenderingSystem {
                     obj.x * tileSize,
                     obj.y * tileSize
                 );
+            } else if (obj.type === 'creature') {
+                // Render first creature sprite (only visible during find_creature phase)
+                if (obj.id === 'lumina_first' && this.game.plotPhase === PlotPhase.FIND_CREATURE) {
+                    spriteLoader.drawCreature(
+                        ctx,
+                        'lumina',
+                        obj.x * tileSize,
+                        obj.y * tileSize
+                    );
+                }
             }
-            // Creatures are invisible until discovered
         }
     }
 
