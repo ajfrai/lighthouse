@@ -584,7 +584,14 @@ const NPCS = {
                 choices: null
             },
             {
-                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.hasInspectedBoat && (!game.completedQuests || game.completedQuests.size === 0),
+                condition: (game) => {
+                    // Only shown if player hasn't completed any of CALLUM's quests yet
+                    const callumsQuests = ['fishing_crates', 'fishing_nets', 'fishing_baskets', 'fishing_records'];
+                    const completedCallumsQuests = callumsQuests.filter(q => game.completedQuests && game.completedQuests.has(q));
+                    return (game.plotPhase === 'boat_quest' || game.plotPhase === 'working')
+                        && game.hasInspectedBoat
+                        && completedCallumsQuests.length === 0;
+                },
                 text: "You want work? I've got fish that need counting.",
                 choices: [
                     {
@@ -600,7 +607,14 @@ const NPCS = {
                 ]
             },
             {
-                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.hasInspectedBoat && game.completedQuests && game.completedQuests.size > 0,
+                condition: (game) => {
+                    // Only shown if player HAS completed at least one of CALLUM's quests
+                    const callumsQuests = ['fishing_crates', 'fishing_nets', 'fishing_baskets', 'fishing_records'];
+                    const completedCallumsQuests = callumsQuests.filter(q => game.completedQuests && game.completedQuests.has(q));
+                    return (game.plotPhase === 'boat_quest' || game.plotPhase === 'working')
+                        && game.hasInspectedBoat
+                        && completedCallumsQuests.length > 0;
+                },
                 text: "Back for more? Good. Let's see what we've got today.",
                 choices: [
                     {

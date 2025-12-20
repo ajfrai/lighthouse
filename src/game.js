@@ -732,6 +732,12 @@ class LighthouseGame {
     }
 
     checkRandomEncounter() {
+        // CRITICAL: Disable random encounters during find_creature phase
+        // The first creature MUST be the scripted narrative sequence
+        if (this.plotPhase === PlotPhase.FIND_CREATURE && !this.firstEncounterTriggered) {
+            return;  // No random encounters until scripted encounter completes
+        }
+
         const terrain = this.getTerrainAt(this.player.x, this.player.y);
 
         // Check each creature for possible encounter
