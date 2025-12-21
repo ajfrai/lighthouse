@@ -60,7 +60,7 @@ class LighthouseGame {
         this.activeQuest = null;  // {questId, quest, currentStep, type}
         this.questObjective = null;  // Current objective text to display
         this.firstEncounterTriggered = false;  // Track first narrative encounter
-        this.encounterState = null;  // State for narrative encounter sequence
+        this.creatureEncounter = null;  // State for narrative creature encounter sequence
         this.hasInspectedBoat = false;  // Track if player has examined the boat
         this.npcInteractions = new Map();  // Track NPC conversations: Map<npcId, Set<plotPhase>>
         this.lastDialogueEndTime = 0;  // Prevent double-interaction after dialogue ends
@@ -105,8 +105,13 @@ class LighthouseGame {
 
         // Initialize subsystems
         this.questSystem = new QuestSystem(this);
-        this.dialogueSystem = new DialogueSystem(this);
+        this.dialogueSystem = new DialogueSystem(this);  // Keep for compatibility during migration
+        this.dialogueQueue = new DialogueQueueSystem(this);  // New queue-based system
+        this.dialogue = this.dialogueQueue;  // Primary API
         this.renderingSystem = new RenderingSystem(this);
+
+        // Set up dialogue event listeners
+        this.setupDialogueListeners();
 
         // Animation
         this.lastFrameTime = 0;
@@ -126,6 +131,46 @@ class LighthouseGame {
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
+    }
+
+    setupDialogueListeners() {
+        // Creature encounter event listeners
+        this.dialogue.on('trigger:creature_choice_slow', () => {
+            this.creatureEncounter.choice = 'slow';
+            this.dialogue.queueFlow(CREATURE_FLOWS.slow);
+        });
+
+        this.dialogue.on('trigger:creature_choice_wait', () => {
+            this.creatureEncounter.choice = 'wait';
+            this.dialogue.queueFlow(CREATURE_FLOWS.wait);
+        });
+
+        this.dialogue.on('trigger:creature_choice_grab', () => {
+            this.creatureEncounter.choice = 'grab';
+            this.dialogue.queueFlow(CREATURE_FLOWS.grab);
+        });
+
+        this.dialogue.on('trigger:creature_path_complete', () => {
+            this.finishCreatureEncounter();
+        });
+
+        // Quest completion event listeners
+        this.dialogue.on('trigger:quest_step_completed', () => {
+            if (this.activeQuest.currentStep >= this.activeQuest.quest.steps.length) {
+                this.questSystem.completeQuest();
+            } else {
+                this.questSystem.advanceQuestStep();
+            }
+        });
+
+        // General event logging (for debugging)
+        this.dialogue.on('started', (id) => {
+            console.log('[Dialogue] Started:', id);
+        });
+
+        this.dialogue.on('closed', (id) => {
+            console.log('[Dialogue] Closed:', id);
+        });
     }
 
     setupDebugMenu() {
@@ -740,7 +785,7 @@ class LighthouseGame {
         }
 
         // Random habitat-based encounters (disabled during scripted sequence)
-        if (!this.encounterState || !this.encounterState.active) {
+        if (!this.creatureEncounter || !this.creatureEncounter.active) {
             this.checkRandomEncounter();
         }
     }
@@ -843,86 +888,31 @@ class LighthouseGame {
         this.updateUI();
     }
 
-    // First Creature Encounter - Narrative Sequence
+    // First Creature Encounter - Narrative Sequence (Queue-Based)
     startFirstCreatureEncounter() {
-        this.encounterState = {
+        this.creatureEncounter = {
             step: 'intro',
             choice: null,
             creatureName: '',
             active: true
         };
 
-        // Show first narrative sequence
-        this.showCreatureNarrative("Something small is huddled between the rocks.", () => {
-            this.showCreatureNarrative("It's shivering. One of its wings is tucked at a strange angle.", () => {
-                this.showCreatureNarrative("It sees you and tenses, ready to flee.", () => {
-                    this.showCreatureChoice();
-                });
-            });
-        });
+        // Queue the introduction flow
+        this.dialogue.queueFlow(CREATURE_FLOWS.intro);
     }
 
-    showCreatureNarrative(text, onContinue) {
-        // Don't use single choices for narrative - they auto-advance instantly!
-        // Instead, use onClose handler so player can read the story
-        this.startDialogue([text], null, onContinue);
-    }
+    finishCreatureEncounter() {
+        // Queue bonding sequence, then naming
+        this.dialogue.queueFlow(CREATURE_FLOWS.bonding);
 
-    showCreatureChoice() {
-        this.startDialogue(["What do you do?"], [
-            {
-                text: "Approach slowly",
-                action: () => this.handleCreatureChoice('slow')
-            },
-            {
-                text: "Stay still and wait",
-                action: () => this.handleCreatureChoice('wait')
-            },
-            {
-                text: "Try to grab it",
-                action: () => this.handleCreatureChoice('grab')
+        // Listen for when bonding completes
+        const bondingHandler = (id) => {
+            if (id === 'creature_bonding_0') {
+                this.dialogue.off('closed', bondingHandler);
+                this.showCreatureNaming();
             }
-        ]);
-    }
-
-    handleCreatureChoice(choice) {
-        this.encounterState.choice = choice;
-
-        if (choice === 'slow') {
-            this.showCreatureNarrative("You take a slow step forward. It watches you but doesn't run.", () => {
-                this.showCreatureNarrative("Another step. It makes a small sound—not fear. Something else.", () => {
-                    this.showCreatureNarrative("You kneel down. It hesitates... then hops toward you.", () => {
-                        this.completeCreatureApproach();
-                    });
-                });
-            });
-        } else if (choice === 'wait') {
-            this.showCreatureNarrative("You sit down on the rocks and wait.", () => {
-                this.showCreatureNarrative("Minutes pass. The creature watches you.", () => {
-                    this.showCreatureNarrative("Eventually, curiosity wins. It inches closer, closer...", () => {
-                        this.showCreatureNarrative("It stops just out of reach, but it's not afraid anymore.", () => {
-                            this.completeCreatureApproach();
-                        });
-                    });
-                });
-            });
-        } else if (choice === 'grab') {
-            this.showCreatureNarrative("You lunge forward. The creature bolts.", () => {
-                this.showCreatureNarrative("It scrambles over the rocks, injured wing dragging.", () => {
-                    this.showCreatureNarrative("But it doesn't get far. It's too hurt.", () => {
-                        this.showCreatureNarrative("You approach more carefully this time. It has no choice but to let you.", () => {
-                            this.completeCreatureApproach();
-                        });
-                    });
-                });
-            });
-        }
-    }
-
-    completeCreatureApproach() {
-        this.showCreatureNarrative("The creature settles against you. It's warm despite the sea wind.", () => {
-            this.showCreatureNaming();
-        });
+        };
+        this.dialogue.on('closed', bondingHandler);
     }
 
     showCreatureNaming() {
@@ -966,7 +956,7 @@ class LighthouseGame {
         this.plotPhase = 'creature_found';
 
         // Mark encounter as complete
-        this.encounterState.active = false;
+        this.creatureEncounter.active = false;
 
         // Update UI
         this.updateUI();
