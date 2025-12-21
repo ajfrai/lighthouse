@@ -501,6 +501,13 @@ class LighthouseGame {
     }
 
     interact() {
+        // CRITICAL FIX: Prevent interaction while dialogue is active
+        // This was causing infinite loop - A button would both advance dialogue AND trigger interact()
+        if (this.dialogue.state !== 'IDLE') {
+            console.log('[Game] Interaction blocked - dialogue is active (state:', this.dialogue.state + ')');
+            return;
+        }
+
         // Prevent double-interaction: don't allow interaction immediately after dialogue ends
         const now = Date.now();
         if (now - this.lastDialogueEndTime < 300) {
