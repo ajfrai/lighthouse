@@ -693,7 +693,7 @@ class LighthouseGame {
         });
 
         // Show as dialogue (D-pad controlled)
-        this.dialogueSystem.startDialogue(
+        this.dialogue.startDialogue(
             ["Welcome to Marina's shop! What would you like?"],
             choices,
             null,
@@ -730,7 +730,7 @@ class LighthouseGame {
         });
 
         // Show as dialogue (D-pad controlled)
-        this.dialogueSystem.startDialogue(
+        this.dialogue.startDialogue(
             [job.question],
             choices,
             null,
@@ -834,7 +834,7 @@ class LighthouseGame {
         const creatureInfo = document.getElementById('creatureInfo');
 
         // Show as dialogue (D-pad controlled)
-        this.dialogueSystem.startDialogue(
+        this.dialogue.startDialogue(
             [
                 `${creature.emoji} ${creature.name}`,
                 creature.description,
@@ -871,7 +871,7 @@ class LighthouseGame {
         }
 
         // Show discovery as dialogue (D-pad controlled)
-        this.dialogueSystem.startDialogue(
+        this.dialogue.startDialogue(
             [
                 `${creature.emoji} ${creature.name}`,
                 creature.description,
@@ -980,7 +980,7 @@ class LighthouseGame {
     }
 
     startDialogue(lines, choices = null, onClose = null) {
-        this.dialogueSystem.startDialogue(lines, choices, onClose);
+        this.dialogue.startDialogue(lines, choices, onClose);
     }
 
     advanceQuestStep() {

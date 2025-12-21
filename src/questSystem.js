@@ -53,7 +53,7 @@ class QuestSystem {
         // Show as dialogue with choices (D-pad compatible)
         // Use quest-specific greeting if available, otherwise a contextual default
         const questGreeting = npc.questGreeting || "Choose a task:";
-        this.game.dialogueSystem.startDialogue(
+        this.game.dialogue.startDialogue(
             [questGreeting],
             choices,
             null,
@@ -157,7 +157,7 @@ class QuestSystem {
         });
 
         // Show as dialogue (fully D-pad controlled)
-        this.game.dialogueSystem.startDialogue(
+        this.game.dialogue.startDialogue(
             [problem.question],
             choices,
             null,

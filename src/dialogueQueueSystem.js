@@ -19,7 +19,7 @@ class DialogueQueueSystem {
         this.headless = options.headless || false; // For testing without UI
 
         // Queue state
-        this.queue = [];              // Pending dialogues
+        this._queue = [];             // Pending dialogues (internal array)
         this.current = null;          // Currently showing dialogue
         this.state = 'IDLE';          // IDLE | SHOWING | WAITING_FOR_CHOICE
 
@@ -62,7 +62,7 @@ class DialogueQueueSystem {
             dialogue.id = `dialogue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         }
 
-        this.queue.push(dialogue);
+        this._queue.push(dialogue);
         this.log('queued', dialogue.id);
 
         // If idle, start processing immediately
@@ -71,6 +71,39 @@ class DialogueQueueSystem {
         }
 
         return dialogue.id;
+    }
+
+    /**
+     * Legacy API compatibility - matches old dialogueSystem.startDialogue() signature
+     * @param {Array|string} lines - Dialogue lines (array or single string)
+     * @param {Array} [choices] - Choice objects with text and action
+     * @param {Function} [onClose] - Callback when dialogue closes
+     * @param {string} [speaker] - Speaker name
+     */
+    startDialogue(lines, choices = null, onClose = null, speaker = null) {
+        // Convert to queue format
+        const linesArray = Array.isArray(lines) ? lines : [lines];
+
+        // Queue each line (multi-line dialogues are separate queue entries)
+        linesArray.forEach((line, index) => {
+            const isLast = index === linesArray.length - 1;
+
+            this.queue({
+                text: line,
+                speaker: speaker,
+                choices: isLast ? choices : null,  // Only last line gets choices
+                trigger: isLast && onClose ? '_onclose_callback' : null
+            });
+        });
+
+        // Set up one-time onClose handler if provided
+        if (onClose && typeof onClose === 'function') {
+            const handler = () => {
+                this.off('trigger:_onclose_callback', handler);
+                onClose(this.game);
+            };
+            this.on('trigger:_onclose_callback', handler);
+        }
     }
 
     /**
@@ -132,6 +165,11 @@ class DialogueQueueSystem {
             this.emit('trigger:' + choice.trigger, choice, this.current.id);
         }
 
+        // If choice has action callback (old pattern), execute it
+        if (choice.action && typeof choice.action === 'function') {
+            choice.action();
+        }
+
         // Close current dialogue and process next
         this.closeCurrentDialogue();
     }
@@ -140,7 +178,7 @@ class DialogueQueueSystem {
      * Clear entire queue and current dialogue
      */
     clear() {
-        this.queue = [];
+        this._queue = [];
         if (this.current) {
             this.hideUI();
             this.current = null;
@@ -156,8 +194,8 @@ class DialogueQueueSystem {
         return {
             state: this.state,
             current: this.current,
-            queueLength: this.queue.length,
-            queuePreview: this.queue.slice(0, 3).map(d => ({
+            queueLength: this._queue.length,
+            queuePreview: this._queue.slice(0, 3).map(d => ({
                 id: d.id,
                 text: d.text.substring(0, 30) + '...'
             })),
@@ -200,14 +238,14 @@ class DialogueQueueSystem {
     // ========================================================================
 
     processNext() {
-        if (this.queue.length === 0) {
+        if (this._queue.length === 0) {
             this.state = 'IDLE';
             this.emit('queue_empty');
             this.log('queue_empty');
             return;
         }
 
-        this.current = this.queue.shift();
+        this.current = this._queue.shift();
         this.state = 'SHOWING';
 
         this.log('started', this.current.id);

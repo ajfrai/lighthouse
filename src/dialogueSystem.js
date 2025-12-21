@@ -125,6 +125,12 @@ class DialogueSystem {
     }
 
     startDialogue(lines, choices = null, onClose = null, npcName = null) {
+        // Delegate to queue system
+        this.game.dialogue.startDialogue(lines, choices, onClose, npcName);
+        return;
+
+        // OLD CODE BELOW - KEEPING FOR REFERENCE DURING MIGRATION
+        /*
         this.game.state = GameState.DIALOGUE;
         this.game.dialogue.active = true;
         this.game.dialogue.lines = Array.isArray(lines) ? lines : [lines];
