@@ -327,6 +327,13 @@ class DialogueSystem {
             this.game.dialogue.onClose = null;  // Clear it first
             onCloseHandler(this.game);
             console.log('[DialogueSystem] onClose handler executed');
+
+            // CRITICAL: If onClose handler started a new dialogue, don't clear the state!
+            // The new dialogue will have set active=true and state=DIALOGUE
+            if (this.game.dialogue.active) {
+                console.log('[DialogueSystem] New dialogue started by onClose - skipping cleanup');
+                return;  // New dialogue is now running, don't interfere
+            }
         }
 
         console.log('[DialogueSystem] Setting dialogue.active = false');

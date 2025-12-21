@@ -243,6 +243,31 @@ test('Narrative dialogues use onClose, not single choices', () => {
     assert(passesOnContinue, 'Should pass onContinue to startDialogue as third parameter');
 });
 
+test('onClose handlers can chain dialogues without interference', () => {
+    // CRITICAL: When onClose handler starts a new dialogue, endDialogue must not
+    // interfere with the new dialogue by resetting state or clearing UI
+
+    const dialogueSystemPath = require('path').join(__dirname, '../src/dialogueSystem.js');
+    const dialogueContent = require('fs').readFileSync(dialogueSystemPath, 'utf8');
+
+    // Find endDialogue function
+    const endDialogueMatch = dialogueContent.match(/endDialogue\s*\(\s*\)\s*\{[\s\S]*?^\s{4}\}/m);
+    assert(endDialogueMatch, 'endDialogue function should exist');
+
+    const funcBody = endDialogueMatch[0];
+
+    // After calling onClose handler, should check if new dialogue was started
+    // by checking if dialogue.active is true
+    const hasCheck = funcBody.includes('if (this.game.dialogue.active)') ||
+                    funcBody.includes('if(this.game.dialogue.active)');
+    assert(hasCheck, 'Should check if new dialogue was started by onClose handler');
+
+    // Should return early or skip cleanup if new dialogue started
+    const hasEarlyReturn = funcBody.includes('return') &&
+                          funcBody.indexOf('return') < funcBody.indexOf('clearDialogueUI');
+    assert(hasEarlyReturn, 'Should return early if new dialogue started, before clearing UI');
+});
+
 // ============================================================================
 // TEST 5: Dialogue Condition Exclusivity
 // ============================================================================
