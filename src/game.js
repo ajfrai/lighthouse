@@ -863,10 +863,9 @@ class LighthouseGame {
     }
 
     showCreatureNarrative(text, onContinue) {
-        this.startDialogue([text], onContinue ? [{
-            text: "Continue",
-            action: onContinue
-        }] : null);
+        // Don't use single choices for narrative - they auto-advance instantly!
+        // Instead, use onClose handler so player can read the story
+        this.startDialogue([text], null, onContinue);
     }
 
     showCreatureChoice() {

@@ -1,0 +1,9 @@
+Speaker: Marlowe
+Text: [5 lines]
+  Line 1: [Marlowe] "Morning. Sleep well?"
+  Line 2: [Marlowe] "I heard something on the rocks last night. Sounded small... maybe hurt."
+  Line 3: [Marlowe] "My eyes aren't what they were. Would you go look for me?"
+  Line 4: [Marlowe] "Head west to the beach. Check near the rocks. Be careful."
+  Line 5: [Marlowe] "Come back and tell me what you find."
+Choices: none (press A to continue)
+Has onClose: true

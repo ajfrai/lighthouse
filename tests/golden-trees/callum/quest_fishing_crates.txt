@@ -1,0 +1,8 @@
+Quest: Count the Crates
+ID: fishing_crates
+Type: one_off
+Reward: 5 coins
+Problem:
+  Question: "I caught 24 fish and need to split them equally among 6 crates. How many fish go in each crate?"
+  Answers: [2, 3, 4, 5]
+  Correct: 4

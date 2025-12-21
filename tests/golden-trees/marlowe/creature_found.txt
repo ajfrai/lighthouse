@@ -1,0 +1,4 @@
+Speaker: Marlowe
+Text: [complex type]
+Choices: none (press A to continue)
+Has onClose: true

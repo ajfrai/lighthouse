@@ -1,0 +1,8 @@
+Quest: Calculate the Nets
+ID: fishing_nets
+Type: one_off
+Reward: 5 coins
+Problem:
+  Question: "I set 3 nets with 8 fish in each net. How many fish did I catch total?"
+  Answers: [11, 24, 21, 18]
+  Correct: 24

@@ -1,0 +1,14 @@
+{
+  "name": "lighthouse-game",
+  "version": "1.0.0",
+  "description": "A narrative-driven creature collection game",
+  "scripts": {
+    "test": "cd tests && ./run-golden-tests.sh",
+    "test:generate-golden": "cd tests && ./generate-golden-trees.sh",
+    "prerelease": "npm test",
+    "predeploy": "npm test"
+  },
+  "keywords": ["game", "creatures", "narrative"],
+  "author": "",
+  "license": "ISC"
+}

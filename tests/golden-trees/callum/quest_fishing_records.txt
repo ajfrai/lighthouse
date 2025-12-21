@@ -1,0 +1,41 @@
+Quest: Check the Catch Records
+ID: fishing_records
+Type: multi_step
+Reward: 100 coins
+Steps: 3
+
+Step 1/3:
+  Type: visit_and_solve
+  Description: "Check the nets on the western beach"
+  Location: (6, 8)
+  Radius: 2
+  Marker: 🎣
+  Arrival Message: "You count 47 fish in the western nets, but the record says 58 fish were caught."
+  Problem:
+    Question: "If 58 fish were caught but only 47 are here, how many are missing?"
+    Answers: [9, 11, 13, 15]
+    Correct: 11
+
+Step 2/3:
+  Type: visit_and_solve
+  Description: "Check the nets on the eastern shore"
+  Location: (25, 8)
+  Radius: 2
+  Marker: 🎣
+  Arrival Message: "The eastern nets have 13 sections, each holds 12 fish. The record says 144 total."
+  Problem:
+    Question: "Are the records correct? What is 13 × 12?"
+    Answers: [144, 156, 132, 148]
+    Correct: 156
+
+Step 3/3:
+  Type: visit_and_solve
+  Description: "Check the storage in the boat"
+  Location: (5, 7)
+  Radius: 2
+  Marker: 📦
+  Arrival Message: "The boat has 8 crates. Each crate holds 23 fish. Records show 184 fish stored."
+  Problem:
+    Question: "How many fish are actually in storage? (8 × 23)"
+    Answers: [164, 184, 204, 189]
+    Correct: 184

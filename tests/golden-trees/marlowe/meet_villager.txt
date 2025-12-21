@@ -1,0 +1,4 @@
+Speaker: Marlowe
+Text: "The village is south and west. Look for Callum near the western clearing."
+Choices: none (press A to continue)
+Has onClose: false

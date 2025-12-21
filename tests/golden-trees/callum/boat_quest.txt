@@ -1,0 +1,4 @@
+Speaker: Callum
+Text: "Go take a look at the boat first. It's on the western shore. You'll see what we're working with."
+Choices: none (press A to continue)
+Has onClose: false
