@@ -21,14 +21,26 @@ class DialogueQueueSystem {
         // Queue state
         this._queue = [];             // Pending dialogues (internal array)
         this.current = null;          // Currently showing dialogue
-        this.state = 'IDLE';          // IDLE | SHOWING | WAITING_FOR_CHOICE
+        this.state = 'IDLE';          // IDLE | ANIMATING | WAITING_FOR_INPUT | WAITING_FOR_CHOICE
+
+        // Typewriter animation state
+        this.typewriterSpeed = game.speedRunMode ? 1000 : 30; // chars per second
+        this.fullText = '';
+        this.currentText = '';
+        this.textIndex = 0;
+        this.lastTypewriterUpdate = 0;
+
+        // FSM: Dialogue visit tracking (prevents infinite loops)
+        this.visitCounts = new Map(); // Maps dialogue state key -> visit count
+        this.maxVisitsBeforeWarning = 3; // Industry standard: warn after 3 repeats
 
         // Event system
         this.listeners = {};
 
-        // Debug
+        // Debug & performance tracking
         this.eventLog = [];
         this.maxLogSize = 100;
+        this.lastDialogueStartTime = 0;
 
         // UI elements (null in headless mode)
         this.ui = this.headless ? null : {
@@ -213,11 +225,53 @@ class DialogueQueueSystem {
     }
 
     /**
+     * Update typewriter animation (call every frame)
+     * @param {number} timestamp - Current timestamp in ms
+     */
+    update(timestamp) {
+        if (this.state !== 'ANIMATING') return;
+
+        const timeSinceLastChar = timestamp - this.lastTypewriterUpdate;
+        const msPerChar = 1000 / this.typewriterSpeed;
+
+        if (timeSinceLastChar >= msPerChar && this.textIndex < this.fullText.length) {
+            this.textIndex++;
+            this.currentText = this.fullText.substring(0, this.textIndex);
+            this.lastTypewriterUpdate = timestamp;
+
+            // Update UI
+            if (this.ui && this.ui.content) {
+                this.ui.content.textContent = this.currentText;
+            }
+
+            // When animation completes, transition to WAITING_FOR_INPUT
+            if (this.textIndex >= this.fullText.length) {
+                this.state = 'WAITING_FOR_INPUT';
+                this.log('animation_complete', this.current?.id);
+            }
+        }
+    }
+
+    /**
      * Advance current dialogue or process next in queue
      * Called when player presses A button
+     * Implements double-tap: first tap completes animation, second tap advances
      */
     advance() {
-        if (this.state === 'SHOWING') {
+        // State: ANIMATING - Complete animation instantly (first tap)
+        if (this.state === 'ANIMATING') {
+            this.textIndex = this.fullText.length;
+            this.currentText = this.fullText;
+            if (this.ui && this.ui.content) {
+                this.ui.content.textContent = this.currentText;
+            }
+            this.state = 'WAITING_FOR_INPUT';
+            this.log('animation_skipped', this.current?.id);
+            return; // Double-tap: wait for second press
+        }
+
+        // State: WAITING_FOR_INPUT - Close dialogue (second tap)
+        if (this.state === 'WAITING_FOR_INPUT') {
             this.closeCurrentDialogue();
         } else if (this.state === 'WAITING_FOR_CHOICE') {
             // In choice state, need to select first
@@ -331,8 +385,26 @@ class DialogueQueueSystem {
             return;
         }
 
+        // Performance tracking (industry standard: <100ms response time)
+        const startTime = performance.now();
+
         this.current = this._queue.shift();
-        this.state = 'SHOWING';
+
+        // Initialize typewriter animation
+        this.fullText = this.current.text || '';
+        this.textIndex = 0;
+        this.currentText = '';
+        this.lastTypewriterUpdate = performance.now();
+
+        // FSM: Track visit count for this dialogue state
+        const stateKey = this.getDialogueStateKey(this.current);
+        const visitCount = (this.visitCounts.get(stateKey) || 0) + 1;
+        this.visitCounts.set(stateKey, visitCount);
+
+        // Warn about potential infinite loops (industry best practice)
+        if (visitCount > this.maxVisitsBeforeWarning) {
+            console.warn(`[DialogueQueue] WARNING: Dialogue state "${stateKey}" shown ${visitCount} times - potential infinite loop!`);
+        }
 
         this.log('started', this.current.id);
         this.emit('started', this.current.id, this.current);
@@ -342,8 +414,15 @@ class DialogueQueueSystem {
             this.showUI(this.current);
         }
 
-        // If has choices, transition to choice state
+        // If has choices, skip animation and go straight to choice state
         if (this.current.choices && this.current.choices.length > 0) {
+            // Skip typewriter for choices (prevents A-button confusion)
+            this.textIndex = this.fullText.length;
+            this.currentText = this.fullText;
+            if (this.ui && this.ui.content) {
+                this.ui.content.textContent = this.currentText;
+            }
+
             this.state = 'WAITING_FOR_CHOICE';
             this.log('waiting_for_choice', this.current.id);
 
@@ -352,7 +431,29 @@ class DialogueQueueSystem {
                 // Small delay to allow UI to render
                 setTimeout(() => this.selectChoice(0), 50);
             }
+        } else {
+            // Start typewriter animation
+            this.state = 'ANIMATING';
         }
+
+        // Performance benchmark (<100ms is target)
+        const responseTime = performance.now() - startTime;
+        if (responseTime > 100) {
+            console.warn(`[DialogueQueue] PERFORMANCE: Dialogue start took ${responseTime.toFixed(2)}ms (target: <100ms)`);
+        }
+    }
+
+    /**
+     * Generate unique state key for FSM tracking
+     * @param {Object} dialogue - Dialogue object
+     * @returns {string} State key
+     */
+    getDialogueStateKey(dialogue) {
+        // Combine speaker + plot phase + text snippet for unique state
+        const speaker = dialogue.speaker || 'unknown';
+        const phase = this.game.plotPhase || 'none';
+        const textSnippet = (dialogue.text || '').substring(0, 30);
+        return `${speaker}_${phase}_${textSnippet}`;
     }
 
     closeCurrentDialogue() {
@@ -394,9 +495,15 @@ class DialogueQueueSystem {
             this.ui.speaker.textContent = dialogue.speaker || '???';
         }
 
-        // Set text
+        // Initialize text (empty for animation, or full for choices)
         if (this.ui.content) {
-            this.ui.content.textContent = dialogue.text;
+            // If this dialogue has choices, show full text immediately
+            // Otherwise, start empty and let typewriter animate it
+            if (dialogue.choices && dialogue.choices.length > 0) {
+                this.ui.content.textContent = dialogue.text;
+            } else {
+                this.ui.content.textContent = ''; // Typewriter will fill this
+            }
         }
 
         // Render choices

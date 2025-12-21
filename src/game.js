@@ -997,6 +997,7 @@ class LighthouseGame {
         // Update
         this.handleInput(deltaTime);
         spriteLoader.updateWaterAnimation(timestamp);
+        this.dialogue.update(timestamp); // Typewriter animation
 
         // Render
         this.renderingSystem.render();
