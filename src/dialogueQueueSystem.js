@@ -260,6 +260,8 @@ class DialogueQueueSystem {
      * Implements double-tap: first tap completes animation, second tap advances
      */
     advance() {
+        console.log('[DialogueQueue] advance() called, state:', this.state);
+
         // State: ANIMATING - Complete animation instantly (first tap)
         if (this.state === 'ANIMATING') {
             this.textIndex = this.fullText.length;
@@ -275,12 +277,17 @@ class DialogueQueueSystem {
         // State: WAITING_FOR_INPUT - Close dialogue (second tap)
         if (this.state === 'WAITING_FOR_INPUT') {
             this.closeCurrentDialogue();
-        } else if (this.state === 'WAITING_FOR_CHOICE') {
-            // In choice state, need to select first
-            console.warn('[DialogueQueue] Cannot advance - waiting for choice selection');
-        } else {
-            console.warn('[DialogueQueue] Cannot advance - no dialogue showing');
+            return;
         }
+
+        // State: WAITING_FOR_CHOICE - Select first choice (default action)
+        if (this.state === 'WAITING_FOR_CHOICE') {
+            console.log('[DialogueQueue] A button in choice menu - selecting first choice');
+            this.selectChoice(0);
+            return;
+        }
+
+        console.warn('[DialogueQueue] Cannot advance - no dialogue showing');
     }
 
     /**
