@@ -588,19 +588,31 @@ const NPCS = {
                 choices: null
             },
             {
-                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.coins < 20,
+                // Priority 1: If coins < 20, show "money's tight" message
+                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && (game.coins || 0) < 20,
                 text: "How's the work going? Money's tight, I know. One job at a time.",
                 repeatText: "Keep working. The coin will come.",
                 choices: null
             },
             {
-                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && game.boatQuest && game.boatQuest.planks.collected >= 4,
+                // Priority 2: If coins >= 20 AND planks >= 4, show "good progress" message
+                condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working')
+                    && (game.coins || 0) >= 20
+                    && game.boatQuest && game.boatQuest.planks.collected >= 4,
                 text: "I heard you've been gathering driftwood. Good. That boat won't fix itself.",
                 repeatText: "Good progress on those planks.",
                 choices: null
             },
             {
-                condition: (game) => game.plotPhase === 'boat_quest' || game.plotPhase === 'working',
+                // Priority 3: Catch-all for boat_quest/working when neither above applies
+                // This matches when: coins >= 20 AND planks < 4
+                condition: (game) => {
+                    const inWorkingPhase = game.plotPhase === 'boat_quest' || game.plotPhase === 'working';
+                    const coins = game.coins || 0;
+                    const hasEnoughCoins = coins >= 20;
+                    const notEnoughPlanks = !game.boatQuest || game.boatQuest.planks.collected < 4;
+                    return inWorkingPhase && hasEnoughCoins && notEnoughPlanks;
+                },
                 text: "How's the work going? Callum's rough, but he's fair. Do good work and he'll pay honest.",
                 repeatText: "Keep at it. You're doing well.",
                 choices: null
@@ -689,7 +701,8 @@ const NPCS = {
                         && completedCallumsQuests.length === callumsQuests.length;
                 },
                 text: "You've finished all my work. Not bad. Talk to Marlowe—he'll have the next steps for you.",
-                choices: null  // No choices, just acknowledgment
+                repeatText: "All done here. Go see Marlowe.",  // FIX: Prevent infinite loop
+                choices: null
             },
             {
                 condition: (game) => {
@@ -714,6 +727,20 @@ const NPCS = {
                         action: (game) => {}
                     }
                 ]
+            },
+            {
+                // FIX: Add boat_ready phase dialogue (prevents dead end)
+                condition: (game) => game.plotPhase === 'boat_ready',
+                text: "The boat's ready. When the storm comes, you'll be ready too.",
+                repeatText: "We're all set. Just waiting on the storm now.",
+                choices: null
+            },
+            {
+                // FIX: Add departure phase dialogue (prevents dead end)
+                condition: (game) => game.plotPhase === 'departure',
+                text: "Safe travels. May the winds be kind.",
+                repeatText: "Time to go. Good luck out there.",
+                choices: null
             }
         ],
         // Keep quest data for the quest system

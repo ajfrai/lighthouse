@@ -1,4 +1,4 @@
 Speaker: Marlowe
-Text: "How's the work going? Callum's rough, but he's fair. Do good work and he'll pay honest."
+Text: "How's the work going? Money's tight, I know. One job at a time."
 Choices: none (press A to continue)
 Has onClose: false
