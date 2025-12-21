@@ -554,26 +554,54 @@ class DialogueQueueSystem {
     }
 
     // ========================================================================
-    // INPUT HANDLING
+    // INPUT HANDLING - Used by InputRouter
     // ========================================================================
 
-    setupInputHandlers() {
-        document.addEventListener('keydown', (e) => {
-            // FIX: Check for ANIMATING or WAITING_FOR_INPUT (not old 'SHOWING' state)
-            if (this.state === 'ANIMATING' || this.state === 'WAITING_FOR_INPUT') {
-                if (e.key === 'a' || e.key === 'A' || e.key === ' ' || e.key === 'Enter') {
-                    e.preventDefault();
-                    this.advance();
-                }
-            } else if (this.state === 'WAITING_FOR_CHOICE') {
-                if (e.key === 'a' || e.key === 'A' || e.key === ' ' || e.key === 'Enter') {
-                    e.preventDefault();
-                    // Select currently highlighted choice (always 0 for now)
-                    this.selectChoice(0);
-                }
-                // TODO: Add up/down arrow support for multiple choices
+    /**
+     * Handle input from InputRouter
+     * Called in priority order - dialogue has highest priority (100)
+     *
+     * @param {Object} input - Input object from router
+     * @param {string} input.key - Key that was pressed
+     * @param {Function} input.consume - Call to prevent lower-priority handlers from seeing this input
+     */
+    handleInput(input) {
+        // Only handle input when dialogue is active
+        if (this.state === 'IDLE') {
+            // Don't consume - let game handle it
+            return;
+        }
+
+        // Handle advancing dialogue (animation or waiting for input)
+        if (this.state === 'ANIMATING' || this.state === 'WAITING_FOR_INPUT') {
+            if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
+                this.advance();
+                input.consume(); // ✅ Consume input - prevent game.interact() from running
+                return;
             }
-        });
+        }
+
+        // Handle choice selection
+        if (this.state === 'WAITING_FOR_CHOICE') {
+            if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
+                this.selectChoice(0);
+                input.consume(); // ✅ Consume input
+                return;
+            }
+            // TODO: Add up/down arrow support for multiple choices
+        }
+
+        // If we get here, dialogue is active but input wasn't handled
+        // Still consume to prevent game from processing it
+        input.consume();
+    }
+
+    /**
+     * DEPRECATED: Old input setup (kept for backward compatibility during migration)
+     * Will be removed once InputRouter is fully integrated
+     */
+    setupInputHandlers() {
+        console.warn('[DialogueQueue] setupInputHandlers() is deprecated - using InputRouter instead');
     }
 
     // ========================================================================

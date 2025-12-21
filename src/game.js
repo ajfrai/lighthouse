@@ -169,6 +169,11 @@ class LighthouseGame {
 
         this.dialogue.on('closed', (id) => {
             console.log('[Dialogue] Closed:', id);
+
+            // CRITICAL FIX: Update lastDialogueEndTime to prevent double-interaction
+            // This prevents interact() from being called by the same button press that closed the dialogue
+            this.lastDialogueEndTime = Date.now();
+            console.log('[Game] Dialogue ended, blocking interactions for 300ms');
         });
     }
 
@@ -374,6 +379,33 @@ class LighthouseGame {
             }
         }
         // Menu/Shop handling removed - mobile only uses on-screen buttons
+    }
+
+    /**
+     * Handle input from InputRouter
+     * Called after dialogue system (priority 0 vs dialogue's 100)
+     *
+     * @param {Object} input - Input object from router
+     * @param {string} input.key - Key that was pressed
+     * @param {Function} input.consume - Call to prevent lower-priority handlers from seeing this input
+     */
+    handleInputEvent(input) {
+        // Only handle input in EXPLORING state
+        if (this.state !== GameState.EXPLORING) {
+            // Don't consume - let other systems handle it
+            return;
+        }
+
+        // A button or Enter key triggers interaction
+        if (input.key === 'a' || input.key === 'A' || input.key === 'Enter') {
+            this.interact();
+            input.consume(); // ✅ Consumed - handled the input
+            return;
+        }
+
+        // Movement keys (arrow keys) - don't consume, just track state
+        // Movement is handled by handleInput(deltaTime) in game loop
+        // We don't consume movement keys so browser doesn't prevent scrolling if needed
     }
 
     handleInput(deltaTime) {
