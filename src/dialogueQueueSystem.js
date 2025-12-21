@@ -153,6 +153,7 @@ class DialogueQueueSystem {
      * @param {string} npcId - NPC identifier
      */
     showNPCDialog(npcId) {
+        console.log(`[DialogueQueue] showNPCDialog called for ${npcId}, current state:`, this.state);
         const npc = NPCS[npcId];
         if (!npc) return;
 
@@ -247,6 +248,7 @@ class DialogueQueueSystem {
             // When animation completes, transition to WAITING_FOR_INPUT
             if (this.textIndex >= this.fullText.length) {
                 this.state = 'WAITING_FOR_INPUT';
+                console.log('[DialogueQueue] Animation complete, state:', this.state);
                 this.log('animation_complete', this.current?.id);
             }
         }
@@ -378,10 +380,12 @@ class DialogueQueueSystem {
     // ========================================================================
 
     processNext() {
+        console.log(`[DialogueQueue] processNext called, queue length: ${this._queue.length}, current state: ${this.state}`);
         if (this._queue.length === 0) {
             this.state = 'IDLE';
             this.emit('queue_empty');
             this.log('queue_empty');
+            console.log('[DialogueQueue] Queue empty, state now IDLE');
             return;
         }
 
@@ -389,6 +393,7 @@ class DialogueQueueSystem {
         const startTime = performance.now();
 
         this.current = this._queue.shift();
+        console.log('[DialogueQueue] Starting dialogue:', this.current.text?.substring(0, 50));
 
         // Initialize typewriter animation
         this.fullText = this.current.text || '';
@@ -457,16 +462,19 @@ class DialogueQueueSystem {
     }
 
     closeCurrentDialogue() {
+        console.log('[DialogueQueue] closeCurrentDialogue called, state:', this.state);
         if (!this.current) {
             console.warn('[DialogueQueue] No current dialogue to close');
             return;
         }
 
         const closedDialogue = this.current;
+        console.log('[DialogueQueue] Closing dialogue:', closedDialogue.text?.substring(0, 50));
         this.log('closed', closedDialogue.id);
 
         // Emit trigger if specified
         if (closedDialogue.trigger) {
+            console.log('[DialogueQueue] Emitting trigger:', closedDialogue.trigger);
             this.emit('trigger:' + closedDialogue.trigger, closedDialogue);
         }
 
@@ -480,6 +488,7 @@ class DialogueQueueSystem {
         }
 
         // Process next dialogue in queue
+        console.log('[DialogueQueue] About to call processNext from closeCurrentDialogue');
         this.processNext();
     }
 
