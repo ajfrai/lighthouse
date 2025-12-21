@@ -444,6 +444,7 @@ class DialogueQueueSystem {
 
             this.state = 'WAITING_FOR_CHOICE';
             this.log('waiting_for_choice', this.current.id);
+            console.log(`[DialogueQueue] ✓ State set to WAITING_FOR_CHOICE for ${this.current.choices.length} choices`);
 
             // Auto-select if only one choice (quest menu pattern)
             if (this.current.choices.length === 1) {
@@ -596,6 +597,8 @@ class DialogueQueueSystem {
      * @param {Function} input.consume - Call to prevent lower-priority handlers from seeing this input
      */
     handleInput(input) {
+        console.log(`[DialogueQueue] handleInput() called: key='${input.key}', state='${this.state}'`);
+
         // Only handle input when dialogue is active
         if (this.state === 'IDLE') {
             // Don't consume - let game handle it
