@@ -513,6 +513,11 @@ class DialogueQueueSystem {
     showUI(dialogue) {
         if (!this.ui) return;
 
+        console.log('[DialogueQueue] showUI() called');
+        console.log('  dialogue.text:', dialogue.text?.substring?.(0, 50));
+        console.log('  dialogue.choices:', dialogue.choices ? `${dialogue.choices.length} choices` : 'none');
+        console.log('  this.ui.choices:', this.ui.choices ? 'exists' : 'NULL!!!');
+
         // Set speaker
         if (this.ui.speaker) {
             this.ui.speaker.textContent = dialogue.speaker || '???';
