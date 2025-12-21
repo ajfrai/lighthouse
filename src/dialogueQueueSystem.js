@@ -88,9 +88,19 @@ class DialogueQueueSystem {
         linesArray.forEach((line, index) => {
             const isLast = index === linesArray.length - 1;
 
+            // Handle object format: {speaker: "Name", text: "..."}
+            let dialogueText, dialogueSpeaker;
+            if (typeof line === 'object' && line.text) {
+                dialogueText = line.text;
+                dialogueSpeaker = line.speaker || speaker;
+            } else {
+                dialogueText = line;
+                dialogueSpeaker = speaker;
+            }
+
             this.queue({
-                text: line,
-                speaker: speaker,
+                text: dialogueText,
+                speaker: dialogueSpeaker,
                 choices: isLast ? choices : null,  // Only last line gets choices
                 trigger: isLast && onClose ? '_onclose_callback' : null
             });
