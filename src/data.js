@@ -315,19 +315,12 @@ const QUEST_STEP_HANDLERS = {
                             game.activeQuest.currentStep++;
                             game.questObjective = null;
 
-                            // Use startDialogue with onClose handler instead of setTimeout
-                            // This properly advances quest AFTER dialogue closes, preventing menu freeze
-                            game.dialogueSystem.startDialogue(
-                                ["Correct! The records have been updated."],
-                                null,
-                                () => {
-                                    if (game.activeQuest.currentStep >= game.activeQuest.quest.steps.length) {
-                                        game.questSystem.completeQuest();
-                                    } else {
-                                        game.questSystem.advanceQuestStep();
-                                    }
-                                }
-                            );
+                            // Use queue system with trigger
+                            // Event listener in setupDialogueListeners() handles quest advancement
+                            game.dialogue.queue({
+                                text: "Correct! The records have been updated.",
+                                trigger: 'quest_step_completed'
+                            });
                         } else {
                             // Wrong answer - don't advance step, player can try again
                             game.showDialog("That's not quite right. Let me review the records again.");
