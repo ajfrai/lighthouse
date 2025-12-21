@@ -538,7 +538,8 @@ class DialogueQueueSystem {
 
     setupInputHandlers() {
         document.addEventListener('keydown', (e) => {
-            if (this.state === 'SHOWING') {
+            // FIX: Check for ANIMATING or WAITING_FOR_INPUT (not old 'SHOWING' state)
+            if (this.state === 'ANIMATING' || this.state === 'WAITING_FOR_INPUT') {
                 if (e.key === 'a' || e.key === 'A' || e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
                     this.advance();
