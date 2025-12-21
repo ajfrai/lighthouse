@@ -315,19 +315,12 @@ const QUEST_STEP_HANDLERS = {
                             game.activeQuest.currentStep++;
                             game.questObjective = null;
 
-                            // Use startDialogue with onClose handler instead of setTimeout
-                            // This properly advances quest AFTER dialogue closes, preventing menu freeze
-                            game.dialogueSystem.startDialogue(
-                                ["Correct! The records have been updated."],
-                                null,
-                                () => {
-                                    if (game.activeQuest.currentStep >= game.activeQuest.quest.steps.length) {
-                                        game.questSystem.completeQuest();
-                                    } else {
-                                        game.questSystem.advanceQuestStep();
-                                    }
-                                }
-                            );
+                            // Use queue system with trigger
+                            // Event listener in setupDialogueListeners() handles quest advancement
+                            game.dialogue.queue({
+                                text: "Correct! The records have been updated.",
+                                trigger: 'quest_step_completed'
+                            });
                         } else {
                             // Wrong answer - don't advance step, player can try again
                             game.showDialog("That's not quite right. Let me review the records again.");
@@ -826,5 +819,69 @@ const JOBS = {
             answers: answers,
             correct: answer
         };
+    }
+};
+
+// ============================================================================
+// Dialogue Flows - Declarative dialogue sequences for queue system
+// ============================================================================
+
+const CREATURE_FLOWS = {
+    // Introduction flow - shown when player first finds creature
+    intro: {
+        id: 'creature_intro',
+        dialogues: [
+            { text: "Something small is huddled between the rocks." },
+            { text: "It's shivering. One of its wings is tucked at a strange angle." },
+            { text: "It sees you and tenses, ready to flee." },
+            {
+                text: "What do you do?",
+                choices: [
+                    { text: "Approach slowly", trigger: 'creature_choice_slow' },
+                    { text: "Stay still and wait", trigger: 'creature_choice_wait' },
+                    { text: "Try to grab it quickly", trigger: 'creature_choice_grab' }
+                ]
+            }
+        ]
+    },
+
+    // Slow approach path
+    slow: {
+        id: 'creature_slow',
+        dialogues: [
+            { text: "You take a slow step forward. It watches you but doesn't run." },
+            { text: "Another step. It makes a small sound—not fear. Something else." },
+            { text: "You kneel down. It hesitates... then hops toward you.", trigger: 'creature_path_complete' }
+        ]
+    },
+
+    // Wait path
+    wait: {
+        id: 'creature_wait',
+        dialogues: [
+            { text: "You sit down on the rocks and wait." },
+            { text: "Minutes pass. The creature watches you." },
+            { text: "Eventually, curiosity wins. It inches closer, closer..." },
+            { text: "It stops just out of reach, but it's not afraid anymore.", trigger: 'creature_path_complete' }
+        ]
+    },
+
+    // Grab path
+    grab: {
+        id: 'creature_grab',
+        dialogues: [
+            { text: "You lunge forward. The creature bolts." },
+            { text: "It scrambles over the rocks, injured wing dragging." },
+            { text: "But it doesn't get far. It's too hurt." },
+            { text: "You approach more carefully this time. It has no choice but to let you.", trigger: 'creature_path_complete' }
+        ]
+    },
+
+    // Bonding sequence (shown after any path completes)
+    bonding: {
+        id: 'creature_bonding',
+        dialogues: [
+            { text: "The creature settles against you. It's warm despite the sea wind." }
+        ]
     }
 };

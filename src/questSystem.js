@@ -53,7 +53,7 @@ class QuestSystem {
         // Show as dialogue with choices (D-pad compatible)
         // Use quest-specific greeting if available, otherwise a contextual default
         const questGreeting = npc.questGreeting || "Choose a task:";
-        this.game.dialogueSystem.startDialogue(
+        this.game.dialogue.startDialogue(
             [questGreeting],
             choices,
             null,
@@ -82,11 +82,8 @@ class QuestSystem {
             // Simple one-problem quest
             this.showQuestProblem(quest.problem, quest.name);
         } else if (quest.type === 'multi_step') {
-            // CRITICAL: Close quest menu dialogue before starting multi-step quest
-            // This prevents infinite dialogue loop where dialogBox is visible but unresponsive
-            this.game.dialogueSystem.endDialogue();
-
             // Start multi-step quest
+            // Queue system automatically handles closing previous dialogue
             this.advanceQuestStep();
         }
     }
@@ -157,7 +154,7 @@ class QuestSystem {
         });
 
         // Show as dialogue (fully D-pad controlled)
-        this.game.dialogueSystem.startDialogue(
+        this.game.dialogue.startDialogue(
             [problem.question],
             choices,
             null,
