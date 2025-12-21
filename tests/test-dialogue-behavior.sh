@@ -218,29 +218,36 @@ test('Single-choice dialogues auto-advance (quest menus)', () => {
     assert(hasAutoAdvance, 'Single-choice auto-advance should exist for quest menus');
 });
 
-test('Narrative dialogues use onClose, not single choices', () => {
-    // Verify showCreatureNarrative uses onClose instead of single choice
-    // to prevent auto-skip
+test('Creature encounter uses queue system, not callback hell', () => {
+    // Verify creature encounter uses queue-based dialogue instead of callbacks
+    // to prevent race conditions and auto-skip bugs
 
     const gamePath = require('path').join(__dirname, '../src/game.js');
     const gameContent = require('fs').readFileSync(gamePath, 'utf8');
 
-    // Find showCreatureNarrative function definition
-    const narrativeFuncMatch = gameContent.match(/showCreatureNarrative\s*\([^)]+\)\s*\{[^}]+\}/s);
+    const dataPath = require('path').join(__dirname, '../src/data.js');
+    const dataContent = require('fs').readFileSync(dataPath, 'utf8');
 
-    assert(narrativeFuncMatch, 'showCreatureNarrative should exist');
+    // Find startFirstCreatureEncounter function
+    const encounterFuncMatch = gameContent.match(/startFirstCreatureEncounter\s*\(\s*\)\s*\{[\s\S]*?^\s{4}\}/m);
+    assert(encounterFuncMatch, 'startFirstCreatureEncounter should exist');
 
-    const funcBody = narrativeFuncMatch[0];
+    const funcBody = encounterFuncMatch[0];
 
-    // Should accept onContinue parameter
-    assert(funcBody.includes('onContinue'), 'Should accept onContinue parameter');
+    // Should use dialogue.queueFlow instead of nested callbacks
+    const usesQueue = funcBody.includes('dialogue.queueFlow') || funcBody.includes('dialogue.queue');
+    assert(usesQueue, 'Should use dialogue.queueFlow for dialogue sequencing');
+    assert(funcBody.includes('CREATURE_FLOWS'), 'Should reference CREATURE_FLOWS data structure');
 
-    // Should pass null for choices (second parameter)
-    assert(funcBody.includes('null'), 'Should pass null for choices');
+    // Should NOT have nested showCreatureNarrative callbacks
+    assert(!funcBody.includes('showCreatureNarrative'), 'Should not use deprecated callback pattern');
 
-    // Should pass onContinue as third parameter
-    const passesOnContinue = funcBody.match(/startDialogue\s*\([^,]+,\s*null\s*,\s*onContinue\s*\)/);
-    assert(passesOnContinue, 'Should pass onContinue to startDialogue as third parameter');
+    // Verify CREATURE_FLOWS exists in data.js
+    assert(dataContent.includes('const CREATURE_FLOWS'), 'CREATURE_FLOWS should be defined in data.js');
+    assert(dataContent.includes('creature_intro'), 'Should have intro flow');
+    assert(dataContent.includes('creature_slow'), 'Should have slow path flow');
+    assert(dataContent.includes('creature_wait'), 'Should have wait path flow');
+    assert(dataContent.includes('creature_grab'), 'Should have grab path flow');
 });
 
 test('onClose handlers can chain dialogues without interference', () => {
