@@ -36,11 +36,11 @@ class OnScreenLogger {
 
         // Toggle button
         const toggle = document.createElement('button');
-        toggle.textContent = '📋';
+        toggle.textContent = '👁️';
         toggle.style.cssText = `
             position: fixed;
             bottom: 50px;
-            right: 10px;
+            right: 60px;
             width: 40px;
             height: 40px;
             font-size: 20px;
@@ -55,6 +55,81 @@ class OnScreenLogger {
             this.overlay.style.display = this.enabled ? 'block' : 'none';
         };
         document.body.appendChild(toggle);
+
+        // Copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '📋';
+        copyBtn.style.cssText = `
+            position: fixed;
+            bottom: 50px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            z-index: 10000;
+            background: #333;
+            color: #ff0;
+            border: 2px solid #ff0;
+            border-radius: 5px;
+        `;
+        copyBtn.onclick = () => this.copyLogs();
+        document.body.appendChild(copyBtn);
+    }
+
+    copyLogs() {
+        const text = this.logs.join('\n');
+
+        // Try modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.showCopyConfirmation('Copied!');
+            }).catch(err => {
+                // Fallback to textarea method
+                this.copyViaTextarea(text);
+            });
+        } else {
+            // Fallback for older browsers
+            this.copyViaTextarea(text);
+        }
+    }
+
+    copyViaTextarea(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+            document.execCommand('copy');
+            this.showCopyConfirmation('Copied!');
+        } catch (err) {
+            this.showCopyConfirmation('Copy failed');
+        }
+
+        document.body.removeChild(textarea);
+    }
+
+    showCopyConfirmation(message) {
+        const confirm = document.createElement('div');
+        confirm.textContent = message;
+        confirm.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            right: 10px;
+            padding: 10px 20px;
+            background: #0f0;
+            color: #000;
+            font-weight: bold;
+            border-radius: 5px;
+            z-index: 10001;
+        `;
+        document.body.appendChild(confirm);
+
+        setTimeout(() => {
+            document.body.removeChild(confirm);
+        }, 1500);
     }
 
     interceptConsole() {
