@@ -109,6 +109,18 @@ class LighthouseGame {
         this.dialogue = this.dialogueQueue;  // Primary API
         this.renderingSystem = new RenderingSystem(this);
 
+        // Initialize InputRouter - centralized input handling
+        this.inputRouter = new InputRouter();
+
+        // Register input handlers with priority
+        // Higher priority = processed first
+        this.inputRouter.register(this.dialogue, 100);  // Dialogue has highest priority
+        this.inputRouter.register(this, 0);  // Game exploration has lowest priority
+
+        console.log('[Game] InputRouter initialized with handlers:');
+        console.log('  - Dialogue (priority 100)');
+        console.log('  - Game (priority 0)');
+
         // Set up dialogue event listeners
         this.setupDialogueListeners();
 
@@ -389,7 +401,7 @@ class LighthouseGame {
      * @param {string} input.key - Key that was pressed
      * @param {Function} input.consume - Call to prevent lower-priority handlers from seeing this input
      */
-    handleInputEvent(input) {
+    handleInput(input) {
         // Only handle input in EXPLORING state
         if (this.state !== GameState.EXPLORING) {
             // Don't consume - let other systems handle it
@@ -408,7 +420,7 @@ class LighthouseGame {
         // We don't consume movement keys so browser doesn't prevent scrolling if needed
     }
 
-    handleInput(deltaTime) {
+    updateMovement(deltaTime) {
         // Only allow movement in EXPLORING state
         if (this.state !== GameState.EXPLORING) {
             this.player.moving = false;
@@ -1034,7 +1046,7 @@ class LighthouseGame {
         this.lastFrameTime = timestamp;
 
         // Update
-        this.handleInput(deltaTime);
+        this.updateMovement(deltaTime);
         spriteLoader.updateWaterAnimation(timestamp);
         this.dialogue.update(timestamp); // Typewriter animation
 
