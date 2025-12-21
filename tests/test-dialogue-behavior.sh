@@ -208,12 +208,12 @@ test('Single-choice dialogues auto-advance (quest menus)', () => {
     // Quest menus with single choice should auto-advance (that's intentional)
     // This test documents the behavior
 
-    const dialogueSystemPath = require('path').join(__dirname, '../src/dialogueSystem.js');
-    const dialogueContent = require('fs').readFileSync(dialogueSystemPath, 'utf8');
+    const dialogueQueuePath = require('path').join(__dirname, '../src/dialogueQueueSystem.js');
+    const dialogueContent = require('fs').readFileSync(dialogueQueuePath, 'utf8');
 
     // Verify single choice auto-advance exists
     const hasAutoAdvance = dialogueContent.includes('choices.length === 1') &&
-                          dialogueContent.includes('selectDialogueChoice');
+                          dialogueContent.includes('selectChoice');
 
     assert(hasAutoAdvance, 'Single-choice auto-advance should exist for quest menus');
 });
@@ -250,29 +250,25 @@ test('Creature encounter uses queue system, not callback hell', () => {
     assert(dataContent.includes('creature_grab'), 'Should have grab path flow');
 });
 
-test('onClose handlers can chain dialogues without interference', () => {
-    // CRITICAL: When onClose handler starts a new dialogue, endDialogue must not
-    // interfere with the new dialogue by resetting state or clearing UI
+test('Queue system prevents race conditions in dialogue chaining', () => {
+    // Queue system processes dialogues one at a time (FIFO)
+    // This prevents race conditions that plagued the old callback system
 
-    const dialogueSystemPath = require('path').join(__dirname, '../src/dialogueSystem.js');
-    const dialogueContent = require('fs').readFileSync(dialogueSystemPath, 'utf8');
+    const dialogueQueuePath = require('path').join(__dirname, '../src/dialogueQueueSystem.js');
+    const dialogueContent = require('fs').readFileSync(dialogueQueuePath, 'utf8');
 
-    // Find endDialogue function
-    const endDialogueMatch = dialogueContent.match(/endDialogue\s*\(\s*\)\s*\{[\s\S]*?^\s{4}\}/m);
-    assert(endDialogueMatch, 'endDialogue function should exist');
+    // Verify queue-based architecture
+    assert(dialogueContent.includes('this._queue'), 'Should have internal queue array');
+    assert(dialogueContent.includes('processNext'), 'Should have processNext method');
+    assert(dialogueContent.includes('FIFO'), 'Should document FIFO queue processing');
 
-    const funcBody = endDialogueMatch[0];
+    // Verify single dialogue at a time
+    assert(dialogueContent.includes('this.current'), 'Should track current dialogue');
+    assert(dialogueContent.includes('this.state'), 'Should have state machine');
 
-    // After calling onClose handler, should check if new dialogue was started
-    // by checking if dialogue.active is true
-    const hasCheck = funcBody.includes('if (this.game.dialogue.active)') ||
-                    funcBody.includes('if(this.game.dialogue.active)');
-    assert(hasCheck, 'Should check if new dialogue was started by onClose handler');
-
-    // Should return early or skip cleanup if new dialogue started
-    const hasEarlyReturn = funcBody.includes('return') &&
-                          funcBody.indexOf('return') < funcBody.indexOf('clearDialogueUI');
-    assert(hasEarlyReturn, 'Should return early if new dialogue started, before clearing UI');
+    // Verify queue prevents overlapping dialogues
+    const hasQueueCheck = dialogueContent.includes('if (this.state === \'IDLE\')');
+    assert(hasQueueCheck, 'Should only process next when idle (no race conditions)');
 });
 
 // ============================================================================

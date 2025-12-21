@@ -105,8 +105,7 @@ class LighthouseGame {
 
         // Initialize subsystems
         this.questSystem = new QuestSystem(this);
-        this.dialogueSystem = new DialogueSystem(this);  // Keep for compatibility during migration
-        this.dialogueQueue = new DialogueQueueSystem(this);  // New queue-based system
+        this.dialogueQueue = new DialogueQueueSystem(this);
         this.dialogue = this.dialogueQueue;  // Primary API
         this.renderingSystem = new RenderingSystem(this);
 
@@ -531,7 +530,7 @@ class LighthouseGame {
                 }
                 return;
             } else if (obj.type === 'npc' && obj.x === checkX && obj.y === checkY) {
-                this.dialogueSystem.showNPCDialog(obj.id);
+                this.dialogue.showNPCDialog(obj.id);
                 return;
             } else if (obj.type === 'store') {
                 // Check if player is adjacent to store (2x2 building)
@@ -976,7 +975,7 @@ class LighthouseGame {
 
     // Wrapper methods that delegate to subsystems
     showDialog(message) {
-        this.dialogueSystem.showDialog(message);
+        this.dialogue.showDialog(message);
     }
 
     startDialogue(lines, choices = null, onClose = null) {
@@ -997,7 +996,6 @@ class LighthouseGame {
 
         // Update
         this.handleInput(deltaTime);
-        this.dialogueSystem.updateDialogue(timestamp);
         spriteLoader.updateWaterAnimation(timestamp);
 
         // Render

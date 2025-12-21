@@ -127,6 +127,82 @@ class DialogueQueueSystem {
     }
 
     /**
+     * Show NPC dialogue based on NPC framework conditions
+     * @param {string} npcId - NPC identifier
+     */
+    showNPCDialog(npcId) {
+        const npc = NPCS[npcId];
+        if (!npc) return;
+
+        // Framework-based dialogue system
+        if (npc.type === 'dialogue_npc' && npc.dialogues) {
+            const dialogue = npc.dialogues.find(d => d.condition(this.game));
+
+            if (dialogue) {
+                // Track NPC interactions per phase
+                const interactionKey = `${npcId}_${this.game.plotPhase}`;
+                if (!this.game.npcInteractions.has(interactionKey)) {
+                    this.game.npcInteractions.set(interactionKey, 0);
+                }
+                const timesSpoken = this.game.npcInteractions.get(interactionKey);
+
+                // If already spoken AND has repeatText, show short version (skip onClose/choices)
+                if (timesSpoken > 0 && dialogue.repeatText) {
+                    console.log(`[DialogueQueue] Repeat interaction with ${npcId} in ${this.game.plotPhase} - showing short message`);
+                    this.startDialogue([dialogue.repeatText], null, null, npc.name);
+                    return;
+                }
+
+                // Mark as spoken (increment counter)
+                this.game.npcInteractions.set(interactionKey, timesSpoken + 1);
+                console.log(`[DialogueQueue] First/important interaction with ${npcId} in ${this.game.plotPhase} - showing full dialogue`);
+
+                const choices = dialogue.choices ? dialogue.choices.map(choice => ({
+                    text: choice.text,
+                    action: () => choice.action(this.game)
+                })) : null;
+
+                // Support dynamic text (function that returns array/string)
+                let textContent = dialogue.text;
+                if (typeof textContent === 'function') {
+                    textContent = textContent(this.game);
+                }
+
+                const lines = Array.isArray(textContent) ? textContent : [textContent];
+                const onClose = dialogue.onClose || null;
+
+                this.startDialogue(lines, choices, onClose, npc.name);
+            } else {
+                this.showDialog("...");
+            }
+            return;
+        }
+
+        // Quest system for quest NPCs
+        if (npc.type === 'quest_npc') {
+            this.game.questSystem.showQuestMenu(npcId, npc);
+            return;
+        }
+
+        // Legacy system
+        if (npc.shop) {
+            this.game.openShop();
+        } else if (npc.job) {
+            this.game.showJob(npcId, npc);
+        } else {
+            this.showDialog(npc.greeting);
+        }
+    }
+
+    /**
+     * Show simple message dialogue
+     * @param {string} message - Message to display
+     */
+    showDialog(message) {
+        this.startDialogue([message]);
+    }
+
+    /**
      * Advance current dialogue or process next in queue
      * Called when player presses A button
      */
