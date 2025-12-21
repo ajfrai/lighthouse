@@ -989,8 +989,8 @@ class LighthouseGame {
         this.dialogueSystem.showDialog(message);
     }
 
-    startDialogue(lines, choices = null) {
-        this.dialogueSystem.startDialogue(lines, choices);
+    startDialogue(lines, choices = null, onClose = null) {
+        this.dialogueSystem.startDialogue(lines, choices, onClose);
     }
 
     advanceQuestStep() {
