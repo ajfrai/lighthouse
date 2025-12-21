@@ -532,12 +532,17 @@ class DialogueQueueSystem {
         // Render choices
         if (dialogue.choices && this.ui.choices) {
             this.selectedChoiceIndex = 0; // Reset to first choice
+            console.log(`[DialogueQueue] Rendering ${dialogue.choices.length} choices:`);
+            dialogue.choices.forEach((choice, i) => console.log(`  ${i}: ${choice.text}`));
+
             const html = dialogue.choices.map((choice, index) =>
                 `<div class="dialogue-choice ${index === this.selectedChoiceIndex ? 'selected' : ''}" data-index="${index}">
                     ${choice.text}
                 </div>`
             ).join('');
             this.ui.choices.innerHTML = html;
+
+            console.log(`[DialogueQueue] Choices HTML rendered, state: ${this.state}`);
         } else if (this.ui.choices) {
             this.ui.choices.innerHTML = '';
         }
