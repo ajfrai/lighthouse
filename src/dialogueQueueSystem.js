@@ -30,6 +30,9 @@ class DialogueQueueSystem {
         this.textIndex = 0;
         this.lastTypewriterUpdate = 0;
 
+        // Choice selection state (for multi-choice dialogues)
+        this.selectedChoiceIndex = 0;  // Which choice is currently highlighted
+
         // FSM: Dialogue visit tracking (prevents infinite loops)
         this.visitCounts = new Map(); // Maps dialogue state key -> visit count
         this.maxVisitsBeforeWarning = 3; // Industry standard: warn after 3 repeats
@@ -50,9 +53,8 @@ class DialogueQueueSystem {
             choices: document.getElementById('dialogChoices')
         };
 
-        if (!this.headless) {
-            this.setupInputHandlers();
-        }
+        // Input handling is now done by InputRouter (registered in Game constructor)
+        // No need to set up event listeners here anymore
     }
 
     // ========================================================================
@@ -529,8 +531,9 @@ class DialogueQueueSystem {
 
         // Render choices
         if (dialogue.choices && this.ui.choices) {
+            this.selectedChoiceIndex = 0; // Reset to first choice
             const html = dialogue.choices.map((choice, index) =>
-                `<div class="dialogue-choice ${index === 0 ? 'selected' : ''}" data-index="${index}">
+                `<div class="dialogue-choice ${index === this.selectedChoiceIndex ? 'selected' : ''}" data-index="${index}">
                     ${choice.text}
                 </div>`
             ).join('');
@@ -551,6 +554,23 @@ class DialogueQueueSystem {
         this.ui.dialogBox.classList.add('hidden');
         if (this.ui.content) this.ui.content.textContent = '';
         if (this.ui.choices) this.ui.choices.innerHTML = '';
+    }
+
+    /**
+     * Update choice highlight when arrow keys navigate
+     * Called when selectedChoiceIndex changes
+     */
+    updateChoiceHighlight() {
+        if (!this.ui || !this.ui.choices) return;
+
+        const choiceElements = this.ui.choices.querySelectorAll('.dialogue-choice');
+        choiceElements.forEach((el, index) => {
+            if (index === this.selectedChoiceIndex) {
+                el.classList.add('selected');
+            } else {
+                el.classList.remove('selected');
+            }
+        });
     }
 
     // ========================================================================
@@ -583,25 +603,32 @@ class DialogueQueueSystem {
 
         // Handle choice selection
         if (this.state === 'WAITING_FOR_CHOICE') {
-            if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
-                this.selectChoice(0);
-                input.consume(); // ✅ Consume input
+            const numChoices = this.current?.choices?.length || 0;
+
+            // Arrow keys navigate choices
+            if (input.key === 'ArrowUp') {
+                this.selectedChoiceIndex = (this.selectedChoiceIndex - 1 + numChoices) % numChoices;
+                this.updateChoiceHighlight();
+                input.consume();
+                return;
+            } else if (input.key === 'ArrowDown') {
+                this.selectedChoiceIndex = (this.selectedChoiceIndex + 1) % numChoices;
+                this.updateChoiceHighlight();
+                input.consume();
                 return;
             }
-            // TODO: Add up/down arrow support for multiple choices
+
+            // A button or Enter confirms selection
+            if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
+                this.selectChoice(this.selectedChoiceIndex);
+                input.consume();
+                return;
+            }
         }
 
         // If we get here, dialogue is active but input wasn't handled
         // Still consume to prevent game from processing it
         input.consume();
-    }
-
-    /**
-     * DEPRECATED: Old input setup (kept for backward compatibility during migration)
-     * Will be removed once InputRouter is fully integrated
-     */
-    setupInputHandlers() {
-        console.warn('[DialogueQueue] setupInputHandlers() is deprecated - using InputRouter instead');
     }
 
     // ========================================================================
