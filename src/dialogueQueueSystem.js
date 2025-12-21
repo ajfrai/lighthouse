@@ -120,9 +120,14 @@ class DialogueQueueSystem {
 
         // Set up one-time onClose handler if provided
         if (onClose && typeof onClose === 'function') {
+            console.log('[DialogueQueue] Setting up onClose handler');
             const handler = () => {
+                console.log('[DialogueQueue] ★★★ onClose handler RUNNING ★★★');
+                console.log('[DialogueQueue]   Plot phase BEFORE onClose:', this.game.plotPhase);
                 this.off('trigger:_onclose_callback', handler);
                 onClose(this.game);
+                console.log('[DialogueQueue]   Plot phase AFTER onClose:', this.game.plotPhase);
+                console.log('[DialogueQueue] ★★★ onClose handler COMPLETE ★★★');
             };
             this.on('trigger:_onclose_callback', handler);
         }
