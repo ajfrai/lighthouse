@@ -120,9 +120,14 @@ class DialogueQueueSystem {
 
         // Set up one-time onClose handler if provided
         if (onClose && typeof onClose === 'function') {
+            console.log('[DialogueQueue] Setting up onClose handler');
             const handler = () => {
+                console.log('[DialogueQueue] ★★★ onClose handler RUNNING ★★★');
+                console.log('[DialogueQueue]   Plot phase BEFORE onClose:', this.game.plotPhase);
                 this.off('trigger:_onclose_callback', handler);
                 onClose(this.game);
+                console.log('[DialogueQueue]   Plot phase AFTER onClose:', this.game.plotPhase);
+                console.log('[DialogueQueue] ★★★ onClose handler COMPLETE ★★★');
             };
             this.on('trigger:_onclose_callback', handler);
         }
@@ -153,6 +158,7 @@ class DialogueQueueSystem {
      * @param {string} npcId - NPC identifier
      */
     showNPCDialog(npcId) {
+        console.log(`[DialogueQueue] showNPCDialog called for ${npcId}, current state:`, this.state);
         const npc = NPCS[npcId];
         if (!npc) return;
 
@@ -247,6 +253,7 @@ class DialogueQueueSystem {
             // When animation completes, transition to WAITING_FOR_INPUT
             if (this.textIndex >= this.fullText.length) {
                 this.state = 'WAITING_FOR_INPUT';
+                console.log('[DialogueQueue] Animation complete, state:', this.state);
                 this.log('animation_complete', this.current?.id);
             }
         }
@@ -258,6 +265,8 @@ class DialogueQueueSystem {
      * Implements double-tap: first tap completes animation, second tap advances
      */
     advance() {
+        console.log('[DialogueQueue] advance() called, state:', this.state);
+
         // State: ANIMATING - Complete animation instantly (first tap)
         if (this.state === 'ANIMATING') {
             this.textIndex = this.fullText.length;
@@ -273,12 +282,17 @@ class DialogueQueueSystem {
         // State: WAITING_FOR_INPUT - Close dialogue (second tap)
         if (this.state === 'WAITING_FOR_INPUT') {
             this.closeCurrentDialogue();
-        } else if (this.state === 'WAITING_FOR_CHOICE') {
-            // In choice state, need to select first
-            console.warn('[DialogueQueue] Cannot advance - waiting for choice selection');
-        } else {
-            console.warn('[DialogueQueue] Cannot advance - no dialogue showing');
+            return;
         }
+
+        // State: WAITING_FOR_CHOICE - Select first choice (default action)
+        if (this.state === 'WAITING_FOR_CHOICE') {
+            console.log('[DialogueQueue] A button in choice menu - selecting first choice');
+            this.selectChoice(0);
+            return;
+        }
+
+        console.warn('[DialogueQueue] Cannot advance - no dialogue showing');
     }
 
     /**
@@ -378,10 +392,12 @@ class DialogueQueueSystem {
     // ========================================================================
 
     processNext() {
+        console.log(`[DialogueQueue] processNext called, queue length: ${this._queue.length}, current state: ${this.state}`);
         if (this._queue.length === 0) {
             this.state = 'IDLE';
             this.emit('queue_empty');
             this.log('queue_empty');
+            console.log('[DialogueQueue] Queue empty, state now IDLE');
             return;
         }
 
@@ -389,6 +405,7 @@ class DialogueQueueSystem {
         const startTime = performance.now();
 
         this.current = this._queue.shift();
+        console.log('[DialogueQueue] Starting dialogue:', this.current.text?.substring(0, 50));
 
         // Initialize typewriter animation
         this.fullText = this.current.text || '';
@@ -457,16 +474,19 @@ class DialogueQueueSystem {
     }
 
     closeCurrentDialogue() {
+        console.log('[DialogueQueue] closeCurrentDialogue called, state:', this.state);
         if (!this.current) {
             console.warn('[DialogueQueue] No current dialogue to close');
             return;
         }
 
         const closedDialogue = this.current;
+        console.log('[DialogueQueue] Closing dialogue:', closedDialogue.text?.substring(0, 50));
         this.log('closed', closedDialogue.id);
 
         // Emit trigger if specified
         if (closedDialogue.trigger) {
+            console.log('[DialogueQueue] Emitting trigger:', closedDialogue.trigger);
             this.emit('trigger:' + closedDialogue.trigger, closedDialogue);
         }
 
@@ -480,6 +500,7 @@ class DialogueQueueSystem {
         }
 
         // Process next dialogue in queue
+        console.log('[DialogueQueue] About to call processNext from closeCurrentDialogue');
         this.processNext();
     }
 
