@@ -1,0 +1,10 @@
+Speaker: Callum
+Text: [6 lines]
+  Line 1: [Callum] "Marlowe sent you? Hm. You're smaller than I expected."
+  Line 2: [You] "He said you might have work."
+  Line 3: [Callum] "I've got work if you can count."
+  Line 4: [Callum] "But that's not the real reason you're here, is it?"
+  Line 5: [You] "I... I need to leave the island."
+  Line 6: [Callum] "Everyone does, eventually. Lucky for you, there's a boat."
+Choices: none (press A to continue)
+Has onClose: true

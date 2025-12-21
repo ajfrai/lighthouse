@@ -1,0 +1,8 @@
+Quest: Pack the Lobsters
+ID: fishing_baskets
+Type: one_off
+Reward: 5 coins
+Problem:
+  Question: "I have 15 lobsters to pack. If each basket holds 3 lobsters, how many baskets do I need?"
+  Answers: [3, 4, 5, 6]
+  Correct: 5

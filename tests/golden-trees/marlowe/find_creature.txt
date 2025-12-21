@@ -1,0 +1,4 @@
+Speaker: Marlowe
+Text: "Find anything yet? Head west to the beach. Check near the rocks. Something's out there, I'm certain."
+Choices: none (press A to continue)
+Has onClose: false
