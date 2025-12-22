@@ -162,6 +162,7 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_path_complete', () => {
+            console.log('[Game] creature_path_complete trigger received');
             this.finishCreatureEncounter();
         });
 
@@ -1040,25 +1041,44 @@ class LighthouseGame {
             active: true
         };
 
+        // Clear all held keys to prevent movement after encounter
+        this.clearAllKeys();
+
         // Queue the introduction flow
         this.dialogue.queueFlow(CREATURE_FLOWS.intro);
     }
 
+    clearAllKeys() {
+        // Clear all key states to prevent stuck movement
+        this.keys = {};
+        this.keysPressed = {};
+        this.player.moving = false;
+    }
+
     finishCreatureEncounter() {
+        console.log('[Game] finishCreatureEncounter() called');
         // Queue bonding sequence, then naming
         this.dialogue.queueFlow(CREATURE_FLOWS.bonding);
+        console.log('[Game] Bonding flow queued, setting up listener');
 
         // Listen for when bonding completes
         const bondingHandler = (id) => {
+            console.log('[Game] Bonding dialogue closed, id:', id);
             if (id === 'creature_bonding_0') {
+                console.log('[Game] Bonding complete, showing naming view');
                 this.dialogue.off('closed', bondingHandler);
                 this.showCreatureNaming();
             }
         };
         this.dialogue.on('closed', bondingHandler);
+        console.log('[Game] Bonding listener registered');
     }
 
     showCreatureNaming() {
+        console.log('[Game] showCreatureNaming() called');
+        // Clear all held keys to prevent movement after naming
+        this.clearAllKeys();
+
         // Show dedicated first encounter view with naming choices
         const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
 
