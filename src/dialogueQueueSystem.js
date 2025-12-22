@@ -268,7 +268,9 @@ class DialogueQueueSystem {
      * Implements double-tap: first tap completes animation, second tap advances
      */
     advance() {
-        console.log('[DialogueQueue] advance() called, state:', this.state);
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] advance() called, state:', this.state);
+        }
 
         // State: ANIMATING - Complete animation instantly (first tap)
         if (this.state === 'ANIMATING') {
@@ -303,6 +305,8 @@ class DialogueQueueSystem {
      * @param {number} index - Choice index
      */
     selectChoice(index) {
+        console.log(`[CHOICE DEBUG] selectChoice(${index}) called, state=${this.state}`);
+
         if (this.state !== 'WAITING_FOR_CHOICE') {
             console.warn('[DialogueQueue] Not in choice state');
             return;
@@ -314,16 +318,20 @@ class DialogueQueueSystem {
             return;
         }
 
+        console.log(`[CHOICE DEBUG] Choice selected: "${choice.text}", has action: ${!!choice.action}, has trigger: ${!!choice.trigger}`);
+
         this.log('choice_selected', { dialogue: this.current.id, choice: index });
         this.emit('choice', choice, this.current.id, index);
 
         // If choice has trigger, emit it
         if (choice.trigger) {
+            console.log(`[CHOICE DEBUG] Emitting trigger: ${choice.trigger}`);
             this.emit('trigger:' + choice.trigger, choice, this.current.id);
         }
 
         // If choice has action callback (old pattern), execute it
         if (choice.action && typeof choice.action === 'function') {
+            console.log(`[CHOICE DEBUG] Executing choice action`);
             choice.action();
         }
 
@@ -395,7 +403,9 @@ class DialogueQueueSystem {
     // ========================================================================
 
     processNext() {
-        console.log(`[DialogueQueue] processNext called, queue length: ${this._queue.length}, current state: ${this.state}`);
+        if (this.verboseLogging) {
+            console.log(`[DialogueQueue] processNext called, queue length: ${this._queue.length}, current state: ${this.state}`);
+        }
         if (this._queue.length === 0) {
             this.state = 'IDLE';
             this.emit('queue_empty');
@@ -408,7 +418,9 @@ class DialogueQueueSystem {
         const startTime = performance.now();
 
         this.current = this._queue.shift();
-        console.log('[DialogueQueue] Starting dialogue:', this.current.text?.substring(0, 50));
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] Starting dialogue:', this.current.text?.substring(0, 50));
+        }
 
         // Initialize typewriter animation
         this.fullText = this.current.text || '';
@@ -480,14 +492,18 @@ class DialogueQueueSystem {
     }
 
     closeCurrentDialogue() {
-        console.log('[DialogueQueue] closeCurrentDialogue called, state:', this.state);
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] closeCurrentDialogue called, state:', this.state);
+        }
         if (!this.current) {
             console.warn('[DialogueQueue] No current dialogue to close');
             return;
         }
 
         const closedDialogue = this.current;
-        console.log('[DialogueQueue] Closing dialogue:', closedDialogue.text?.substring(0, 50));
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] Closing dialogue:', closedDialogue.text?.substring(0, 50));
+        }
         this.log('closed', closedDialogue.id);
 
         // Emit trigger if specified
@@ -506,7 +522,9 @@ class DialogueQueueSystem {
         }
 
         // Process next dialogue in queue
-        console.log('[DialogueQueue] About to call processNext from closeCurrentDialogue');
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] About to call processNext from closeCurrentDialogue');
+        }
         this.processNext();
     }
 
@@ -628,15 +646,18 @@ class DialogueQueueSystem {
         // Handle choice selection
         if (this.state === 'WAITING_FOR_CHOICE') {
             const numChoices = this.current?.choices?.length || 0;
+            console.log(`[CHOICE DEBUG] In WAITING_FOR_CHOICE, key='${input.key}', numChoices=${numChoices}, selectedIndex=${this.selectedChoiceIndex}`);
 
             // Arrow keys navigate choices
             if (input.key === 'ArrowUp') {
                 this.selectedChoiceIndex = (this.selectedChoiceIndex - 1 + numChoices) % numChoices;
+                console.log(`[CHOICE DEBUG] ArrowUp → selectedIndex now ${this.selectedChoiceIndex}`);
                 this.updateChoiceHighlight();
                 input.consume();
                 return;
             } else if (input.key === 'ArrowDown') {
                 this.selectedChoiceIndex = (this.selectedChoiceIndex + 1) % numChoices;
+                console.log(`[CHOICE DEBUG] ArrowDown → selectedIndex now ${this.selectedChoiceIndex}`);
                 this.updateChoiceHighlight();
                 input.consume();
                 return;
@@ -644,6 +665,7 @@ class DialogueQueueSystem {
 
             // A button or Enter confirms selection
             if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
+                console.log(`[CHOICE DEBUG] A button pressed, calling selectChoice(${this.selectedChoiceIndex})`);
                 this.selectChoice(this.selectedChoiceIndex);
                 input.consume();
                 return;

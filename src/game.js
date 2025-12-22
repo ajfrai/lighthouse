@@ -222,9 +222,10 @@ class LighthouseGame {
             this.updateDebugMenuButtons();
         });
 
-        // Debug Console toggle
+        // Debug Console toggle - repurposed for verbose logging
         document.getElementById('toggleDebugConsole').addEventListener('click', (e) => {
-            const enabled = debugLogger.toggle();
+            this.dialogue.verboseLogging = !this.dialogue.verboseLogging;
+            console.log(`Verbose Logging: ${this.dialogue.verboseLogging ? 'ON' : 'OFF'}`);
             this.updateDebugMenuButtons();
         });
 
@@ -259,8 +260,8 @@ class LighthouseGame {
         debugInfoBtn.textContent = `Debug Info: ${this.showDebugInfo ? 'ON' : 'OFF'}`;
         debugInfoBtn.classList.toggle('active', this.showDebugInfo);
 
-        debugConsoleBtn.textContent = `Debug Console: ${debugLogger.enabled ? 'ON' : 'OFF'}`;
-        debugConsoleBtn.classList.toggle('active', debugLogger.enabled);
+        debugConsoleBtn.textContent = `Verbose Logs: ${this.dialogue.verboseLogging ? 'ON' : 'OFF'}`;
+        debugConsoleBtn.classList.toggle('active', this.dialogue.verboseLogging);
     }
 
     jumpToPhase(phaseIndex) {
