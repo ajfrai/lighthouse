@@ -17,6 +17,7 @@ class DialogueQueueSystem {
     constructor(game, options = {}) {
         this.game = game;
         this.headless = options.headless || false; // For testing without UI
+        this.verboseLogging = options.verboseLogging || false; // Enable detailed debug logs
 
         // Queue state
         this._queue = [];             // Pending dialogues (internal array)
@@ -444,7 +445,9 @@ class DialogueQueueSystem {
 
             this.state = 'WAITING_FOR_CHOICE';
             this.log('waiting_for_choice', this.current.id);
-            console.log(`[DialogueQueue] ✓ State set to WAITING_FOR_CHOICE for ${this.current.choices.length} choices`);
+            if (this.verboseLogging) {
+                console.log(`[DialogueQueue] ✓ State set to WAITING_FOR_CHOICE for ${this.current.choices.length} choices`);
+            }
 
             // Auto-select if only one choice (quest menu pattern)
             if (this.current.choices.length === 1) {
@@ -514,10 +517,12 @@ class DialogueQueueSystem {
     showUI(dialogue) {
         if (!this.ui) return;
 
-        console.log('[DialogueQueue] showUI() called');
-        console.log('  dialogue.text:', dialogue.text?.substring?.(0, 50));
-        console.log('  dialogue.choices:', dialogue.choices ? `${dialogue.choices.length} choices` : 'none');
-        console.log('  this.ui.choices:', this.ui.choices ? 'exists' : 'NULL!!!');
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] showUI() called');
+            console.log('  dialogue.text:', dialogue.text?.substring?.(0, 50));
+            console.log('  dialogue.choices:', dialogue.choices ? `${dialogue.choices.length} choices` : 'none');
+            console.log('  this.ui.choices:', this.ui.choices ? 'exists' : 'NULL!!!');
+        }
 
         // Set speaker
         if (this.ui.speaker) {
@@ -538,8 +543,10 @@ class DialogueQueueSystem {
         // Render choices
         if (dialogue.choices && this.ui.choices) {
             this.selectedChoiceIndex = 0; // Reset to first choice
-            console.log(`[DialogueQueue] Rendering ${dialogue.choices.length} choices:`);
-            dialogue.choices.forEach((choice, i) => console.log(`  ${i}: ${choice.text}`));
+            if (this.verboseLogging) {
+                console.log(`[DialogueQueue] Rendering ${dialogue.choices.length} choices:`);
+                dialogue.choices.forEach((choice, i) => console.log(`  ${i}: ${choice.text}`));
+            }
 
             const html = dialogue.choices.map((choice, index) =>
                 `<div class="choice ${index === this.selectedChoiceIndex ? 'selected' : ''}" data-index="${index}">
@@ -548,7 +555,9 @@ class DialogueQueueSystem {
             ).join('');
             this.ui.choices.innerHTML = html;
 
-            console.log(`[DialogueQueue] Choices HTML rendered, state: ${this.state}`);
+            if (this.verboseLogging) {
+                console.log(`[DialogueQueue] Choices HTML rendered, state: ${this.state}`);
+            }
         } else if (this.ui.choices) {
             this.ui.choices.innerHTML = '';
         }
@@ -597,7 +606,9 @@ class DialogueQueueSystem {
      * @param {Function} input.consume - Call to prevent lower-priority handlers from seeing this input
      */
     handleInput(input) {
-        console.log(`[DialogueQueue] handleInput() called: key='${input.key}', state='${this.state}'`);
+        if (this.verboseLogging) {
+            console.log(`[DialogueQueue] handleInput() called: key='${input.key}', state='${this.state}'`);
+        }
 
         // Only handle input when dialogue is active
         if (this.state === 'IDLE') {
