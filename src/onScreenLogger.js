@@ -5,9 +5,11 @@
 
 class OnScreenLogger {
     constructor() {
-        this.enabled = true;
+        this.enabled = false;  // Start hidden
+        this.visible = false;  // Controls UI visibility
         this.maxLines = 10;
         this.logs = [];
+        this.allLogs = [];  // Store ALL logs for copying
         this.createUI();
         this.interceptConsole();
     }
@@ -31,13 +33,14 @@ class OnScreenLogger {
             overflow-y: auto;
             z-index: 9999;
             pointer-events: none;
+            display: none;
         `;
         document.body.appendChild(this.overlay);
 
         // Toggle button
-        const toggle = document.createElement('button');
-        toggle.textContent = '👁️';
-        toggle.style.cssText = `
+        this.toggleBtn = document.createElement('button');
+        this.toggleBtn.textContent = '👁️';
+        this.toggleBtn.style.cssText = `
             position: fixed;
             bottom: 50px;
             right: 60px;
@@ -49,17 +52,18 @@ class OnScreenLogger {
             color: #0f0;
             border: 2px solid #0f0;
             border-radius: 5px;
+            display: none;
         `;
-        toggle.onclick = () => {
+        this.toggleBtn.onclick = () => {
             this.enabled = !this.enabled;
             this.overlay.style.display = this.enabled ? 'block' : 'none';
         };
-        document.body.appendChild(toggle);
+        document.body.appendChild(this.toggleBtn);
 
         // Copy button
-        const copyBtn = document.createElement('button');
-        copyBtn.textContent = '📋';
-        copyBtn.style.cssText = `
+        this.copyBtn = document.createElement('button');
+        this.copyBtn.textContent = '📋';
+        this.copyBtn.style.cssText = `
             position: fixed;
             bottom: 50px;
             right: 10px;
@@ -71,13 +75,29 @@ class OnScreenLogger {
             color: #ff0;
             border: 2px solid #ff0;
             border-radius: 5px;
+            display: none;
         `;
-        copyBtn.onclick = () => this.copyLogs();
-        document.body.appendChild(copyBtn);
+        this.copyBtn.onclick = () => this.copyLogs();
+        document.body.appendChild(this.copyBtn);
+    }
+
+    /**
+     * Show or hide the entire logger UI
+     * Called when verbose logging is toggled
+     */
+    setVisible(visible) {
+        this.visible = visible;
+        this.toggleBtn.style.display = visible ? 'block' : 'none';
+        this.copyBtn.style.display = visible ? 'block' : 'none';
+        if (!visible) {
+            this.enabled = false;
+            this.overlay.style.display = 'none';
+        }
     }
 
     copyLogs() {
-        const text = this.logs.join('\n');
+        // Copy ALL logs, not just the visible ones
+        const text = this.allLogs.join('\n');
 
         // Try modern clipboard API first
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -153,10 +173,15 @@ class OnScreenLogger {
     }
 
     addLog(msg) {
+        // Store in display list (last 10 only)
         this.logs.push(msg);
         if (this.logs.length > this.maxLines) {
             this.logs.shift();
         }
+
+        // Store in full list for copying (all logs)
+        this.allLogs.push(msg);
+
         this.render();
     }
 
