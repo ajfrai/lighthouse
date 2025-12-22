@@ -542,7 +542,7 @@ class DialogueQueueSystem {
             dialogue.choices.forEach((choice, i) => console.log(`  ${i}: ${choice.text}`));
 
             const html = dialogue.choices.map((choice, index) =>
-                `<div class="dialogue-choice ${index === this.selectedChoiceIndex ? 'selected' : ''}" data-index="${index}">
+                `<div class="choice ${index === this.selectedChoiceIndex ? 'selected' : ''}" data-index="${index}">
                     ${choice.text}
                 </div>`
             ).join('');
@@ -574,7 +574,7 @@ class DialogueQueueSystem {
     updateChoiceHighlight() {
         if (!this.ui || !this.ui.choices) return;
 
-        const choiceElements = this.ui.choices.querySelectorAll('.dialogue-choice');
+        const choiceElements = this.ui.choices.querySelectorAll('.choice');
         choiceElements.forEach((el, index) => {
             if (index === this.selectedChoiceIndex) {
                 el.classList.add('selected');
