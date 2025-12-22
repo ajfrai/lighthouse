@@ -279,7 +279,8 @@ const QUEST_STEP_HANDLERS = {
             const quest = game.activeQuest.quest;
             const stepNum = game.activeQuest.currentStep + 1;
             const totalSteps = quest.steps.length;
-            game.showQuestProblem(step, quest.name, stepNum, totalSteps);
+            // Use NPC name, not quest name
+            game.showQuestProblem(step, game.activeQuest.npcName, stepNum, totalSteps);
         },
 
         onUpdate: (game, step) => {

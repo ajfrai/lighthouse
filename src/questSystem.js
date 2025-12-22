@@ -29,7 +29,7 @@ class QuestSystem {
             const nextQuest = QUESTS[nextQuestId];
             choices.push({
                 text: `Quick Problem (${nextQuest.reward} coins) - ${completedOneOffs}/${npc.quests.oneOff.length}`,
-                action: () => this.startQuest(nextQuestId)
+                action: () => this.startQuest(nextQuestId, npcId, npc)
             });
         }
 
@@ -38,7 +38,7 @@ class QuestSystem {
             const fullQuest = QUESTS[npc.quests.full];
             choices.push({
                 text: `${fullQuest.name} (${fullQuest.reward} coins)`,
-                action: () => this.startQuest(npc.quests.full)
+                action: () => this.startQuest(npc.quests.full, npcId, npc)
             });
         }
 
@@ -61,26 +61,28 @@ class QuestSystem {
         );
     }
 
-    startQuest(questId) {
+    startQuest(questId, npcId, npc) {
         const quest = QUESTS[questId];
         if (!quest) {
             console.error(`Quest not found: ${questId}`);
             return;
         }
 
-        // Set up active quest
+        // Set up active quest with NPC info
         this.game.activeQuest = {
             questId: questId,
             quest: quest,
-            currentStep: 0
+            currentStep: 0,
+            npcId: npcId,
+            npcName: npc.name  // Store NPC name for dialogue speaker
         };
 
         document.getElementById('jobUI').classList.add('hidden');
 
         // Handle different quest types
         if (quest.type === 'one_off') {
-            // Simple one-problem quest
-            this.showQuestProblem(quest.problem, quest.name);
+            // Simple one-problem quest - use NPC name, not quest name
+            this.showQuestProblem(quest.problem, this.game.activeQuest.npcName);
         } else if (quest.type === 'multi_step') {
             // Start multi-step quest
             // Queue system automatically handles closing previous dialogue
