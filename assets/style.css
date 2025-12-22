@@ -9,6 +9,13 @@
     box-sizing: border-box;
 }
 
+html, body {
+    overflow: hidden;  /* Prevent page scrolling */
+    height: 100vh;
+    position: fixed;  /* Lock position to prevent displacement */
+    width: 100%;
+}
+
 body {
     font-family: 'Courier New', 'Consolas', monospace;
     background: linear-gradient(135deg, #0a1628 0%, #1a2332 100%);
@@ -16,7 +23,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
     padding: 20px;
 }
 
