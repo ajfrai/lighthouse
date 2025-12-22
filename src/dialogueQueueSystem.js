@@ -268,7 +268,9 @@ class DialogueQueueSystem {
      * Implements double-tap: first tap completes animation, second tap advances
      */
     advance() {
-        console.log('[DialogueQueue] advance() called, state:', this.state);
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] advance() called, state:', this.state);
+        }
 
         // State: ANIMATING - Complete animation instantly (first tap)
         if (this.state === 'ANIMATING') {
@@ -395,7 +397,9 @@ class DialogueQueueSystem {
     // ========================================================================
 
     processNext() {
-        console.log(`[DialogueQueue] processNext called, queue length: ${this._queue.length}, current state: ${this.state}`);
+        if (this.verboseLogging) {
+            console.log(`[DialogueQueue] processNext called, queue length: ${this._queue.length}, current state: ${this.state}`);
+        }
         if (this._queue.length === 0) {
             this.state = 'IDLE';
             this.emit('queue_empty');
@@ -408,7 +412,9 @@ class DialogueQueueSystem {
         const startTime = performance.now();
 
         this.current = this._queue.shift();
-        console.log('[DialogueQueue] Starting dialogue:', this.current.text?.substring(0, 50));
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] Starting dialogue:', this.current.text?.substring(0, 50));
+        }
 
         // Initialize typewriter animation
         this.fullText = this.current.text || '';
@@ -480,14 +486,18 @@ class DialogueQueueSystem {
     }
 
     closeCurrentDialogue() {
-        console.log('[DialogueQueue] closeCurrentDialogue called, state:', this.state);
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] closeCurrentDialogue called, state:', this.state);
+        }
         if (!this.current) {
             console.warn('[DialogueQueue] No current dialogue to close');
             return;
         }
 
         const closedDialogue = this.current;
-        console.log('[DialogueQueue] Closing dialogue:', closedDialogue.text?.substring(0, 50));
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] Closing dialogue:', closedDialogue.text?.substring(0, 50));
+        }
         this.log('closed', closedDialogue.id);
 
         // Emit trigger if specified
@@ -506,7 +516,9 @@ class DialogueQueueSystem {
         }
 
         // Process next dialogue in queue
-        console.log('[DialogueQueue] About to call processNext from closeCurrentDialogue');
+        if (this.verboseLogging) {
+            console.log('[DialogueQueue] About to call processNext from closeCurrentDialogue');
+        }
         this.processNext();
     }
 
