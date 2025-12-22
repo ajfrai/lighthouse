@@ -447,7 +447,9 @@ class DialogueQueueSystem {
         }
 
         // If has choices, skip animation and go straight to choice state
+        console.log(`[CHOICE DEBUG] ⚡ processNext checking choices: current.choices=${!!this.current.choices}, length=${this.current.choices?.length}`);
         if (this.current.choices && this.current.choices.length > 0) {
+            console.log(`[CHOICE DEBUG] ⚡ ENTERING choice branch (has ${this.current.choices.length} choices)`);
             // Skip typewriter for choices (prevents A-button confusion)
             this.textIndex = this.fullText.length;
             this.currentText = this.fullText;
@@ -455,7 +457,9 @@ class DialogueQueueSystem {
                 this.ui.content.textContent = this.currentText;
             }
 
+            console.log(`[CHOICE DEBUG] ⚡ About to set state to WAITING_FOR_CHOICE (current state: ${this.state})`);
             this.state = 'WAITING_FOR_CHOICE';
+            console.log(`[CHOICE DEBUG] ⚡ State is now: ${this.state}`);
             this.log('waiting_for_choice', this.current.id);
             console.log(`[CHOICE DEBUG] ✓ State set to WAITING_FOR_CHOICE for ${this.current.choices.length} choices`);
             console.log(`[CHOICE DEBUG] Current dialogue:`, this.current.text);
@@ -644,7 +648,9 @@ class DialogueQueueSystem {
         }
 
         // Handle choice selection
+        console.log(`[CHOICE DEBUG] ⚡⚡⚡ Checking if state === 'WAITING_FOR_CHOICE': state='${this.state}', match=${this.state === 'WAITING_FOR_CHOICE'}`);
         if (this.state === 'WAITING_FOR_CHOICE') {
+            console.log(`[CHOICE DEBUG] ⚡⚡⚡ ENTERED WAITING_FOR_CHOICE BLOCK ⚡⚡⚡`);
             const numChoices = this.current?.choices?.length || 0;
             console.log(`[CHOICE DEBUG] In WAITING_FOR_CHOICE, key='${input.key}', numChoices=${numChoices}, selectedIndex=${this.selectedChoiceIndex}`);
 
