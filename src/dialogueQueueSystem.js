@@ -305,6 +305,8 @@ class DialogueQueueSystem {
      * @param {number} index - Choice index
      */
     selectChoice(index) {
+        console.log(`[CHOICE DEBUG] selectChoice(${index}) called, state=${this.state}`);
+
         if (this.state !== 'WAITING_FOR_CHOICE') {
             console.warn('[DialogueQueue] Not in choice state');
             return;
@@ -316,16 +318,20 @@ class DialogueQueueSystem {
             return;
         }
 
+        console.log(`[CHOICE DEBUG] Choice selected: "${choice.text}", has action: ${!!choice.action}, has trigger: ${!!choice.trigger}`);
+
         this.log('choice_selected', { dialogue: this.current.id, choice: index });
         this.emit('choice', choice, this.current.id, index);
 
         // If choice has trigger, emit it
         if (choice.trigger) {
+            console.log(`[CHOICE DEBUG] Emitting trigger: ${choice.trigger}`);
             this.emit('trigger:' + choice.trigger, choice, this.current.id);
         }
 
         // If choice has action callback (old pattern), execute it
         if (choice.action && typeof choice.action === 'function') {
+            console.log(`[CHOICE DEBUG] Executing choice action`);
             choice.action();
         }
 
@@ -640,15 +646,18 @@ class DialogueQueueSystem {
         // Handle choice selection
         if (this.state === 'WAITING_FOR_CHOICE') {
             const numChoices = this.current?.choices?.length || 0;
+            console.log(`[CHOICE DEBUG] In WAITING_FOR_CHOICE, key='${input.key}', numChoices=${numChoices}, selectedIndex=${this.selectedChoiceIndex}`);
 
             // Arrow keys navigate choices
             if (input.key === 'ArrowUp') {
                 this.selectedChoiceIndex = (this.selectedChoiceIndex - 1 + numChoices) % numChoices;
+                console.log(`[CHOICE DEBUG] ArrowUp → selectedIndex now ${this.selectedChoiceIndex}`);
                 this.updateChoiceHighlight();
                 input.consume();
                 return;
             } else if (input.key === 'ArrowDown') {
                 this.selectedChoiceIndex = (this.selectedChoiceIndex + 1) % numChoices;
+                console.log(`[CHOICE DEBUG] ArrowDown → selectedIndex now ${this.selectedChoiceIndex}`);
                 this.updateChoiceHighlight();
                 input.consume();
                 return;
@@ -656,6 +665,7 @@ class DialogueQueueSystem {
 
             // A button or Enter confirms selection
             if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
+                console.log(`[CHOICE DEBUG] A button pressed, calling selectChoice(${this.selectedChoiceIndex})`);
                 this.selectChoice(this.selectedChoiceIndex);
                 input.consume();
                 return;
