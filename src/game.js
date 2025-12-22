@@ -162,6 +162,7 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_path_complete', () => {
+            console.log('[Game] creature_path_complete trigger received');
             this.finishCreatureEncounter();
         });
 
@@ -1055,8 +1056,10 @@ class LighthouseGame {
     }
 
     finishCreatureEncounter() {
+        console.log('[Game] finishCreatureEncounter() called');
         // Queue bonding sequence, then naming
         this.dialogue.queueFlow(CREATURE_FLOWS.bonding);
+        console.log('[Game] Bonding flow queued, setting up listener');
 
         // Listen for when bonding completes
         const bondingHandler = (id) => {
@@ -1068,6 +1071,7 @@ class LighthouseGame {
             }
         };
         this.dialogue.on('closed', bondingHandler);
+        console.log('[Game] Bonding listener registered');
     }
 
     showCreatureNaming() {
