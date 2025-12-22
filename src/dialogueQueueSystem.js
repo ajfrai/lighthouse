@@ -165,6 +165,11 @@ class DialogueQueueSystem {
         const npc = NPCS[npcId];
         if (!npc) return;
 
+        // Clear all held keys to prevent movement after dialogue
+        if (this.game && this.game.clearAllKeys) {
+            this.game.clearAllKeys();
+        }
+
         // Framework-based dialogue system
         if (npc.type === 'dialogue_npc' && npc.dialogues) {
             const dialogue = npc.dialogues.find(d => d.condition(this.game));

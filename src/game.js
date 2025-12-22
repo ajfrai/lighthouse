@@ -1040,8 +1040,18 @@ class LighthouseGame {
             active: true
         };
 
+        // Clear all held keys to prevent movement after encounter
+        this.clearAllKeys();
+
         // Queue the introduction flow
         this.dialogue.queueFlow(CREATURE_FLOWS.intro);
+    }
+
+    clearAllKeys() {
+        // Clear all key states to prevent stuck movement
+        this.keys = {};
+        this.keysPressed = {};
+        this.player.moving = false;
     }
 
     finishCreatureEncounter() {
@@ -1059,6 +1069,9 @@ class LighthouseGame {
     }
 
     showCreatureNaming() {
+        // Clear all held keys to prevent movement after naming
+        this.clearAllKeys();
+
         // Show dedicated first encounter view with naming choices
         const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
 
