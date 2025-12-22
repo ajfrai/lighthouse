@@ -528,12 +528,24 @@ class DialogueQueueSystem {
             const triggerName = 'trigger:' + closedDialogue.trigger;
             console.log('[DialogueQueue] Emitting trigger:', closedDialogue.trigger);
             console.log('[DialogueQueue] Listeners for', triggerName, ':', this.eventListeners.get(triggerName)?.length || 0);
-            this.emit(triggerName, closedDialogue);
+            try {
+                this.emit(triggerName, closedDialogue);
+                console.log('[DialogueQueue] Trigger emitted successfully');
+            } catch (error) {
+                console.error('[DialogueQueue] Error in trigger handler:', error);
+            }
         }
 
+        console.log('[DialogueQueue] About to emit closed event');
         // Emit closed event
-        this.emit('closed', closedDialogue.id, closedDialogue);
+        try {
+            this.emit('closed', closedDialogue.id, closedDialogue);
+            console.log('[DialogueQueue] Closed event emitted');
+        } catch (error) {
+            console.error('[DialogueQueue] Error in closed handler:', error);
+        }
 
+        console.log('[DialogueQueue] About to hide UI and process next');
         // Clear current and hide UI
         this.current = null;
         if (!this.headless) {
