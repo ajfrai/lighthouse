@@ -170,6 +170,41 @@ class LighthouseGame {
             this.state = GameState.EXPLORING;
         });
 
+        // Shop event listeners
+        SHOP_ITEMS.forEach(item => {
+            this.dialogue.on(`trigger:shop_owned_${item.id}`, () => {
+                this.dialogue.queue({
+                    text: `You already own ${item.name}.`,
+                    trigger: 'shop_message_shown'
+                });
+            });
+
+            this.dialogue.on(`trigger:shop_buy_${item.id}`, () => {
+                this.buyItem(item.id, item.price);
+            });
+
+            this.dialogue.on(`trigger:shop_cant_afford_${item.id}`, () => {
+                this.dialogue.queue({
+                    text: `You need ${item.price} coins to buy ${item.name}.`,
+                    trigger: 'shop_message_shown'
+                });
+            });
+        });
+
+        this.dialogue.on('trigger:shop_message_shown', () => {
+            // After showing shop message, reopen shop
+            this.showShop();
+        });
+
+        // Job event listeners
+        this.dialogue.on('trigger:job_correct', () => {
+            this.submitJobAnswer(true);
+        });
+
+        this.dialogue.on('trigger:job_incorrect', () => {
+            this.submitJobAnswer(false);
+        });
+
         // Quest completion event listeners
         this.dialogue.on('trigger:quest_step_completed', () => {
             if (this.activeQuest.currentStep >= this.activeQuest.quest.steps.length) {
@@ -731,21 +766,17 @@ class LighthouseGame {
             if (owned) {
                 choices.push({
                     text: `${item.icon} ${item.name} (Owned)`,
-                    action: () => {
-                        this.showDialog(`You already own ${item.name}.`);
-                    }
+                    trigger: `shop_owned_${item.id}` // Use trigger instead of action
                 });
             } else if (canAfford) {
                 choices.push({
                     text: `${item.icon} ${item.name} (${item.price} coins)`,
-                    action: () => this.buyItem(item.id, item.price)
+                    trigger: `shop_buy_${item.id}` // Use trigger instead of action
                 });
             } else {
                 choices.push({
                     text: `${item.icon} ${item.name} (Need ${item.price} coins)`,
-                    action: () => {
-                        this.showDialog(`You need ${item.price} coins to buy ${item.name}.`);
-                    }
+                    trigger: `shop_cant_afford_${item.id}` // Use trigger instead of action
                 });
             }
         });
@@ -779,10 +810,10 @@ class LighthouseGame {
         const job = JOBS[npc.job]();
         this.currentJob = { ...job, payment: npc.payment, npcId };
 
-        // Convert answers to dialogue choices (D-pad compatible)
+        // Convert answers to dialogue choices (D-pad compatible) using triggers
         const choices = job.answers.map(answer => ({
             text: answer,
-            action: () => this.submitJobAnswer(answer)
+            trigger: answer === job.correct ? 'job_correct' : 'job_incorrect'
         }));
 
         // Add cancel option
@@ -802,15 +833,21 @@ class LighthouseGame {
         );
     }
 
-    submitJobAnswer(answer) {
+    submitJobAnswer(isCorrect) {
         const jobUI = document.getElementById('jobUI');
 
-        if (answer === this.currentJob.correct) {
+        if (isCorrect) {
             this.coins += this.currentJob.payment;
             this.updateUI();
-            this.showDialog(`Correct! You earned ${this.currentJob.payment} coins!`);
+            // Queue message instead of calling showDialog directly
+            this.dialogue.queue({
+                text: `Correct! You earned ${this.currentJob.payment} coins!`
+            });
         } else {
-            this.showDialog(`Not quite right. Try again next time!`);
+            // Queue message instead of calling showDialog directly
+            this.dialogue.queue({
+                text: `Not quite right. Try again next time!`
+            });
         }
 
         jobUI.classList.add('hidden');
