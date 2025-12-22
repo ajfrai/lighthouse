@@ -168,6 +168,13 @@ class LighthouseGame {
             this.finishCreatureEncounter();
         });
 
+        this.dialogue.on('trigger:creature_bonding_complete', () => {
+            console.log('========================================');
+            console.log('BONDING COMPLETE TRIGGER FIRED');
+            console.log('========================================');
+            this.showCreatureNaming();
+        });
+
         this.dialogue.on('trigger:creature_naming_complete', () => {
             console.log('[Game] Creature naming complete, returning to EXPLORING state');
             this.state = GameState.EXPLORING;
@@ -1061,25 +1068,9 @@ class LighthouseGame {
         console.log('========================================');
         console.log('FINISH CREATURE ENCOUNTER CALLED');
         console.log('========================================');
-        // Queue bonding sequence, then naming
+        // Queue bonding sequence (which will trigger creature_bonding_complete when done)
         this.dialogue.queueFlow(CREATURE_FLOWS.bonding);
         console.log('BONDING FLOW QUEUED');
-
-        // Listen for when bonding completes
-        const bondingHandler = (id) => {
-            console.log('========================================');
-            console.log('BONDING HANDLER CALLED, id:', id);
-            console.log('========================================');
-            if (id === 'creature_bonding_0') {
-                console.log('ID MATCHES! Calling showCreatureNaming');
-                this.dialogue.off('closed', bondingHandler);
-                this.showCreatureNaming();
-            } else {
-                console.log('ID DOES NOT MATCH. Expected: creature_bonding_0, Got:', id);
-            }
-        };
-        this.dialogue.on('closed', bondingHandler);
-        console.log('BONDING LISTENER REGISTERED');
     }
 
     showCreatureNaming() {
