@@ -527,7 +527,8 @@ class DialogueQueueSystem {
         if (closedDialogue.trigger) {
             const triggerName = 'trigger:' + closedDialogue.trigger;
             console.log('[DialogueQueue] Emitting trigger:', closedDialogue.trigger);
-            console.log('[DialogueQueue] Listeners for', triggerName, ':', this.eventListeners.get(triggerName)?.length || 0);
+            const listenerCount = this.listeners[triggerName]?.length || 0;
+            console.log('[DialogueQueue] Listeners for', triggerName, ':', listenerCount);
             try {
                 this.emit(triggerName, closedDialogue);
                 console.log('[DialogueQueue] Trigger emitted successfully');
