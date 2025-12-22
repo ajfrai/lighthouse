@@ -194,10 +194,7 @@ class LighthouseGame {
         const debugMenu = document.getElementById('debugMenu');
         const debugMenuClose = document.getElementById('debugMenuClose');
 
-        // Hide debug menu button by default (only show when debug mode enabled)
-        if (!this.showDebugInfo) {
-            debugMenuBtn.classList.add('hidden');
-        }
+        // Debug menu button is always visible (removed auto-hide logic)
 
         // Toggle debug menu
         debugMenuBtn.addEventListener('click', () => {
@@ -223,9 +220,6 @@ class LighthouseGame {
         document.getElementById('toggleDebugInfo').addEventListener('click', (e) => {
             this.showDebugInfo = !this.showDebugInfo;
             this.updateDebugMenuButtons();
-
-            // Toggle debug menu button visibility
-            debugMenuBtn.classList.toggle('hidden', !this.showDebugInfo);
         });
 
         // Debug Console toggle
@@ -367,12 +361,6 @@ class LighthouseGame {
         if (key === 'F2') {
             this.showDebugInfo = !this.showDebugInfo;
             console.log(`Debug Info: ${this.showDebugInfo ? 'ON' : 'OFF'}`);
-
-            // Toggle debug menu button visibility
-            const debugMenuBtn = document.getElementById('debugMenuBtn');
-            if (debugMenuBtn) {
-                debugMenuBtn.classList.toggle('hidden', !this.showDebugInfo);
-            }
             return;
         }
         if (key === 'T' && this.speedRunMode) {
