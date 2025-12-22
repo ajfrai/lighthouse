@@ -124,8 +124,14 @@ class QuestSystem {
             const result = handler.onUpdate(this.game, step);
 
             if (result.completed) {
-                // Step completed!
-                this.game.activeQuest.currentStep++;
+                // For visit_and_solve, don't auto-advance - choice action handles it after checking answer
+                // For other types (visit_location, fetch_item), advance immediately
+                const shouldAutoAdvance = step.type !== 'visit_and_solve';
+
+                if (shouldAutoAdvance) {
+                    this.game.activeQuest.currentStep++;
+                }
+
                 this.game.questObjective = null;
 
                 // Show completion message and choices

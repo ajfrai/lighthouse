@@ -196,6 +196,11 @@ class LighthouseGame {
             this.showShop();
         });
 
+        this.dialogue.on('trigger:shop_exit', () => {
+            console.log('[Game] Exiting shop, returning to EXPLORING state');
+            this.state = GameState.EXPLORING;
+        });
+
         // Job event listeners
         this.dialogue.on('trigger:job_correct', () => {
             this.submitJobAnswer(true);
@@ -763,7 +768,8 @@ class LighthouseGame {
             const owned = this.inventory.has(item.id);
             const canAfford = this.coins >= item.price;
 
-            if (owned) {
+            // Consumable items can always be purchased (don't show "Owned")
+            if (owned && !item.consumable) {
                 choices.push({
                     text: `${item.icon} ${item.name} (Owned)`,
                     trigger: `shop_owned_${item.id}` // Use trigger instead of action
@@ -784,7 +790,7 @@ class LighthouseGame {
         // Add close option
         choices.push({
             text: 'Leave shop',
-            action: () => {}  // Just dismiss
+            trigger: 'shop_exit'  // Use trigger to restore state
         });
 
         // Show as dialogue (D-pad controlled)
@@ -797,11 +803,47 @@ class LighthouseGame {
     }
 
     buyItem(itemId, price) {
-        if (this.coins >= price && !this.inventory.has(itemId)) {
-            this.coins -= price;
-            this.inventory.add(itemId);
-            this.updateUI();
-            this.showShop();  // Refresh shop UI
+        // Find the item definition to check if it's consumable
+        const item = SHOP_ITEMS.find(i => i.id === itemId);
+
+        if (!item) {
+            console.error(`Item ${itemId} not found in shop`);
+            return;
+        }
+
+        // Handle consumable items (can buy multiple times)
+        if (item.consumable) {
+            if (this.coins >= price) {
+                this.coins -= price;
+
+                // Update boat quest progress based on item type
+                if (this.boatQuest) {
+                    if (itemId === 'rope') {
+                        this.boatQuest.rope.collected += item.quantity || 1;
+                        console.log(`[Game] Bought rope, now have ${this.boatQuest.rope.collected}/${this.boatQuest.rope.required}`);
+                    } else if (itemId === 'planks') {
+                        this.boatQuest.planks.collected += item.quantity || 1;
+                        console.log(`[Game] Bought planks, now have ${this.boatQuest.planks.collected}/${this.boatQuest.planks.required}`);
+                    } else if (itemId === 'driftwood') {
+                        // Driftwood can be crafted into planks (future feature)
+                        // For now, just track in inventory
+                        const currentCount = this.driftwoodCount || 0;
+                        this.driftwoodCount = currentCount + (item.quantity || 1);
+                        console.log(`[Game] Bought driftwood, now have ${this.driftwoodCount} pieces`);
+                    }
+                }
+
+                this.updateUI();
+                this.showShop();  // Refresh shop UI
+            }
+        } else {
+            // Handle permanent items (can only buy once)
+            if (this.coins >= price && !this.inventory.has(itemId)) {
+                this.coins -= price;
+                this.inventory.add(itemId);
+                this.updateUI();
+                this.showShop();  // Refresh shop UI
+            }
         }
     }
 

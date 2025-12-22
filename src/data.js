@@ -589,6 +589,24 @@ const NPCS = {
                 choices: null
             },
             {
+                // HIGH PRIORITY: Check if all Callum's quests are complete
+                condition: (game) => {
+                    const callumsQuests = ['fishing_crates', 'fishing_nets', 'fishing_baskets', 'fishing_records'];
+                    const allComplete = callumsQuests.every(q => game.completedQuests && game.completedQuests.has(q));
+                    return (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && allComplete;
+                },
+                text: [
+                    { speaker: "Marlowe", text: "You finished Callum's work? I heard. He doesn't praise easily, so that means something." },
+                    { speaker: "Marlowe", text: "You've earned good coin. Now comes the hard part—gathering materials for the boat." },
+                    { speaker: "Marlowe", text: "We'll need rope, driftwood, and sturdy planks. Marina at the shop can help with some of it." },
+                    { speaker: "Marlowe", text: "The rest you'll have to find or craft yourself. It won't be easy, but neither is leaving." }
+                ],
+                choices: null,
+                onClose: (game) => {
+                    game.plotPhase = 'working';
+                }
+            },
+            {
                 // Priority 1: If coins < 20, show "money's tight" message
                 condition: (game) => (game.plotPhase === 'boat_quest' || game.plotPhase === 'working') && (game.coins || 0) < 20,
                 text: "How's the work going? Money's tight, I know. One job at a time.",
@@ -799,6 +817,33 @@ const SHOP_ITEMS = [
         description: 'Points toward the nearest undiscovered creature',
         price: 35,
         icon: '🧭'
+    },
+    {
+        id: 'rope',
+        name: 'Rope',
+        description: 'Sturdy rope for boat repairs (x5)',
+        price: 10,
+        icon: '🪢',
+        consumable: true,
+        quantity: 5
+    },
+    {
+        id: 'driftwood',
+        name: 'Driftwood',
+        description: 'Weathered wood for crafting planks (x3)',
+        price: 8,
+        icon: '🪵',
+        consumable: true,
+        quantity: 3
+    },
+    {
+        id: 'planks',
+        name: 'Wood Planks',
+        description: 'Finished planks for boat hull (x2)',
+        price: 15,
+        icon: '🪚',
+        consumable: true,
+        quantity: 2
     }
 ];
 
