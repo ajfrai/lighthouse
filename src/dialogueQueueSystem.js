@@ -666,7 +666,15 @@ class DialogueQueueSystem {
             // A button or Enter confirms selection
             if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
                 console.log(`[DialogueQueue] Selecting choice ${this.selectedChoiceIndex}`);
-                this.selectChoice(this.selectedChoiceIndex);
+                try {
+                    console.log(`[DialogueQueue] About to call this.selectChoice(${this.selectedChoiceIndex})`);
+                    console.log(`[DialogueQueue] this.selectChoice exists: ${typeof this.selectChoice === 'function'}`);
+                    this.selectChoice(this.selectedChoiceIndex);
+                    console.log(`[DialogueQueue] selectChoice returned successfully`);
+                } catch (error) {
+                    console.error(`[DialogueQueue] ERROR calling selectChoice:`, error);
+                    console.error(`[DialogueQueue] Error stack:`, error.stack);
+                }
                 input.consume();
                 return;
             }
