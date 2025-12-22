@@ -226,6 +226,12 @@ class LighthouseGame {
         document.getElementById('toggleDebugConsole').addEventListener('click', (e) => {
             this.dialogue.verboseLogging = !this.dialogue.verboseLogging;
             console.log(`Verbose Logging: ${this.dialogue.verboseLogging ? 'ON' : 'OFF'}`);
+
+            // Show/hide on-screen logger
+            if (typeof onScreenLogger !== 'undefined') {
+                onScreenLogger.setVisible(this.dialogue.verboseLogging);
+            }
+
             this.updateDebugMenuButtons();
         });
 
