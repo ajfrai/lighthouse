@@ -410,7 +410,7 @@ class DialogueQueueSystem {
             this.state = 'IDLE';
             this.emit('queue_empty');
             this.log('queue_empty');
-            console.log('[DialogueQueue] Queue empty, state now IDLE');
+            console.log('[CHOICE DEBUG] ❌ Queue empty, state now IDLE (no dialogue to show)');
             return;
         }
 
@@ -457,9 +457,9 @@ class DialogueQueueSystem {
 
             this.state = 'WAITING_FOR_CHOICE';
             this.log('waiting_for_choice', this.current.id);
-            if (this.verboseLogging) {
-                console.log(`[DialogueQueue] ✓ State set to WAITING_FOR_CHOICE for ${this.current.choices.length} choices`);
-            }
+            console.log(`[CHOICE DEBUG] ✓ State set to WAITING_FOR_CHOICE for ${this.current.choices.length} choices`);
+            console.log(`[CHOICE DEBUG] Current dialogue:`, this.current.text);
+            console.log(`[CHOICE DEBUG] Choices:`, this.current.choices.map(c => c.text));
 
             // Auto-select if only one choice (quest menu pattern)
             if (this.current.choices.length === 1) {
