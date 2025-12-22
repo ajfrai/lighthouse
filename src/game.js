@@ -165,6 +165,11 @@ class LighthouseGame {
             this.finishCreatureEncounter();
         });
 
+        this.dialogue.on('trigger:creature_naming_complete', () => {
+            console.log('[Game] Creature naming complete, returning to EXPLORING state');
+            this.state = GameState.EXPLORING;
+        });
+
         // Quest completion event listeners
         this.dialogue.on('trigger:quest_step_completed', () => {
             if (this.activeQuest.currentStep >= this.activeQuest.quest.steps.length) {
@@ -988,6 +993,7 @@ class LighthouseGame {
     }
 
     finalizeCreatureNaming(name = 'Shimmer') {
+        console.log(`[Game] finalizeCreatureNaming: ${name}`);
 
         // Add creature to party with stats
         const creature = {
@@ -1020,10 +1026,11 @@ class LighthouseGame {
         // Update UI
         this.updateUI();
 
-        // Show final message
-        this.showCreatureNarrative(`${name} looks up at you. You should tell Marlowe what you found.`, () => {
-            this.state = GameState.EXPLORING;
-            document.getElementById('dialogBox').classList.add('hidden');
+        // Queue final message instead of calling showCreatureNarrative
+        // This prevents nested dialogue calls
+        this.dialogue.queue({
+            text: `${name} looks up at you. You should tell Marlowe what you found.`,
+            trigger: 'creature_naming_complete'
         });
     }
 
