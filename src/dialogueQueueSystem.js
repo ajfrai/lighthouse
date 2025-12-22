@@ -525,8 +525,10 @@ class DialogueQueueSystem {
 
         // Emit trigger if specified
         if (closedDialogue.trigger) {
+            const triggerName = 'trigger:' + closedDialogue.trigger;
             console.log('[DialogueQueue] Emitting trigger:', closedDialogue.trigger);
-            this.emit('trigger:' + closedDialogue.trigger, closedDialogue);
+            console.log('[DialogueQueue] Listeners for', triggerName, ':', this.eventListeners.get(triggerName)?.length || 0);
+            this.emit(triggerName, closedDialogue);
         }
 
         // Emit closed event
