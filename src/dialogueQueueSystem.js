@@ -304,37 +304,43 @@ class DialogueQueueSystem {
      * @param {number} index - Choice index
      */
     selectChoice(index) {
-        console.log(`[CHOICE DEBUG] selectChoice(${index}) called, state=${this.state}`);
+        console.log(`[DialogueQueue] selectChoice(${index}) called, state=${this.state}, current=${!!this.current}`);
 
         if (this.state !== 'WAITING_FOR_CHOICE') {
-            console.warn('[DialogueQueue] Not in choice state');
+            console.warn('[DialogueQueue] selectChoice: Not in choice state, aborting');
+            return;
+        }
+
+        if (!this.current || !this.current.choices) {
+            console.error('[DialogueQueue] selectChoice: No current dialogue or choices!');
             return;
         }
 
         const choice = this.current.choices[index];
         if (!choice) {
-            console.warn('[DialogueQueue] Invalid choice index:', index);
+            console.warn(`[DialogueQueue] selectChoice: Invalid choice index ${index}, only have ${this.current.choices.length} choices`);
             return;
         }
 
-        console.log(`[CHOICE DEBUG] Choice selected: "${choice.text}", has action: ${!!choice.action}, has trigger: ${!!choice.trigger}`);
+        console.log(`[DialogueQueue] selectChoice: Executing choice "${choice.text}"`);
 
         this.log('choice_selected', { dialogue: this.current.id, choice: index });
         this.emit('choice', choice, this.current.id, index);
 
         // If choice has trigger, emit it
         if (choice.trigger) {
-            console.log(`[CHOICE DEBUG] Emitting trigger: ${choice.trigger}`);
+            console.log(`[DialogueQueue] selectChoice: Emitting trigger ${choice.trigger}`);
             this.emit('trigger:' + choice.trigger, choice, this.current.id);
         }
 
         // If choice has action callback (old pattern), execute it
         if (choice.action && typeof choice.action === 'function') {
-            console.log(`[CHOICE DEBUG] Executing choice action`);
+            console.log(`[DialogueQueue] selectChoice: Executing choice action function`);
             choice.action();
         }
 
         // Close current dialogue and process next
+        console.log(`[DialogueQueue] selectChoice: Closing dialogue and processing next`);
         this.closeCurrentDialogue();
     }
 
