@@ -314,14 +314,30 @@ const QUEST_STEP_HANDLERS = {
                         if (answer === problem.correct) {
                             // Correct! Advance to next step
                             game.activeQuest.currentStep++;
-                            game.questObjective = null;
 
-                            // Use queue system with trigger
-                            // Event listener in setupDialogueListeners() handles quest advancement
-                            game.dialogue.queue({
-                                text: "Correct! The records have been updated.",
-                                trigger: 'quest_step_completed'
-                            });
+                            // Check if quest is complete
+                            if (game.activeQuest.currentStep >= game.activeQuest.quest.steps.length) {
+                                // Quest complete - show success message then complete
+                                game.questObjective = null;
+                                game.dialogue.queue({
+                                    text: "Correct! The records have been updated.",
+                                    trigger: 'quest_step_completed'  // This will complete the quest
+                                });
+                            } else {
+                                // More steps remaining - initialize next step
+                                const nextStep = game.activeQuest.quest.steps[game.activeQuest.currentStep];
+                                const handler = QUEST_STEP_HANDLERS[nextStep.type];
+
+                                // Show success message first
+                                game.dialogue.queue({
+                                    text: "Correct! The records have been updated."
+                                });
+
+                                // Initialize next step after dialogue closes
+                                if (handler && handler.onStart) {
+                                    handler.onStart(game, nextStep);
+                                }
+                            }
                         } else {
                             // Wrong answer - don't advance step, player can try again
                             game.showDialog("That's not quite right. Let me review the records again.");
