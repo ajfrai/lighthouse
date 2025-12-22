@@ -290,10 +290,9 @@ class DialogueQueueSystem {
             return;
         }
 
-        // State: WAITING_FOR_CHOICE - Select first choice (default action)
+        // State: WAITING_FOR_CHOICE - Should not reach here (handled in handleInput)
         if (this.state === 'WAITING_FOR_CHOICE') {
-            console.log('[DialogueQueue] A button in choice menu - selecting first choice');
-            this.selectChoice(0);
+            console.error('[DialogueQueue] BUG: advance() called in WAITING_FOR_CHOICE state - this should be handled by handleInput!');
             return;
         }
 
@@ -631,42 +630,28 @@ class DialogueQueueSystem {
      * @param {Function} input.consume - Call to prevent lower-priority handlers from seeing this input
      */
     handleInput(input) {
-        if (this.verboseLogging) {
-            console.log(`[DialogueQueue] handleInput() called: key='${input.key}', state='${this.state}'`);
-        }
+        console.log(`[DialogueQueue] handleInput: key='${input.key}', state='${this.state}'`);
 
         // Only handle input when dialogue is active
         if (this.state === 'IDLE') {
-            // Don't consume - let game handle it
-            return;
+            return; // Don't consume - let game handle it
         }
 
-        // Handle advancing dialogue (animation or waiting for input)
-        if (this.state === 'ANIMATING' || this.state === 'WAITING_FOR_INPUT') {
-            if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
-                this.advance();
-                input.consume(); // ✅ Consume input - prevent game.interact() from running
-                return;
-            }
-        }
-
-        // Handle choice selection
-        console.log(`[CHOICE DEBUG] ⚡⚡⚡ Checking if state === 'WAITING_FOR_CHOICE': state='${this.state}', match=${this.state === 'WAITING_FOR_CHOICE'}`);
+        // CRITICAL: Handle choice selection FIRST before anything else
         if (this.state === 'WAITING_FOR_CHOICE') {
-            console.log(`[CHOICE DEBUG] ⚡⚡⚡ ENTERED WAITING_FOR_CHOICE BLOCK ⚡⚡⚡`);
+            console.log(`[DialogueQueue] In WAITING_FOR_CHOICE state, handling choice input`);
             const numChoices = this.current?.choices?.length || 0;
-            console.log(`[CHOICE DEBUG] In WAITING_FOR_CHOICE, key='${input.key}', numChoices=${numChoices}, selectedIndex=${this.selectedChoiceIndex}`);
 
             // Arrow keys navigate choices
             if (input.key === 'ArrowUp') {
                 this.selectedChoiceIndex = (this.selectedChoiceIndex - 1 + numChoices) % numChoices;
-                console.log(`[CHOICE DEBUG] ArrowUp → selectedIndex now ${this.selectedChoiceIndex}`);
                 this.updateChoiceHighlight();
                 input.consume();
                 return;
-            } else if (input.key === 'ArrowDown') {
+            }
+
+            if (input.key === 'ArrowDown') {
                 this.selectedChoiceIndex = (this.selectedChoiceIndex + 1) % numChoices;
-                console.log(`[CHOICE DEBUG] ArrowDown → selectedIndex now ${this.selectedChoiceIndex}`);
                 this.updateChoiceHighlight();
                 input.consume();
                 return;
@@ -674,15 +659,27 @@ class DialogueQueueSystem {
 
             // A button or Enter confirms selection
             if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
-                console.log(`[CHOICE DEBUG] A button pressed, calling selectChoice(${this.selectedChoiceIndex})`);
+                console.log(`[DialogueQueue] Selecting choice ${this.selectedChoiceIndex}`);
                 this.selectChoice(this.selectedChoiceIndex);
+                input.consume();
+                return;
+            }
+
+            // Consume all other input when in choice mode
+            input.consume();
+            return;
+        }
+
+        // Handle advancing dialogue (animation or waiting for input)
+        if (this.state === 'ANIMATING' || this.state === 'WAITING_FOR_INPUT') {
+            if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
+                this.advance();
                 input.consume();
                 return;
             }
         }
 
-        // If we get here, dialogue is active but input wasn't handled
-        // Still consume to prevent game from processing it
+        // Consume any other input while dialogue is active
         input.consume();
     }
 
