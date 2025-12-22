@@ -1060,7 +1060,9 @@ class LighthouseGame {
 
         // Listen for when bonding completes
         const bondingHandler = (id) => {
+            console.log('[Game] Bonding dialogue closed, id:', id);
             if (id === 'creature_bonding_0') {
+                console.log('[Game] Bonding complete, showing naming view');
                 this.dialogue.off('closed', bondingHandler);
                 this.showCreatureNaming();
             }
@@ -1069,6 +1071,7 @@ class LighthouseGame {
     }
 
     showCreatureNaming() {
+        console.log('[Game] showCreatureNaming() called');
         // Clear all held keys to prevent movement after naming
         this.clearAllKeys();
 
