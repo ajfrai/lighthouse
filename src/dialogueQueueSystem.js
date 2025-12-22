@@ -442,8 +442,11 @@ class DialogueQueueSystem {
         this.emit('started', this.current.id, this.current);
 
         // Show in UI (if not headless)
+        console.log(`[CHOICE DEBUG] ⚡⚡⚡ BEFORE showUI, current.choices=${!!this.current.choices}, headless=${this.headless}`);
         if (!this.headless) {
+            console.log(`[CHOICE DEBUG] ⚡⚡⚡ CALLING showUI now`);
             this.showUI(this.current);
+            console.log(`[CHOICE DEBUG] ⚡⚡⚡ RETURNED from showUI`);
         }
 
         // If has choices, skip animation and go straight to choice state
