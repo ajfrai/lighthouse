@@ -141,7 +141,10 @@ class LighthouseGame {
         // Set version display
         const versionEl = document.getElementById('version-display');
         if (versionEl) {
-            versionEl.textContent = 'LATEST';
+            fetch('VERSION.txt')
+                .then(r => r.text())
+                .then(v => versionEl.textContent = 'v' + v.trim())
+                .catch(() => versionEl.textContent = 'v???');
         }
 
         // Start game loop
