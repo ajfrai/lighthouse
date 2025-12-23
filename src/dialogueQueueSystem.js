@@ -402,14 +402,24 @@ class DialogueQueueSystem {
             if (event.startsWith('trigger:')) {
                 const count = this.listeners[event].length;
                 console.log(`[DialogueQueue] Emitting ${event} (${count} listener${count !== 1 ? 's' : ''})`);
+                console.log(`[DialogueQueue] DEBUG: listeners type = ${typeof this.listeners[event]}, isArray = ${Array.isArray(this.listeners[event])}`);
             }
             this.listeners[event].forEach((handler, index) => {
+                if (event.startsWith('trigger:')) {
+                    console.log(`[DialogueQueue] → Calling handler ${index + 1}...`);
+                }
                 try {
                     handler(...args);
+                    if (event.startsWith('trigger:')) {
+                        console.log(`[DialogueQueue] ✓ Handler ${index + 1} completed`);
+                    }
                 } catch (error) {
-                    console.error(`[DialogueQueue] ERROR in ${event} handler:`, error);
+                    console.error(`[DialogueQueue] ERROR in ${event} handler ${index + 1}:`, error);
                 }
             });
+            if (event.startsWith('trigger:')) {
+                console.log(`[DialogueQueue] DEBUG: forEach completed`);
+            }
         } else if (event.startsWith('trigger:')) {
             console.log(`[DialogueQueue] No listeners for ${event}`);
         }
