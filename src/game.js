@@ -152,6 +152,18 @@ class LighthouseGame {
 
         console.log('✓ Lighthouse Adventure started!');
         console.log('>>> CODE VERSION: LATEST');
+        console.log('>>> Testing if showCreatureNaming exists:', typeof this.showCreatureNaming);
+
+        // TEST: Try calling showCreatureNaming directly after 5 seconds
+        setTimeout(() => {
+            console.log('>>> TEST: Attempting to call showCreatureNaming directly...');
+            try {
+                this.showCreatureNaming();
+                console.log('>>> TEST: showCreatureNaming call completed');
+            } catch (error) {
+                console.error('>>> TEST: Error calling showCreatureNaming:', error);
+            }
+        }, 5000);
     }
 
     setupDialogueListeners() {
