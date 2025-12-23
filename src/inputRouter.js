@@ -96,14 +96,8 @@ class InputRouter {
             // If input was consumed, stop propagation
             if (input.consumed) {
                 nativeEvent.preventDefault();
-                console.log(`[InputRouter] Input '${input.key}' consumed by handler (priority ${priority})`);
                 break;
             }
-        }
-
-        // If no handler consumed input, it falls through (browser default behavior)
-        if (!input.consumed) {
-            console.log(`[InputRouter] Input '${input.key}' not consumed by any handler`);
         }
     }
 
