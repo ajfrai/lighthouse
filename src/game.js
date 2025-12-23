@@ -142,9 +142,11 @@ class LighthouseGame {
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
+        console.log('>>> CODE VERSION: claude/review-previous-task-01L4m7SwATzQneSdDNToekiZ @ commit a9cd044');
     }
 
     setupDialogueListeners() {
+        console.log('>>> setupDialogueListeners() called - registering trigger handlers');
         // Creature encounter event listeners
         this.dialogue.on('trigger:creature_choice_slow', () => {
             this.creatureEncounter.choice = 'slow';
@@ -169,10 +171,13 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_bonding_complete', () => {
+            console.log('>>> HANDLER START - creature_bonding_complete @ a9cd044');
             console.log('========================================');
             console.log('BONDING COMPLETE TRIGGER FIRED');
             console.log('========================================');
+            console.log('>>> About to call showCreatureNaming(), this =', this);
             this.showCreatureNaming();
+            console.log('>>> HANDLER END - creature_bonding_complete');
         });
 
         this.dialogue.on('trigger:creature_naming_complete', () => {

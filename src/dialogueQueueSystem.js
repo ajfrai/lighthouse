@@ -401,13 +401,20 @@ class DialogueQueueSystem {
         if (this.listeners[event]) {
             console.log(`[DialogueQueue] >>>>>> Emitting ${event} to ${this.listeners[event].length} handler(s)`);
             this.listeners[event].forEach((handler, index) => {
+                console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} type:`, typeof handler, 'is function:', typeof handler === 'function');
                 try {
                     console.log(`[DialogueQueue] >>>>>> Calling handler ${index + 1} for ${event}`);
-                    handler(...args);
-                    console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} completed`);
+                    const result = handler(...args);
+                    console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} returned:`, result);
+                    console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} completed successfully`);
                 } catch (error) {
-                    console.error(`[DialogueQueue] Error in ${event} handler:`, error);
-                    console.error(error.stack);
+                    console.error(`[DialogueQueue] !!!!! ERROR in ${event} handler ${index + 1}:`);
+                    console.error('!!!!! Error message:', error?.message);
+                    console.error('!!!!! Error type:', error?.constructor?.name);
+                    console.error('!!!!! Full error:', error);
+                    if (error?.stack) {
+                        console.error('!!!!! Stack trace:', error.stack);
+                    }
                 }
             });
             console.log(`[DialogueQueue] >>>>>> All handlers for ${event} completed`);
