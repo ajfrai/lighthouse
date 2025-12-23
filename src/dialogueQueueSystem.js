@@ -407,11 +407,15 @@ class DialogueQueueSystem {
             this.listeners[event].forEach((handler, index) => {
                 if (event.startsWith('trigger:')) {
                     console.log(`[DialogueQueue] → Calling handler ${index + 1}...`);
+                    console.log(`[DialogueQueue] DEBUG: handler type = ${typeof handler}`);
+                    console.log(`[DialogueQueue] DEBUG: handler = ${handler.toString().substring(0, 150)}`);
                 }
                 try {
-                    handler(...args);
+                    console.log(`[DialogueQueue] DEBUG: About to call handler(...args)`);
+                    const result = handler(...args);
+                    console.log(`[DialogueQueue] DEBUG: handler(...args) returned`);
                     if (event.startsWith('trigger:')) {
-                        console.log(`[DialogueQueue] ✓ Handler ${index + 1} completed`);
+                        console.log(`[DialogueQueue] ✓ Handler ${index + 1} completed, result:`, result);
                     }
                 } catch (error) {
                     console.error(`[DialogueQueue] ERROR in ${event} handler ${index + 1}:`, error);
