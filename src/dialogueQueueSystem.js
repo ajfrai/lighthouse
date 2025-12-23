@@ -404,10 +404,16 @@ class DialogueQueueSystem {
                 console.log(`[DialogueQueue] Emitting ${event} (${count} listener${count !== 1 ? 's' : ''})`);
             }
             this.listeners[event].forEach((handler, index) => {
+                if (event.startsWith('trigger:')) {
+                    console.log(`[DialogueQueue] → Calling handler ${index + 1}...`);
+                }
                 try {
                     handler(...args);
+                    if (event.startsWith('trigger:')) {
+                        console.log(`[DialogueQueue] ✓ Handler ${index + 1} completed`);
+                    }
                 } catch (error) {
-                    console.error(`[DialogueQueue] ERROR in ${event} handler:`, error);
+                    console.error(`[DialogueQueue] ERROR in ${event} handler ${index + 1}:`, error);
                 }
             });
         } else if (event.startsWith('trigger:')) {
