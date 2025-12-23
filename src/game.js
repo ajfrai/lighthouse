@@ -142,7 +142,7 @@ class LighthouseGame {
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
-        console.log('>>> CODE VERSION: claude/review-previous-task-01L4m7SwATzQneSdDNToekiZ @ commit eefdbcc');
+        console.log('>>> CODE VERSION: claude/review-previous-task-01L4m7SwATzQneSdDNToekiZ @ commit cd5e789');
     }
 
     setupDialogueListeners() {
@@ -171,7 +171,7 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_bonding_complete', () => {
-            console.log('>>> HANDLER START - creature_bonding_complete @ eefdbcc');
+            console.log('>>> HANDLER START - creature_bonding_complete @ cd5e789');
             console.log('========================================');
             console.log('BONDING COMPLETE TRIGGER FIRED');
             console.log('========================================');
