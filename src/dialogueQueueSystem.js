@@ -404,23 +404,21 @@ class DialogueQueueSystem {
                 console.log(`[DialogueQueue] Emitting ${event} (${count} listener${count !== 1 ? 's' : ''})`);
                 console.log(`[DialogueQueue] DEBUG: listeners type = ${typeof this.listeners[event]}, isArray = ${Array.isArray(this.listeners[event])}`);
             }
-            this.listeners[event].forEach((handler, index) => {
+            // Use for loop instead of forEach to avoid any potential issues
+            for (let index = 0; index < this.listeners[event].length; index++) {
+                const handler = this.listeners[event][index];
                 if (event.startsWith('trigger:')) {
                     console.log(`[DialogueQueue] → Calling handler ${index + 1}...`);
-                    console.log(`[DialogueQueue] DEBUG: handler type = ${typeof handler}`);
-                    console.log(`[DialogueQueue] DEBUG: handler = ${handler.toString().substring(0, 150)}`);
                 }
                 try {
-                    console.log(`[DialogueQueue] DEBUG: About to call handler(...args)`);
-                    const result = handler(...args);
-                    console.log(`[DialogueQueue] DEBUG: handler(...args) returned`);
+                    handler(...args);
                     if (event.startsWith('trigger:')) {
-                        console.log(`[DialogueQueue] ✓ Handler ${index + 1} completed, result:`, result);
+                        console.log(`[DialogueQueue] ✓ Handler ${index + 1} completed`);
                     }
                 } catch (error) {
                     console.error(`[DialogueQueue] ERROR in ${event} handler ${index + 1}:`, error);
                 }
-            });
+            }
             if (event.startsWith('trigger:')) {
                 console.log(`[DialogueQueue] DEBUG: forEach completed`);
             }
