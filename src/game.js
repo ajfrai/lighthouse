@@ -179,11 +179,8 @@ class LighthouseGame {
             this.finishCreatureEncounter();
         });
 
-        const gameInstance = this;
-        this.dialogue.on('trigger:creature_bonding_complete', function() {
-            // Bypass console.log entirely - just call the function
-            gameInstance.showCreatureNaming();
-        });
+        const showNamingFunc = this.showCreatureNaming.bind(this);
+        this.dialogue.on('trigger:creature_bonding_complete', showNamingFunc);
 
         this.dialogue.on('trigger:creature_naming_complete', () => {
             console.log('[Game] Creature naming complete, returning to EXPLORING state');
