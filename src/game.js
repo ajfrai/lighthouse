@@ -162,8 +162,17 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_path_complete', () => {
-            console.log('[Game] creature_path_complete trigger received');
+            console.log('========================================');
+            console.log('CREATURE PATH COMPLETE TRIGGER FIRED');
+            console.log('========================================');
             this.finishCreatureEncounter();
+        });
+
+        this.dialogue.on('trigger:creature_bonding_complete', () => {
+            console.log('========================================');
+            console.log('BONDING COMPLETE TRIGGER FIRED');
+            console.log('========================================');
+            this.showCreatureNaming();
         });
 
         this.dialogue.on('trigger:creature_naming_complete', () => {
@@ -1056,22 +1065,12 @@ class LighthouseGame {
     }
 
     finishCreatureEncounter() {
-        console.log('[Game] finishCreatureEncounter() called');
-        // Queue bonding sequence, then naming
+        console.log('========================================');
+        console.log('FINISH CREATURE ENCOUNTER CALLED');
+        console.log('========================================');
+        // Queue bonding sequence (which will trigger creature_bonding_complete when done)
         this.dialogue.queueFlow(CREATURE_FLOWS.bonding);
-        console.log('[Game] Bonding flow queued, setting up listener');
-
-        // Listen for when bonding completes
-        const bondingHandler = (id) => {
-            console.log('[Game] Bonding dialogue closed, id:', id);
-            if (id === 'creature_bonding_0') {
-                console.log('[Game] Bonding complete, showing naming view');
-                this.dialogue.off('closed', bondingHandler);
-                this.showCreatureNaming();
-            }
-        };
-        this.dialogue.on('closed', bondingHandler);
-        console.log('[Game] Bonding listener registered');
+        console.log('BONDING FLOW QUEUED');
     }
 
     showCreatureNaming() {

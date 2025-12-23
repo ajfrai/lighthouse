@@ -970,7 +970,7 @@ const CREATURE_FLOWS = {
     bonding: {
         id: 'creature_bonding',
         dialogues: [
-            { text: "The creature settles against you. It's warm despite the sea wind." }
+            { text: "The creature settles against you. It's warm despite the sea wind.", trigger: 'creature_bonding_complete' }
         ]
     }
 };
