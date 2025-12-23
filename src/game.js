@@ -138,11 +138,20 @@ class LighthouseGame {
         this.setupInput();
         this.setupDebugMenu();
 
+        // Set version display
+        const versionEl = document.getElementById('version-display');
+        if (versionEl) {
+            fetch('VERSION.txt')
+                .then(r => r.text())
+                .then(v => versionEl.textContent = 'v' + v.trim())
+                .catch(() => versionEl.textContent = 'v???');
+        }
+
         // Start game loop
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
-        console.log('>>> CODE VERSION: claude/review-previous-task-01L4m7SwATzQneSdDNToekiZ @ commit a9cd044');
+        console.log('>>> CODE VERSION: LATEST');
     }
 
     setupDialogueListeners() {
@@ -172,26 +181,8 @@ class LighthouseGame {
 
         const gameInstance = this;
         this.dialogue.on('trigger:creature_bonding_complete', function() {
-            console.log('>>> HANDLER START - creature_bonding_complete @ LATEST');
-            console.log('>>> typeof gameInstance =', typeof gameInstance);
-            console.log('>>> typeof gameInstance.showCreatureNaming =', typeof gameInstance?.showCreatureNaming);
-            console.log('========================================');
-            console.log('BONDING COMPLETE TRIGGER FIRED');
-            console.log('========================================');
-            try {
-                if (gameInstance && typeof gameInstance.showCreatureNaming === 'function') {
-                    console.log('>>> Calling gameInstance.showCreatureNaming()');
-                    gameInstance.showCreatureNaming();
-                    console.log('>>> showCreatureNaming() completed');
-                } else {
-                    console.error('>>> ERROR: gameInstance or showCreatureNaming not available!');
-                    console.error('>>> gameInstance:', gameInstance);
-                }
-            } catch (error) {
-                console.error('>>> CAUGHT ERROR in bonding handler:', error);
-                console.error('>>> Error stack:', error.stack);
-            }
-            console.log('>>> HANDLER END - creature_bonding_complete');
+            // Bypass console.log entirely - just call the function
+            gameInstance.showCreatureNaming();
         });
 
         this.dialogue.on('trigger:creature_naming_complete', () => {
