@@ -138,11 +138,17 @@ class LighthouseGame {
         this.setupInput();
         this.setupDebugMenu();
 
+        // Set version display
+        const versionEl = document.getElementById('version-display');
+        if (versionEl) {
+            versionEl.textContent = 'v5ffc943';
+        }
+
         // Start game loop
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
-        console.log('>>> CODE VERSION: claude/review-previous-task-01L4m7SwATzQneSdDNToekiZ @ commit a9cd044');
+        console.log('>>> CODE VERSION: v5ffc943');
     }
 
     setupDialogueListeners() {
