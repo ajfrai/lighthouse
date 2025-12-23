@@ -170,13 +170,27 @@ class LighthouseGame {
             this.finishCreatureEncounter();
         });
 
-        this.dialogue.on('trigger:creature_bonding_complete', () => {
-            console.log('>>> HANDLER START - creature_bonding_complete @ a9cd044');
+        const gameInstance = this;
+        this.dialogue.on('trigger:creature_bonding_complete', function() {
+            console.log('>>> HANDLER START - creature_bonding_complete @ LATEST');
+            console.log('>>> typeof gameInstance =', typeof gameInstance);
+            console.log('>>> typeof gameInstance.showCreatureNaming =', typeof gameInstance?.showCreatureNaming);
             console.log('========================================');
             console.log('BONDING COMPLETE TRIGGER FIRED');
             console.log('========================================');
-            console.log('>>> About to call showCreatureNaming(), this =', this);
-            this.showCreatureNaming();
+            try {
+                if (gameInstance && typeof gameInstance.showCreatureNaming === 'function') {
+                    console.log('>>> Calling gameInstance.showCreatureNaming()');
+                    gameInstance.showCreatureNaming();
+                    console.log('>>> showCreatureNaming() completed');
+                } else {
+                    console.error('>>> ERROR: gameInstance or showCreatureNaming not available!');
+                    console.error('>>> gameInstance:', gameInstance);
+                }
+            } catch (error) {
+                console.error('>>> CAUGHT ERROR in bonding handler:', error);
+                console.error('>>> Error stack:', error.stack);
+            }
             console.log('>>> HANDLER END - creature_bonding_complete');
         });
 
