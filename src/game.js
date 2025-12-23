@@ -117,9 +117,6 @@ class LighthouseGame {
         this.inputRouter.register(this.dialogue, 100);  // Dialogue has highest priority
         this.inputRouter.register(this, 0);  // Game exploration has lowest priority
 
-        console.log('[Game] InputRouter initialized with handlers:');
-        console.log('  - Dialogue (priority 100)');
-        console.log('  - Game (priority 0)');
 
         // Set up dialogue event listeners
         this.setupDialogueListeners();
@@ -151,11 +148,9 @@ class LighthouseGame {
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
-        console.log('>>> CODE VERSION: LATEST');
     }
 
     setupDialogueListeners() {
-        console.log('>>> setupDialogueListeners() called - registering trigger handlers');
         // Creature encounter event listeners
         this.dialogue.on('trigger:creature_choice_slow', () => {
             this.creatureEncounter.choice = 'slow';
@@ -173,14 +168,14 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_path_complete', () => {
-            console.log('========================================');
-            console.log('CREATURE PATH COMPLETE TRIGGER FIRED');
-            console.log('========================================');
             this.finishCreatureEncounter();
         });
 
-        const showNamingFunc = this.showCreatureNaming.bind(this);
-        this.dialogue.on('trigger:creature_bonding_complete', showNamingFunc);
+        this.dialogue.on('trigger:creature_bonding_complete', () => {
+            console.log('[Game] creature_bonding_complete handler executing');
+            this.showCreatureNaming();
+            console.log('[Game] creature_bonding_complete handler done');
+        });
 
         this.dialogue.on('trigger:creature_naming_complete', () => {
             console.log('[Game] Creature naming complete, returning to EXPLORING state');
@@ -247,7 +242,6 @@ class LighthouseGame {
             // CRITICAL FIX: Update lastDialogueEndTime to prevent double-interaction
             // This prevents interact() from being called by the same button press that closed the dialogue
             this.lastDialogueEndTime = Date.now();
-            console.log('[Game] Dialogue ended, blocking interactions for 300ms');
         });
     }
 
@@ -364,7 +358,6 @@ class LighthouseGame {
                     this.handleKeyPress(key);
 
                     // ALSO dispatch keyboard event for dialogue choice navigation
-                    console.log(`[MobileControls] D-pad ${key} pressed - dispatching event`);
                     const keydownEvent = new KeyboardEvent('keydown', {
                         key: key,
                         code: key === 'ArrowUp' ? 'ArrowUp' :
@@ -376,7 +369,6 @@ class LighthouseGame {
                     document.dispatchEvent(keydownEvent);
                 } else if (btn.id === 'btnAction') {
                     // Dispatch real keyboard event so dialogueSystem can catch it
-                    console.log('[MobileControls] A button pressed - dispatching "a" keydown event');
                     const keydownEvent = new KeyboardEvent('keydown', {
                         key: 'a',
                         code: 'KeyA',
@@ -395,7 +387,6 @@ class LighthouseGame {
                             cancelable: true
                         });
                         document.dispatchEvent(keyupEvent);
-                        console.log('[MobileControls] Dispatched "a" keyup event (cleanup)');
                     }, 50);
 
                     // InputRouter now handles all input - no need to call handleKeyPress
@@ -619,14 +610,12 @@ class LighthouseGame {
         // CRITICAL FIX: Prevent interaction while dialogue is active
         // This was causing infinite loop - A button would both advance dialogue AND trigger interact()
         if (this.dialogue.state !== 'IDLE') {
-            console.log('[Game] Interaction blocked - dialogue is active (state:', this.dialogue.state + ')');
             return;
         }
 
         // Prevent double-interaction: don't allow interaction immediately after dialogue ends
         const now = Date.now();
         if (now - this.lastDialogueEndTime < 300) {
-            console.log('[Game] Interaction blocked - dialogue just ended');
             return;
         }
 
@@ -1072,12 +1061,8 @@ class LighthouseGame {
     }
 
     finishCreatureEncounter() {
-        console.log('========================================');
-        console.log('FINISH CREATURE ENCOUNTER CALLED');
-        console.log('========================================');
         // Queue bonding sequence (which will trigger creature_bonding_complete when done)
         this.dialogue.queueFlow(CREATURE_FLOWS.bonding);
-        console.log('BONDING FLOW QUEUED');
     }
 
     showCreatureNaming() {

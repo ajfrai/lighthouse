@@ -386,13 +386,7 @@ class DialogueQueueSystem {
         if (!this.listeners[event]) {
             this.listeners[event] = [];
         }
-        // Debug: log the handler source for creature_bonding_complete
-        if (event === 'trigger:creature_bonding_complete') {
-            console.log(`[DialogueQueue] ⚠️ Registering creature_bonding_complete handler:`);
-            console.log(`[DialogueQueue] Handler source (first 500 chars):`, handler.toString().substring(0, 500));
-        }
         this.listeners[event].push(handler);
-        console.log(`[DialogueQueue] Registered listener for '${event}' (total: ${this.listeners[event].length})`);
     }
 
     off(event, handler) {
@@ -404,33 +398,17 @@ class DialogueQueueSystem {
         this.log('event', { event, args });
 
         if (this.listeners[event]) {
-            console.log(`[DialogueQueue] >>>>>> Emitting ${event} to ${this.listeners[event].length} handler(s)`);
+            // Only log trigger events (not internal events like 'closed')
+            if (event.startsWith('trigger:')) {
+                console.log(`[DialogueQueue] Emitting ${event}`);
+            }
             this.listeners[event].forEach((handler, index) => {
-                console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} type:`, typeof handler, 'is function:', typeof handler === 'function');
-                if (event === 'trigger:creature_bonding_complete') {
-                    console.log(`[DialogueQueue] ⚠️ About to execute creature_bonding_complete handler`);
-                    console.log(`[DialogueQueue] Handler source:`, handler.toString().substring(0, 500));
-                }
                 try {
-                    console.log(`[DialogueQueue] >>>>>> Calling handler ${index + 1} for ${event}`);
-                    console.log(`[DialogueQueue] >>>>>> Just before handler(...args)`);
-                    const result = handler(...args);
-                    console.log(`[DialogueQueue] >>>>>> Just after handler(...args), result:`, result);
-                    console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} returned:`, result);
-                    console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} completed successfully`);
+                    handler(...args);
                 } catch (error) {
-                    console.error(`[DialogueQueue] !!!!! ERROR in ${event} handler ${index + 1}:`);
-                    console.error('!!!!! Error message:', error?.message);
-                    console.error('!!!!! Error type:', error?.constructor?.name);
-                    console.error('!!!!! Full error:', error);
-                    if (error?.stack) {
-                        console.error('!!!!! Stack trace:', error.stack);
-                    }
+                    console.error(`[DialogueQueue] ERROR in ${event} handler:`, error);
                 }
             });
-            console.log(`[DialogueQueue] >>>>>> All handlers for ${event} completed`);
-        } else {
-            console.log(`[DialogueQueue] No listeners registered for ${event}`);
         }
     }
 
@@ -552,27 +530,11 @@ class DialogueQueueSystem {
         // Emit trigger if specified
         if (closedDialogue.trigger) {
             const triggerName = 'trigger:' + closedDialogue.trigger;
-            console.log('[DialogueQueue] Emitting trigger:', closedDialogue.trigger, '>>> CODE VERSION: LATEST');
-            const listenerCount = this.listeners[triggerName]?.length || 0;
-            console.log('[DialogueQueue] Listeners for', triggerName, ':', listenerCount);
-            try {
-                this.emit(triggerName, closedDialogue);
-                console.log('[DialogueQueue] Trigger emitted successfully');
-            } catch (error) {
-                console.error('[DialogueQueue] Error in trigger handler:', error);
-            }
+            this.emit(triggerName, closedDialogue);
         }
 
-        console.log('[DialogueQueue] About to emit closed event');
         // Emit closed event
-        try {
-            this.emit('closed', closedDialogue.id, closedDialogue);
-            console.log('[DialogueQueue] Closed event emitted');
-        } catch (error) {
-            console.error('[DialogueQueue] Error in closed handler:', error);
-        }
-
-        console.log('[DialogueQueue] About to hide UI and process next');
+        this.emit('closed', closedDialogue.id, closedDialogue);
         // Clear current and hide UI
         this.current = null;
         if (!this.headless) {
