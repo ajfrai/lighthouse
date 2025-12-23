@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Creature Encounter Flow Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .info { color: #ff0; }
+        pre { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Creature Encounter Flow Test</h1>
+    <div id="output"></div>
+
+    <script type="module">
+        const output = document.getElementById('output');
+
+        function log(msg, type = 'info') {
+            const pre = document.createElement('pre');
+            pre.className = type;
+            pre.textContent = msg;
+            output.appendChild(pre);
+        }
+
+        function assert(condition, message) {
+            if (condition) {
+                log('✓ ' + message, 'pass');
+            } else {
+                log('✗ ' + message, 'fail');
+                throw new Error('Assertion failed: ' + message);
+            }
+        }
+
+        // Import necessary modules
+        import { CREATURE_FLOWS } from './src/data.js';
+
+        log('=== Testing Creature Encounter Flow ===\n', 'info');
+
+        // Test 1: Verify flow structure
+        log('Test 1: Verify CREATURE_FLOWS structure', 'info');
+        assert(CREATURE_FLOWS.intro, 'intro flow exists');
+        assert(CREATURE_FLOWS.slow, 'slow flow exists');
+        assert(CREATURE_FLOWS.wait, 'wait flow exists');
+        assert(CREATURE_FLOWS.grab, 'grab flow exists');
+        assert(CREATURE_FLOWS.bonding, 'bonding flow exists');
+
+        // Test 2: Verify triggers are set
+        log('\nTest 2: Verify triggers are properly set', 'info');
+
+        const slowPath = CREATURE_FLOWS.slow.dialogues;
+        const lastSlowDialogue = slowPath[slowPath.length - 1];
+        assert(lastSlowDialogue.trigger === 'creature_path_complete',
+               'slow path has creature_path_complete trigger');
+
+        const waitPath = CREATURE_FLOWS.wait.dialogues;
+        const lastWaitDialogue = waitPath[waitPath.length - 1];
+        assert(lastWaitDialogue.trigger === 'creature_path_complete',
+               'wait path has creature_path_complete trigger');
+
+        const grabPath = CREATURE_FLOWS.grab.dialogues;
+        const lastGrabDialogue = grabPath[grabPath.length - 1];
+        assert(lastGrabDialogue.trigger === 'creature_path_complete',
+               'grab path has creature_path_complete trigger');
+
+        const bondingDialogues = CREATURE_FLOWS.bonding.dialogues;
+        const bondingDialogue = bondingDialogues[0];
+        log('Bonding dialogue: ' + JSON.stringify(bondingDialogue, null, 2), 'info');
+        assert(bondingDialogue.trigger === 'creature_bonding_complete',
+               'bonding has creature_bonding_complete trigger');
+
+        // Test 3: Simulate the dialogue queue system
+        log('\nTest 3: Simulate dialogue queue flow', 'info');
+
+        class MockDialogueQueue {
+            constructor() {
+                this.queue = [];
+                this.listeners = {};
+                this.eventLog = [];
+            }
+
+            on(event, handler) {
+                if (!this.listeners[event]) {
+                    this.listeners[event] = [];
+                }
+                this.listeners[event].push(handler);
+                log(`Listener registered: ${event}`, 'info');
+            }
+
+            emit(event, ...args) {
+                this.eventLog.push({ event, args });
+                log(`Event emitted: ${event}`, 'info');
+                if (this.listeners[event]) {
+                    this.listeners[event].forEach(handler => {
+                        try {
+                            handler(...args);
+                        } catch (error) {
+                            log(`Error in ${event} handler: ${error.message}`, 'fail');
+                        }
+                    });
+                }
+            }
+
+            queueFlow(flow) {
+                const flowDialogues = Array.isArray(flow) ? flow : flow.dialogues;
+                flowDialogues.forEach((dialogue, index) => {
+                    if (!dialogue.id && flow.id) {
+                        dialogue.id = `${flow.id}_${index}`;
+                    }
+                    this.queue.push(dialogue);
+                });
+                log(`Flow queued: ${flow.id}`, 'info');
+            }
+
+            processDialogue(dialogue) {
+                log(`Processing dialogue: "${dialogue.text?.substring(0, 50)}..."`, 'info');
+                if (dialogue.trigger) {
+                    log(`Dialogue has trigger: ${dialogue.trigger}`, 'info');
+                    this.emit('trigger:' + dialogue.trigger, dialogue);
+                }
+            }
+        }
+
+        const mockDialogue = new MockDialogueQueue();
+        let namingCalled = false;
+
+        // Setup listeners like in game.js
+        mockDialogue.on('trigger:creature_path_complete', () => {
+            log('>>> creature_path_complete handler called', 'info');
+            mockDialogue.queueFlow(CREATURE_FLOWS.bonding);
+        });
+
+        mockDialogue.on('trigger:creature_bonding_complete', () => {
+            log('>>> creature_bonding_complete handler called', 'info');
+            namingCalled = true;
+        });
+
+        // Simulate flow
+        log('\nSimulating slow path...', 'info');
+        mockDialogue.queueFlow(CREATURE_FLOWS.slow);
+
+        // Process each dialogue
+        while (mockDialogue.queue.length > 0) {
+            const dialogue = mockDialogue.queue.shift();
+            mockDialogue.processDialogue(dialogue);
+        }
+
+        log('\nTest Results:', 'info');
+        assert(namingCalled, 'showCreatureNaming should be called');
+
+        log('\n=== Event Log ===', 'info');
+        mockDialogue.eventLog.forEach(evt => {
+            log(`${evt.event}`, 'info');
+        });
+
+        log('\n✓ ALL TESTS PASSED', 'pass');
+    </script>
+</body>
+</html>

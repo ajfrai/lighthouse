@@ -387,6 +387,7 @@ class DialogueQueueSystem {
             this.listeners[event] = [];
         }
         this.listeners[event].push(handler);
+        console.log(`[DialogueQueue] Registered listener for '${event}' (total: ${this.listeners[event].length})`);
     }
 
     off(event, handler) {
@@ -398,13 +399,20 @@ class DialogueQueueSystem {
         this.log('event', { event, args });
 
         if (this.listeners[event]) {
-            this.listeners[event].forEach(handler => {
+            console.log(`[DialogueQueue] >>>>>> Emitting ${event} to ${this.listeners[event].length} handler(s)`);
+            this.listeners[event].forEach((handler, index) => {
                 try {
+                    console.log(`[DialogueQueue] >>>>>> Calling handler ${index + 1} for ${event}`);
                     handler(...args);
+                    console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} completed`);
                 } catch (error) {
                     console.error(`[DialogueQueue] Error in ${event} handler:`, error);
+                    console.error(error.stack);
                 }
             });
+            console.log(`[DialogueQueue] >>>>>> All handlers for ${event} completed`);
+        } else {
+            console.log(`[DialogueQueue] No listeners registered for ${event}`);
         }
     }
 
