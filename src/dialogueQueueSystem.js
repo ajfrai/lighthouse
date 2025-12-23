@@ -400,7 +400,8 @@ class DialogueQueueSystem {
         if (this.listeners[event]) {
             // Only log trigger events (not internal events like 'closed')
             if (event.startsWith('trigger:')) {
-                console.log(`[DialogueQueue] Emitting ${event}`);
+                const count = this.listeners[event].length;
+                console.log(`[DialogueQueue] Emitting ${event} (${count} listener${count !== 1 ? 's' : ''})`);
             }
             this.listeners[event].forEach((handler, index) => {
                 try {
@@ -409,6 +410,8 @@ class DialogueQueueSystem {
                     console.error(`[DialogueQueue] ERROR in ${event} handler:`, error);
                 }
             });
+        } else if (event.startsWith('trigger:')) {
+            console.log(`[DialogueQueue] No listeners for ${event}`);
         }
     }
 

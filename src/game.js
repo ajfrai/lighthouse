@@ -151,6 +151,7 @@ class LighthouseGame {
     }
 
     setupDialogueListeners() {
+        console.log('[Game] setupDialogueListeners called');
         // Creature encounter event listeners
         this.dialogue.on('trigger:creature_choice_slow', () => {
             this.creatureEncounter.choice = 'slow';
@@ -176,6 +177,7 @@ class LighthouseGame {
             this.showCreatureNaming();
             console.log('[Game] creature_bonding_complete handler done');
         });
+        console.log('[Game] Registered creature_bonding_complete handler');
 
         this.dialogue.on('trigger:creature_naming_complete', () => {
             console.log('[Game] Creature naming complete, returning to EXPLORING state');
