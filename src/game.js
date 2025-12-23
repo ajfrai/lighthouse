@@ -174,7 +174,13 @@ class LighthouseGame {
 
         this.dialogue.on('trigger:creature_bonding_complete', () => {
             console.log('[DialogueQueue] ★★★ CREATURE BONDING COMPLETE HANDLER EXECUTING ★★★');
-            this.showCreatureNaming();
+            console.log('[DialogueQueue] DEBUG: this =', this);
+            console.log('[DialogueQueue] DEBUG: typeof this.showCreatureNaming =', typeof this.showCreatureNaming);
+            try {
+                this.showCreatureNaming();
+            } catch (error) {
+                console.error('[DialogueQueue] ERROR calling showCreatureNaming:', error);
+            }
             console.log('[DialogueQueue] ★★★ CREATURE BONDING COMPLETE HANDLER DONE ★★★');
         });
         console.log('[Game] Registered creature_bonding_complete handler');
