@@ -151,19 +151,6 @@ class LighthouseGame {
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
-        console.log('>>> CODE VERSION: LATEST');
-        console.log('>>> Testing if showCreatureNaming exists:', typeof this.showCreatureNaming);
-
-        // TEST: Try calling showCreatureNaming directly after 5 seconds
-        setTimeout(() => {
-            console.log('>>> TEST: Attempting to call showCreatureNaming directly...');
-            try {
-                this.showCreatureNaming();
-                console.log('>>> TEST: showCreatureNaming call completed');
-            } catch (error) {
-                console.error('>>> TEST: Error calling showCreatureNaming:', error);
-            }
-        }, 5000);
     }
 
     setupDialogueListeners() {
@@ -191,8 +178,11 @@ class LighthouseGame {
             this.finishCreatureEncounter();
         });
 
-        const showNamingFunc = this.showCreatureNaming.bind(this);
-        this.dialogue.on('trigger:creature_bonding_complete', showNamingFunc);
+        this.dialogue.on('trigger:creature_bonding_complete', () => {
+            console.log('[Game] creature_bonding_complete handler executing');
+            this.showCreatureNaming();
+            console.log('[Game] creature_bonding_complete handler done');
+        });
 
         this.dialogue.on('trigger:creature_naming_complete', () => {
             console.log('[Game] Creature naming complete, returning to EXPLORING state');
