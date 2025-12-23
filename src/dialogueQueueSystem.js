@@ -386,6 +386,11 @@ class DialogueQueueSystem {
         if (!this.listeners[event]) {
             this.listeners[event] = [];
         }
+        // Debug: log the handler source for creature_bonding_complete
+        if (event === 'trigger:creature_bonding_complete') {
+            console.log(`[DialogueQueue] ⚠️ Registering creature_bonding_complete handler:`);
+            console.log(`[DialogueQueue] Handler source (first 500 chars):`, handler.toString().substring(0, 500));
+        }
         this.listeners[event].push(handler);
         console.log(`[DialogueQueue] Registered listener for '${event}' (total: ${this.listeners[event].length})`);
     }
@@ -402,9 +407,15 @@ class DialogueQueueSystem {
             console.log(`[DialogueQueue] >>>>>> Emitting ${event} to ${this.listeners[event].length} handler(s)`);
             this.listeners[event].forEach((handler, index) => {
                 console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} type:`, typeof handler, 'is function:', typeof handler === 'function');
+                if (event === 'trigger:creature_bonding_complete') {
+                    console.log(`[DialogueQueue] ⚠️ About to execute creature_bonding_complete handler`);
+                    console.log(`[DialogueQueue] Handler source:`, handler.toString().substring(0, 500));
+                }
                 try {
                     console.log(`[DialogueQueue] >>>>>> Calling handler ${index + 1} for ${event}`);
+                    console.log(`[DialogueQueue] >>>>>> Just before handler(...args)`);
                     const result = handler(...args);
+                    console.log(`[DialogueQueue] >>>>>> Just after handler(...args), result:`, result);
                     console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} returned:`, result);
                     console.log(`[DialogueQueue] >>>>>> Handler ${index + 1} completed successfully`);
                 } catch (error) {
