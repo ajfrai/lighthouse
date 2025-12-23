@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Handler Execution Test</title>
+</head>
+<body>
+    <h1>Testing creature_bonding_complete handler</h1>
+    <div id="output" style="font-family: monospace; white-space: pre;"></div>
+
+    <!-- Load actual game files -->
+    <script src="src/debugLogger.js"></script>
+    <script src="src/data.js"></script>
+    <script src="src/dialogueQueueSystem.js"></script>
+
+    <script>
+        const output = document.getElementById('output');
+        function log(msg) {
+            output.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        log('=== Testing Handler Registration and Execution ===\n');
+
+        // Mock game object
+        const mockGame = {
+            speedRunMode: false,
+            plotPhase: 'find_creature'
+        };
+
+        // Create DialogueQueueSystem instance
+        const dialogue = new DialogueQueueSystem(mockGame, { headless: true });
+        log('✓ Created DialogueQueueSystem instance');
+
+        // Track execution
+        let handlerExecuted = false;
+        let showCreatureNamingCalled = false;
+
+        // Mock this context
+        const mockThis = {
+            showCreatureNaming: function() {
+                log('  [Mock] showCreatureNaming() called');
+                showCreatureNamingCalled = true;
+            }
+        };
+
+        // Register handler EXACTLY like game.js does
+        dialogue.on('trigger:creature_bonding_complete', () => {
+            log('  [Handler] creature_bonding_complete handler executing');
+            handlerExecuted = true;
+            mockThis.showCreatureNaming();
+            log('  [Handler] creature_bonding_complete handler done');
+        });
+        log('✓ Registered handler for trigger:creature_bonding_complete');
+
+        // Verify listeners
+        const listeners = dialogue.listeners['trigger:creature_bonding_complete'];
+        log('✓ Listeners array exists: ' + !!listeners);
+        log('✓ Listener count: ' + (listeners ? listeners.length : 0));
+
+        // Emit the trigger
+        log('\n--- Emitting trigger:creature_bonding_complete ---\n');
+        dialogue.emit('trigger:creature_bonding_complete', { text: 'bonding' });
+
+        // Check results
+        log('\n=== RESULTS ===');
+        log('Handler executed: ' + (handlerExecuted ? '✓ YES' : '✗ NO'));
+        log('showCreatureNaming called: ' + (showCreatureNamingCalled ? '✓ YES' : '✗ NO'));
+
+        if (handlerExecuted && showCreatureNamingCalled) {
+            log('\n✓✓✓ TEST PASSED');
+            output.style.backgroundColor = '#d4edda';
+        } else {
+            log('\n✗✗✗ TEST FAILED - Handler did not execute');
+            output.style.backgroundColor = '#f8d7da';
+        }
+    </script>
+</body>
+</html>

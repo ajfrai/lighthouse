@@ -173,9 +173,9 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_bonding_complete', () => {
-            console.log('[Game] creature_bonding_complete handler executing');
+            console.log('[DialogueQueue] ★★★ CREATURE BONDING COMPLETE HANDLER EXECUTING ★★★');
             this.showCreatureNaming();
-            console.log('[Game] creature_bonding_complete handler done');
+            console.log('[DialogueQueue] ★★★ CREATURE BONDING COMPLETE HANDLER DONE ★★★');
         });
         console.log('[Game] Registered creature_bonding_complete handler');
 
