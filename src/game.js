@@ -141,14 +141,14 @@ class LighthouseGame {
         // Set version display
         const versionEl = document.getElementById('version-display');
         if (versionEl) {
-            versionEl.textContent = 'v5ffc943';
+            versionEl.textContent = 'v957c136';
         }
 
         // Start game loop
         this.gameLoop();
 
         console.log('✓ Lighthouse Adventure started!');
-        console.log('>>> CODE VERSION: v5ffc943');
+        console.log('>>> CODE VERSION: v957c136');
     }
 
     setupDialogueListeners() {
