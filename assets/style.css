@@ -389,64 +389,119 @@ button:disabled {
         font-size: 18px;
     }
 
-    /* Take over game view on mobile (NOT full-screen - keep controls visible) */
+    /* FULL-SCREEN NAMING MODAL - Takes over entire viewport */
     #firstEncounterUI {
-        position: absolute !important;  /* Relative to gameWrapper */
+        position: fixed !important;  /* Fixed to viewport, not gameWrapper */
         top: 0 !important;
         left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
         transform: none !important;
-        width: 100% !important;  /* Full width of gameWrapper */
-        height: 100% !important;  /* Full height of gameWrapper */
-        max-height: calc(100% - 80px) !important;  /* Leave room for d-pad controls */
-        align-items: flex-start !important;  /* Align to top */
-        justify-content: center !important;
-        padding-top: 20px !important;  /* Add some top spacing */
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        padding: 0 !important;
         pointer-events: auto !important;
-        z-index: 9999 !important;
-        overflow-y: auto !important;  /* Allow scrolling if needed */
+        z-index: 10000 !important;  /* Above everything */
+        overflow: hidden !important;  /* No scrolling */
     }
 
     .encounter-backdrop {
         display: block !important;
-        position: absolute !important;
+        position: fixed !important;
         top: 0 !important;
         left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        background: #000 !important;
-        opacity: 0.95 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: #000 !important;  /* Solid black - hides game completely */
+        opacity: 1 !important;  /* Full opacity */
         z-index: 1 !important;
     }
 
     .encounter-content {
+        position: relative !important;
         width: 100% !important;
         max-width: 100% !important;
-        padding: 20px !important;
+        height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 0 !important;
+        margin: 0 !important;
         z-index: 2 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
-    /* Larger sprite on mobile */
+    /* TOP ZONE: Creature orb + text */
     .encounter-creature {
-        width: 180px !important;
-        height: 180px !important;
+        width: 140px !important;
+        height: 140px !important;
+        margin: 30px auto 20px !important;
+        flex-shrink: 0 !important;
     }
 
     #encounterCreatureCanvas {
-        width: 180px !important;
-        height: 180px !important;
+        width: 140px !important;
+        height: 140px !important;
     }
 
-    /* Make choices more visible on mobile */
+    .encounter-text {
+        font-size: 18px !important;
+        margin: 0 auto 30px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* MIDDLE ZONE: 2-column name grid */
     .encounter-choices {
-        max-height: 280px !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;  /* 2 columns */
+        gap: 12px !important;
+        padding: 0 20px !important;
+        margin: 0 auto !important;
+        max-width: 400px !important;
+        width: 100% !important;
+        flex-shrink: 0 !important;
+        overflow: visible !important;
     }
 
     .encounter-choice {
         font-size: 16px !important;
-        padding: 16px 24px !important;
+        padding: 14px 16px !important;
+        margin: 0 !important;
+        border-radius: 8px !important;  /* Rounded corners */
         cursor: pointer !important;
+        transition: all 0.15s ease !important;
+    }
+
+    .encounter-choice.selected {
+        background: rgba(255, 215, 0, 0.25) !important;
+        border-color: #ffd700 !important;
+        border-width: 3px !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+    }
+
+    /* Add confirm hint */
+    .encounter-choices::after {
+        content: "Press A to confirm" !important;
+        display: block !important;
+        grid-column: 1 / -1 !important;  /* Span both columns */
+        text-align: center !important;
+        font-size: 14px !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        margin-top: 10px !important;
+        font-family: 'Courier New', monospace !important;
+    }
+
+    /* BOTTOM ZONE: D-pad stays visible and anchored */
+    #mobileControls {
+        position: fixed !important;
+        bottom: 20px !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 10001 !important;  /* Above modal */
+        pointer-events: auto !important;
     }
 }
 
@@ -737,11 +792,19 @@ button:disabled {
 }
 
 .encounter-creature {
-    margin: 0 auto 10px;  /* Less bottom margin for compact layout */
+    margin: 0 auto 10px;
     width: 128px;
     height: 128px;
-    background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle at center,
+        rgba(0, 255, 255, 0.3) 0%,
+        rgba(0, 255, 255, 0.15) 40%,
+        rgba(100, 200, 255, 0.1) 70%,
+        transparent 100%);
     border-radius: 50%;
+    border: 2px solid rgba(0, 255, 255, 0.3);  /* Subtle rim */
+    box-shadow:
+        0 0 30px rgba(0, 255, 255, 0.4),
+        inset 0 0 20px rgba(0, 255, 255, 0.2);  /* Inner glow */
     display: flex;
     align-items: center;
     justify-content: center;
