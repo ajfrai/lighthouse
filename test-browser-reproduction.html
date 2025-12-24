@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Browser Reproduction Test</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        #test-output {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 15px;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 10000;
+            border: 2px solid #0f0;
+        }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .info { color: #ff0; }
+    </style>
+</head>
+<body>
+    <!-- Include all necessary HTML from index.html -->
+    <canvas id="gameCanvas" width="512" height="512" style="border: 1px solid #333;"></canvas>
+
+    <div id="dialogBox" class="hidden">
+        <div id="dialogSpeaker"></div>
+        <div id="dialogContent"></div>
+        <div id="dialogChoices" class="dialogue-choices"></div>
+    </div>
+
+    <div id="firstEncounterUI" class="hidden">
+        <div class="encounter-backdrop"></div>
+        <div class="encounter-content">
+            <div class="encounter-creature">
+                <canvas id="encounterCreatureCanvas" width="128" height="128"></canvas>
+            </div>
+            <div class="encounter-text" id="encounterText"></div>
+            <div class="encounter-choices" id="encounterChoices"></div>
+        </div>
+    </div>
+
+    <div id="test-output"></div>
+
+    <!-- Load all game scripts -->
+    <script src="src/debugLogger.js"></script>
+    <script src="src/onScreenLogger.js"></script>
+    <script src="src/data.js"></script>
+    <script src="src/spriteLoader.js"></script>
+    <script src="src/questSystem.js"></script>
+    <script src="src/dialogueQueueSystem.js"></script>
+    <script src="src/inputRouter.js"></script>
+    <script src="src/renderingSystem.js"></script>
+    <script src="src/game.js"></script>
+
+    <script>
+        const output = document.getElementById('test-output');
+        const log = (msg, type = 'info') => {
+            const line = document.createElement('div');
+            line.className = type;
+            line.textContent = msg;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+            console.log(msg);
+        };
+
+        // Intercept console.log to capture handler logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+            const msg = args.join(' ');
+            if (msg.includes('★') || msg.includes('BONDING') || msg.includes('trigger:creature')) {
+                log(msg, 'info');
+            }
+            originalLog.apply(console, args);
+        };
+
+        window.addEventListener('load', async () => {
+            log('=== BROWSER REPRODUCTION TEST ===', 'info');
+            log('', 'info');
+
+            try {
+                // Wait for game to initialize
+                await new Promise(r => setTimeout(r, 1000));
+
+                log(`Game instance exists: ${!!window.game}`, window.game ? 'pass' : 'fail');
+                if (!window.game) {
+                    log('ERROR: Game not initialized', 'fail');
+                    return;
+                }
+
+                log(`Dialogue system exists: ${!!window.game.dialogue}`, window.game.dialogue ? 'pass' : 'fail');
+
+                // Check handler registration
+                const listeners = window.game.dialogue.listeners['trigger:creature_bonding_complete'];
+                log(`Handlers registered: ${listeners ? listeners.length : 0}`, listeners && listeners.length > 0 ? 'pass' : 'fail');
+
+                if (!listeners || listeners.length === 0) {
+                    log('ERROR: Handler not registered!', 'fail');
+                    log('This is the root cause!', 'fail');
+                    return;
+                }
+
+                log('', 'info');
+                log('=== TRIGGERING ENCOUNTER ===', 'info');
+                log('', 'info');
+
+                // Manually trigger the bonding complete event
+                window.game.dialogue.emit('trigger:creature_bonding_complete');
+
+                // Check results
+                await new Promise(r => setTimeout(r, 500));
+
+                const encounterUI = document.getElementById('firstEncounterUI');
+                const isVisible = !encounterUI.classList.contains('hidden');
+                const buttons = document.querySelectorAll('.encounter-choice');
+                const text = document.getElementById('encounterText').textContent;
+
+                log('', 'info');
+                log('=== RESULTS ===', 'info');
+                log(`UI visible: ${isVisible}`, isVisible ? 'pass' : 'fail');
+                log(`Buttons created: ${buttons.length}`, buttons.length === 5 ? 'pass' : 'fail');
+                log(`Text: "${text}"`, text === "It needs a name." ? 'pass' : 'fail');
+
+                if (isVisible && buttons.length === 5) {
+                    log('', 'info');
+                    log('✓✓✓ TEST PASSED!', 'pass');
+                    log('Handler executed successfully', 'pass');
+                } else {
+                    log('', 'info');
+                    log('✗✗✗ TEST FAILED!', 'fail');
+                    log('Handler did not execute properly', 'fail');
+                }
+
+            } catch (error) {
+                log('', 'info');
+                log('✗✗✗ ERROR: ' + error.message, 'fail');
+                log('Stack: ' + error.stack, 'fail');
+            }
+        });
+    </script>
+</body>
+</html>

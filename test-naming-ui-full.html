@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Naming UI</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 20px;
+        }
+        #test-log {
+            white-space: pre-wrap;
+            margin-top: 20px;
+            border: 1px solid #0f0;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Naming UI Test</h1>
+    <div id="test-log"></div>
+
+    <!-- Include all game HTML elements -->
+    <canvas id="gameCanvas" width="512" height="512" style="display:none;"></canvas>
+
+    <div id="dialogBox" class="hidden">
+        <div id="dialogSpeaker"></div>
+        <div id="dialogContent"></div>
+        <div id="dialogChoices" class="dialogue-choices"></div>
+    </div>
+
+    <div id="firstEncounterUI" class="hidden">
+        <div class="encounter-backdrop"></div>
+        <div class="encounter-content">
+            <div class="encounter-creature">
+                <canvas id="encounterCreatureCanvas" width="128" height="128"></canvas>
+            </div>
+            <div class="encounter-text" id="encounterText"></div>
+            <div class="encounter-choices" id="encounterChoices"></div>
+        </div>
+    </div>
+
+    <!-- Load all game scripts in order -->
+    <script src="src/debugLogger.js"></script>
+    <script src="src/onScreenLogger.js"></script>
+    <script src="src/data.js"></script>
+    <script src="src/spriteLoader.js"></script>
+    <script src="src/questSystem.js"></script>
+    <script src="src/dialogueQueueSystem.js"></script>
+    <script src="src/inputRouter.js"></script>
+    <script src="src/renderingSystem.js"></script>
+    <script src="src/game.js"></script>
+
+    <script>
+        const log = (msg) => {
+            const logEl = document.getElementById('test-log');
+            logEl.textContent += msg + '\n';
+            console.log(msg);
+        };
+
+        // Override console.log to capture logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+            log(args.join(' '));
+            originalLog.apply(console, args);
+        };
+
+        log('=== STARTING TEST ===\n');
+
+        // Wait for page to load
+        window.addEventListener('load', async () => {
+            log('Page loaded');
+
+            try {
+                // Create game instance
+                log('Creating game instance...');
+                window.game = new LighthouseGame();
+                log('✓ Game created');
+
+                // Wait a bit for initialization
+                await new Promise(r => setTimeout(r, 500));
+
+                log('\n=== Testing handler registration ===');
+                const listenerCount = game.dialogue.listeners['trigger:creature_bonding_complete']?.length || 0;
+                log(`Listeners for creature_bonding_complete: ${listenerCount}`);
+
+                if (listenerCount === 0) {
+                    log('✗ PROBLEM: Handler not registered!');
+                    return;
+                }
+
+                log('\n=== Manually triggering creature_bonding_complete ===\n');
+                game.dialogue.emit('trigger:creature_bonding_complete');
+
+                // Check if UI is visible
+                await new Promise(r => setTimeout(r, 100));
+
+                const encounterUI = document.getElementById('firstEncounterUI');
+                const isVisible = !encounterUI.classList.contains('hidden');
+                const buttonCount = document.querySelectorAll('.encounter-choice').length;
+                const text = document.getElementById('encounterText').textContent;
+
+                log('\n=== RESULTS ===');
+                log(`UI visible: ${isVisible}`);
+                log(`Buttons created: ${buttonCount}`);
+                log(`Text: "${text}"`);
+
+                if (isVisible && buttonCount === 5 && text === "It needs a name.") {
+                    log('\n✓✓✓ TEST PASSED');
+                } else {
+                    log('\n✗✗✗ TEST FAILED');
+                }
+
+            } catch (error) {
+                log('\n✗✗✗ ERROR: ' + error.message);
+                log('Stack: ' + error.stack);
+            }
+        });
+    </script>
+</body>
+</html>
