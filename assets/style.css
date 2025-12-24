@@ -388,6 +388,34 @@ button:disabled {
         height: 50px;
         font-size: 18px;
     }
+
+    /* Full-screen naming modal on mobile */
+    #firstEncounterUI {
+        top: 0;
+        left: 0;
+        transform: none;
+        width: 100vw;
+        height: 100vh;
+        align-items: center;  /* Center content vertically */
+        justify-content: center;
+        pointer-events: auto;  /* Allow all interactions on mobile */
+    }
+
+    .encounter-backdrop {
+        display: block;  /* Show backdrop on mobile for full-screen takeover */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.95) 100%);
+        animation: backdropFadeIn 0.5s ease-out;
+    }
+
+    .encounter-content {
+        max-width: 90%;  /* Use more screen space on mobile */
+        padding: 20px;
+    }
 }
 
 /* Creature Naming */
