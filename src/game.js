@@ -482,25 +482,80 @@ class LighthouseGame {
      * @param {Function} input.consume - Call to prevent lower-priority handlers from seeing this input
      */
     handleInput(input) {
-        // Special case: Handle naming UI d-pad navigation
+        // Special case: Handle naming UI d-pad navigation (2-column grid)
         const encounterUI = document.getElementById('firstEncounterUI');
         if (this.state === GameState.DIALOGUE && encounterUI && !encounterUI.classList.contains('hidden')) {
             const nameOptions = document.querySelectorAll('.encounter-choice');
             if (nameOptions.length > 0) {
                 console.log(`[Game] Naming UI active - handling key: ${input.key}`);
 
-                // Arrow keys navigate choices
+                // 2-column grid layout: [Shimmer, Lumina], [Spark, Glow], [Nova]
+                // Track as (row, col) for grid navigation
+                const getGridPos = (index) => {
+                    return { row: Math.floor(index / 2), col: index % 2 };
+                };
+                const getIndex = (row, col) => {
+                    const index = row * 2 + col;
+                    return index < nameOptions.length ? index : -1;
+                };
+
+                let pos = getGridPos(this.namingSelectedIndex);
+                let newIndex = this.namingSelectedIndex;
+
+                // LEFT/RIGHT: Move between columns
+                if (input.key === 'ArrowLeft') {
+                    // Move left, wrap to end of previous row if at column 0
+                    if (pos.col > 0) {
+                        newIndex = getIndex(pos.row, pos.col - 1);
+                    } else if (pos.row > 0) {
+                        // Wrap to end of previous row
+                        const prevRowLastCol = getIndex(pos.row - 1, 1) !== -1 ? 1 : 0;
+                        newIndex = getIndex(pos.row - 1, prevRowLastCol);
+                    }
+                    console.log(`[Game] LEFT pressed - new index: ${newIndex}`);
+                    if (newIndex !== -1) this.namingSelectedIndex = newIndex;
+                    this.updateNamingSelection();
+                    input.consume();
+                    return;
+                }
+
+                if (input.key === 'ArrowRight') {
+                    // Move right, wrap to start of next row if at end
+                    const nextIndex = getIndex(pos.row, pos.col + 1);
+                    if (nextIndex !== -1) {
+                        newIndex = nextIndex;
+                    } else if (pos.row < Math.floor((nameOptions.length - 1) / 2)) {
+                        // Wrap to start of next row
+                        newIndex = getIndex(pos.row + 1, 0);
+                    }
+                    console.log(`[Game] RIGHT pressed - new index: ${newIndex}`);
+                    if (newIndex !== -1) this.namingSelectedIndex = newIndex;
+                    this.updateNamingSelection();
+                    input.consume();
+                    return;
+                }
+
+                // UP/DOWN: Move between rows (stay in same column if possible)
                 if (input.key === 'ArrowUp') {
-                    this.namingSelectedIndex = (this.namingSelectedIndex - 1 + nameOptions.length) % nameOptions.length;
-                    console.log(`[Game] UP pressed - new index: ${this.namingSelectedIndex}`);
+                    if (pos.row > 0) {
+                        const upIndex = getIndex(pos.row - 1, pos.col);
+                        newIndex = upIndex !== -1 ? upIndex : getIndex(pos.row - 1, 0);
+                    }
+                    console.log(`[Game] UP pressed - new index: ${newIndex}`);
+                    if (newIndex !== -1) this.namingSelectedIndex = newIndex;
                     this.updateNamingSelection();
                     input.consume();
                     return;
                 }
 
                 if (input.key === 'ArrowDown') {
-                    this.namingSelectedIndex = (this.namingSelectedIndex + 1) % nameOptions.length;
-                    console.log(`[Game] DOWN pressed - new index: ${this.namingSelectedIndex}`);
+                    const maxRow = Math.floor((nameOptions.length - 1) / 2);
+                    if (pos.row < maxRow) {
+                        const downIndex = getIndex(pos.row + 1, pos.col);
+                        newIndex = downIndex !== -1 ? downIndex : getIndex(pos.row + 1, 0);
+                    }
+                    console.log(`[Game] DOWN pressed - new index: ${newIndex}`);
+                    if (newIndex !== -1) this.namingSelectedIndex = newIndex;
                     this.updateNamingSelection();
                     input.consume();
                     return;
