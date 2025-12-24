@@ -187,35 +187,10 @@ class LighthouseGame {
             // CRITICAL: Set game state to DIALOGUE to prevent movement
             this.state = GameState.DIALOGUE;
 
-            // Show glowing orb UI with creature sprite
+            // Show naming UI with high-res sprite and choices
+            // All rendering happens in showNamingOrbUI (no separate dialogue)
             this.showNamingOrbUI();
-
-            // Use standard dialogue choice system (dpad-compatible!)
-            this.dialogue.queue({
-                text: "It needs a name.",
-                choices: [
-                    { text: "Shimmer", trigger: 'creature_named_shimmer' },
-                    { text: "Lumina", trigger: 'creature_named_lumina' },
-                    { text: "Spark", trigger: 'creature_named_spark' },
-                    { text: "Glow", trigger: 'creature_named_glow' },
-                    { text: "Nova", trigger: 'creature_named_nova' }
-                ]
-            });
         });
-
-        // Register handlers for each name choice
-        const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
-        nameOptions.forEach(name => {
-            this.dialogue.on(`trigger:creature_named_${name.toLowerCase()}`, () => {
-                console.log(`[Game] Creature named: ${name}`);
-
-                // Hide the orb UI now that name is selected
-                this.hideNamingOrbUI();
-
-                this.finalizeCreatureNaming(name);
-            });
-        });
-        console.log('[Game] Registered creature_bonding_complete handler');
 
         this.dialogue.on('trigger:creature_naming_complete', () => {
             console.log('[Game] Creature naming complete, returning to EXPLORING state');
@@ -504,6 +479,41 @@ class LighthouseGame {
      * @param {Function} input.consume - Call to prevent lower-priority handlers from seeing this input
      */
     handleInput(input) {
+        // Special case: Handle naming UI d-pad navigation
+        if (this.state === GameState.DIALOGUE && !document.getElementById('firstEncounterUI').classList.contains('hidden')) {
+            const nameOptions = document.querySelectorAll('.encounter-choice');
+            if (nameOptions.length > 0) {
+                // Arrow keys navigate choices
+                if (input.key === 'ArrowUp') {
+                    this.namingSelectedIndex = (this.namingSelectedIndex - 1 + nameOptions.length) % nameOptions.length;
+                    this.updateNamingSelection();
+                    input.consume();
+                    return;
+                }
+
+                if (input.key === 'ArrowDown') {
+                    this.namingSelectedIndex = (this.namingSelectedIndex + 1) % nameOptions.length;
+                    this.updateNamingSelection();
+                    input.consume();
+                    return;
+                }
+
+                // A button or Enter confirms selection
+                if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
+                    const selectedChoice = nameOptions[this.namingSelectedIndex];
+                    if (selectedChoice) {
+                        selectedChoice.click();
+                        input.consume();
+                        return;
+                    }
+                }
+
+                // Consume all other input during naming
+                input.consume();
+                return;
+            }
+        }
+
         // Only handle input in EXPLORING state
         if (this.state !== GameState.EXPLORING) {
             // Don't consume - let other systems handle it
@@ -1148,34 +1158,76 @@ class LighthouseGame {
     }
 
     showNamingOrbUI() {
-        console.log('[Game] Showing naming orb UI with enhanced sprite');
+        console.log('[Game] Showing naming orb UI with HIGH-RES enhanced sprite');
 
         // Get UI elements
         const encounterUI = document.getElementById('firstEncounterUI');
         const encounterText = document.getElementById('encounterText');
         const encounterCanvas = document.getElementById('encounterCreatureCanvas');
+        const encounterChoices = document.getElementById('encounterChoices');
 
-        // Draw ENHANCED creature on canvas
+        // Draw ENHANCED creature on HIGH-RES canvas (512x512 for crisp rendering)
         const ctx = encounterCanvas.getContext('2d');
-        ctx.clearRect(0, 0, 128, 128);
+        ctx.clearRect(0, 0, 512, 512);
 
-        // Center the creature (16x16 sprite scaled 6x = 96x96, centered in 128x128)
-        // Canvas is 128x128, sprite when scaled is 96x96
-        // Center position: (128-96)/2 = 16 offset
+        // Center the creature (16x16 sprite scaled 24x = 384x384, centered in 512x512)
+        // Canvas is 512x512, sprite when scaled is 384x384
+        // Center position: (512-384)/2 = 64 offset
         ctx.save();
-        ctx.scale(6, 6);
-        // In scaled coordinates, center is at (16/6, 16/6) ≈ (2.67, 2.67)
+        ctx.scale(24, 24);  // 4x sharper than before (was 6x, now 24x)
+        // In scaled coordinates, center is at (64/24, 64/24) ≈ (2.67, 2.67)
         spriteLoader.drawCreature(ctx, 'lumina', 2.67, 2.67, true);  // true = enhanced/cute version!
         ctx.restore();
 
-        // Clear the encounter-choices div (not used with new system)
-        document.getElementById('encounterChoices').innerHTML = '';
+        // Render name choices directly in encounter UI (works on both mobile and desktop)
+        const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
+        encounterChoices.innerHTML = '';
+
+        nameOptions.forEach((name, index) => {
+            const button = document.createElement('button');
+            button.className = 'encounter-choice';
+            button.textContent = name;
+            button.id = `naming-choice-${index}`;
+
+            // Click handler
+            button.onclick = () => {
+                this.selectCreatureName(name);
+            };
+
+            encounterChoices.appendChild(button);
+        });
+
+        // Set up d-pad navigation for the naming choices
+        this.namingSelectedIndex = 0;
+        this.updateNamingSelection();
 
         // Set text
         encounterText.textContent = "It needs a name.";
 
         // Show the orb UI
         encounterUI.classList.remove('hidden');
+    }
+
+    updateNamingSelection() {
+        const choices = document.querySelectorAll('.encounter-choice');
+        choices.forEach((el, index) => {
+            if (index === this.namingSelectedIndex) {
+                el.classList.add('selected');
+                el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            } else {
+                el.classList.remove('selected');
+            }
+        });
+    }
+
+    selectCreatureName(name) {
+        console.log(`[Game] Creature named: ${name}`);
+
+        // Hide the orb UI
+        this.hideNamingOrbUI();
+
+        // Finalize naming
+        this.finalizeCreatureNaming(name);
     }
 
     hideNamingOrbUI() {
