@@ -383,6 +383,8 @@ class LighthouseGame {
                     });
                     document.dispatchEvent(keydownEvent);
                 } else if (btn.id === 'btnAction') {
+                    console.log('[Game] Mobile A button pressed - dispatching keyboard event');
+
                     // Dispatch real keyboard event so dialogueSystem can catch it
                     const keydownEvent = new KeyboardEvent('keydown', {
                         key: 'a',
@@ -391,6 +393,7 @@ class LighthouseGame {
                         cancelable: true
                     });
                     document.dispatchEvent(keydownEvent);
+                    console.log('[Game] Dispatched keydown event for "a" key');
 
                     // CRITICAL: Dispatch keyup immediately after to prevent key staying "pressed"
                     // This prevents player from walking left after dialogue ends
@@ -1311,36 +1314,25 @@ class LighthouseGame {
         ctx.ellipse(-8, -10, 10, 14, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Eyes (large and expressive)
-        // Left eye white
-        ctx.fillStyle = '#ffffff';
+        // Eyes (large and cute - simple solid eyes, no dark shadow)
+        // Left eye (solid soft gray with shine)
+        ctx.fillStyle = '#444444';  // Soft gray instead of black
         ctx.beginPath();
-        ctx.ellipse(-8, -3, 6, 8, 0, 0, Math.PI * 2);
+        ctx.arc(-8, -3, 4, 0, Math.PI * 2);
         ctx.fill();
 
-        // Right eye white
+        // Right eye (solid soft gray with shine)
         ctx.beginPath();
-        ctx.ellipse(8, -3, 6, 8, 0, 0, Math.PI * 2);
+        ctx.arc(8, -3, 4, 0, Math.PI * 2);
         ctx.fill();
 
-        // Left pupil
-        ctx.fillStyle = '#000000';
+        // Eye shine (large and bright)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.beginPath();
-        ctx.ellipse(-8, -2, 3, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Right pupil
-        ctx.beginPath();
-        ctx.ellipse(8, -2, 3, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Eye shine
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.beginPath();
-        ctx.arc(-9, -5, 2, 0, Math.PI * 2);
+        ctx.arc(-9, -5, 2.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(7, -5, 2, 0, Math.PI * 2);
+        ctx.arc(7, -5, 2.5, 0, Math.PI * 2);
         ctx.fill();
 
         // Antennae (curved lines with gradient)
@@ -1360,10 +1352,10 @@ class LighthouseGame {
         ctx.quadraticCurveTo(15, -28, 18, -32);
         ctx.stroke();
 
-        // Belly accent (brown/tan patch)
-        ctx.fillStyle = 'rgba(139, 115, 85, 0.6)';
+        // Belly accent (very subtle, no dark shadow)
+        ctx.fillStyle = 'rgba(139, 115, 85, 0.2)';
         ctx.beginPath();
-        ctx.ellipse(0, 8, 12, 16, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 10, 10, 14, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // Inner glow (close to body)
