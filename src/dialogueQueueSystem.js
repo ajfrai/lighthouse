@@ -420,7 +420,7 @@ class DialogueQueueSystem {
                 }
             }
             if (event.startsWith('trigger:')) {
-                console.log(`[DialogueQueue] DEBUG: forEach completed`);
+                console.log(`[DialogueQueue] DEBUG: All handlers completed`);
             }
         } else if (event.startsWith('trigger:')) {
             console.log(`[DialogueQueue] No listeners for ${event}`);

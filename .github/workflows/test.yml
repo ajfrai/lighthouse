@@ -13,10 +13,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Install test dependencies
+      run: npm install
+
+    - name: Run handler execution test
+      run: node test-handler-execution-real.js
+
     - name: Run encounter flow tests
-      run: |
-        cd $GITHUB_WORKSPACE
-        ./test-encounter-flow.sh
+      run: ./test-encounter-flow.sh
 
     - name: Check for syntax errors
       run: |
