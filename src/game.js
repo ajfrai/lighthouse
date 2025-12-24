@@ -173,19 +173,78 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_bonding_complete', () => {
-            console.log('[DialogueQueue] 1. Handler start');
-
-            // Clear keys
+            // Clear all held keys
             this.keys = {};
             this.keysPressed = {};
             this.player.moving = false;
-            console.log('[DialogueQueue] 2. Keys cleared');
 
+            const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
             const encounterUI = document.getElementById('firstEncounterUI');
-            console.log('[DialogueQueue] 3. Got encounterUI:', !!encounterUI);
+            const encounterText = document.getElementById('encounterText');
+            const encounterChoices = document.getElementById('encounterChoices');
+            const encounterCanvas = document.getElementById('encounterCreatureCanvas');
 
+            // Draw creature on canvas
+            const ctx = encounterCanvas.getContext('2d');
+            ctx.clearRect(0, 0, 128, 128);
+            ctx.save();
+            ctx.scale(6, 6);
+            spriteLoader.drawCreature(ctx, 'lumina', 16, 16);
+            ctx.restore();
+
+            // Set text
+            encounterText.textContent = "It needs a name.";
+
+            // Create choice buttons
+            encounterChoices.innerHTML = '';
+            let selectedIndex = 0;
+
+            const updateSelection = () => {
+                const buttons = encounterChoices.querySelectorAll('.encounter-choice');
+                buttons.forEach((btn, i) => {
+                    btn.classList.toggle('selected', i === selectedIndex);
+                });
+            };
+
+            nameOptions.forEach((name, index) => {
+                const button = document.createElement('button');
+                button.className = 'encounter-choice';
+                button.textContent = name;
+                button.onclick = () => {
+                    selectedIndex = index;
+                    updateSelection();
+                    this.finalizeCreatureNaming(name);
+                    encounterUI.classList.add('hidden');
+                    this.inputRouter.pop();
+                };
+                encounterChoices.appendChild(button);
+            });
+
+            // Set up InputRouter for D-pad navigation
+            this.inputRouter.push({
+                priority: 100,
+                handleInput: (key) => {
+                    if (key === 'ArrowUp') {
+                        selectedIndex = (selectedIndex - 1 + nameOptions.length) % nameOptions.length;
+                        updateSelection();
+                        return true;
+                    } else if (key === 'ArrowDown') {
+                        selectedIndex = (selectedIndex + 1) % nameOptions.length;
+                        updateSelection();
+                        return true;
+                    } else if (key === 'Enter' || key === ' ') {
+                        this.finalizeCreatureNaming(nameOptions[selectedIndex]);
+                        encounterUI.classList.add('hidden');
+                        this.inputRouter.pop();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
+            // Show UI and set initial selection
             encounterUI.classList.remove('hidden');
-            console.log('[DialogueQueue] 4. UI shown - NAMING VIEW SHOULD BE VISIBLE');
+            updateSelection();
         });
         console.log('[Game] Registered creature_bonding_complete handler');
 
