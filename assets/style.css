@@ -397,10 +397,13 @@ button:disabled {
         transform: none !important;
         width: 100% !important;  /* Full width of gameWrapper */
         height: 100% !important;  /* Full height of gameWrapper */
-        align-items: center !important;
+        max-height: calc(100% - 80px) !important;  /* Leave room for d-pad controls */
+        align-items: flex-start !important;  /* Align to top */
         justify-content: center !important;
+        padding-top: 20px !important;  /* Add some top spacing */
         pointer-events: auto !important;
         z-index: 9999 !important;
+        overflow-y: auto !important;  /* Allow scrolling if needed */
     }
 
     .encounter-backdrop {
