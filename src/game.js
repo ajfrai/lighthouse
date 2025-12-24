@@ -184,6 +184,13 @@ class LighthouseGame {
         this.dialogue.on('trigger:creature_bonding_complete', () => {
             console.log('[DialogueQueue] ★ BONDING HANDLER STARTED ★');
 
+            // CRITICAL: Ensure dialogue box is hidden
+            const dialogBox = document.getElementById('dialogBox');
+            if (dialogBox) {
+                dialogBox.classList.add('hidden');
+                console.log('[DialogueQueue] ★ Hid dialogue box');
+            }
+
             // Clear all held keys
             this.keys = {};
             this.keysPressed = {};
@@ -195,6 +202,17 @@ class LighthouseGame {
             const encounterText = document.getElementById('encounterText');
             const encounterChoices = document.getElementById('encounterChoices');
             const encounterCanvas = document.getElementById('encounterCreatureCanvas');
+
+            // Defensive null checks
+            if (!encounterUI || !encounterText || !encounterChoices || !encounterCanvas) {
+                console.error('[DialogueQueue] ✗ Missing DOM elements!', {
+                    encounterUI: !!encounterUI,
+                    encounterText: !!encounterText,
+                    encounterChoices: !!encounterChoices,
+                    encounterCanvas: !!encounterCanvas
+                });
+                return;
+            }
             console.log('[DialogueQueue] ★ Got DOM elements');
 
             // Draw creature on canvas
