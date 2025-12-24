@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Handler Execution Test</title>
+</head>
+<body>
+    <h1>Testing creature_bonding_complete handler execution</h1>
+    <div id="output" style="font-family: monospace; white-space: pre; background: #f0f0f0; padding: 20px;"></div>
+
+    <!-- UI element that the handler needs -->
+    <div id="firstEncounterUI" class="hidden" style="display: none;">
+        <h2>Encounter UI</h2>
+    </div>
+
+    <script>
+        const output = document.getElementById('output');
+        function log(msg) {
+            output.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        log('=== Handler Execution Test ===\n');
+
+        // Mock game object
+        const game = {
+            keys: {},
+            keysPressed: {},
+            player: { moving: false }
+        };
+
+        // Test the EXACT handler code from v0.1.1
+        function testHandler() {
+            log('→ Calling handler...');
+
+            try {
+                // This is the exact handler code
+                (() => {
+                    console.log('[DialogueQueue] 1. Handler start');
+                    log('[DialogueQueue] 1. Handler start');
+
+                    // Clear keys
+                    game.keys = {};
+                    game.keysPressed = {};
+                    game.player.moving = false;
+                    console.log('[DialogueQueue] 2. Keys cleared');
+                    log('[DialogueQueue] 2. Keys cleared');
+
+                    const encounterUI = document.getElementById('firstEncounterUI');
+                    console.log('[DialogueQueue] 3. Got encounterUI:', !!encounterUI);
+                    log('[DialogueQueue] 3. Got encounterUI: ' + !!encounterUI);
+
+                    encounterUI.classList.remove('hidden');
+                    console.log('[DialogueQueue] 4. UI shown - NAMING VIEW SHOULD BE VISIBLE');
+                    log('[DialogueQueue] 4. UI shown - NAMING VIEW SHOULD BE VISIBLE');
+                })();
+
+                log('→ Handler completed successfully');
+
+            } catch (error) {
+                log('→ ERROR: ' + error.message);
+                log('→ Stack: ' + error.stack);
+            }
+        }
+
+        // Run test
+        testHandler();
+
+        // Check if UI is visible
+        const ui = document.getElementById('firstEncounterUI');
+        log('\n=== Results ===');
+        log('UI element exists: ' + !!ui);
+        log('UI is hidden: ' + ui.classList.contains('hidden'));
+        log('UI display: ' + ui.style.display);
+
+        if (!ui.classList.contains('hidden')) {
+            log('\n✓✓✓ SUCCESS - Handler executed and UI is visible');
+            output.style.backgroundColor = '#d4edda';
+        } else {
+            log('\n✗✗✗ FAILURE - Handler did not complete or UI not shown');
+            output.style.backgroundColor = '#f8d7da';
+        }
+    </script>
+</body>
+</html>
