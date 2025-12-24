@@ -480,12 +480,16 @@ class LighthouseGame {
      */
     handleInput(input) {
         // Special case: Handle naming UI d-pad navigation
-        if (this.state === GameState.DIALOGUE && !document.getElementById('firstEncounterUI').classList.contains('hidden')) {
+        const encounterUI = document.getElementById('firstEncounterUI');
+        if (this.state === GameState.DIALOGUE && encounterUI && !encounterUI.classList.contains('hidden')) {
             const nameOptions = document.querySelectorAll('.encounter-choice');
             if (nameOptions.length > 0) {
+                console.log(`[Game] Naming UI active - handling key: ${input.key}`);
+
                 // Arrow keys navigate choices
                 if (input.key === 'ArrowUp') {
                     this.namingSelectedIndex = (this.namingSelectedIndex - 1 + nameOptions.length) % nameOptions.length;
+                    console.log(`[Game] UP pressed - new index: ${this.namingSelectedIndex}`);
                     this.updateNamingSelection();
                     input.consume();
                     return;
@@ -493,6 +497,7 @@ class LighthouseGame {
 
                 if (input.key === 'ArrowDown') {
                     this.namingSelectedIndex = (this.namingSelectedIndex + 1) % nameOptions.length;
+                    console.log(`[Game] DOWN pressed - new index: ${this.namingSelectedIndex}`);
                     this.updateNamingSelection();
                     input.consume();
                     return;
@@ -501,6 +506,7 @@ class LighthouseGame {
                 // A button or Enter confirms selection
                 if (input.key === 'a' || input.key === 'A' || input.key === ' ' || input.key === 'Enter') {
                     const selectedChoice = nameOptions[this.namingSelectedIndex];
+                    console.log(`[Game] SELECT pressed - choosing: ${selectedChoice.textContent}`);
                     if (selectedChoice) {
                         selectedChoice.click();
                         input.consume();
@@ -509,6 +515,7 @@ class LighthouseGame {
                 }
 
                 // Consume all other input during naming
+                console.log(`[Game] Consuming other key during naming: ${input.key}`);
                 input.consume();
                 return;
             }
@@ -1158,7 +1165,7 @@ class LighthouseGame {
     }
 
     showNamingOrbUI() {
-        console.log('[Game] Showing naming orb UI with HIGH-RES enhanced sprite');
+        console.log('[Game] Showing naming orb UI with PROFESSIONAL high-res sprite');
 
         // Get UI elements
         const encounterUI = document.getElementById('firstEncounterUI');
@@ -1166,18 +1173,12 @@ class LighthouseGame {
         const encounterCanvas = document.getElementById('encounterCreatureCanvas');
         const encounterChoices = document.getElementById('encounterChoices');
 
-        // Draw ENHANCED creature on HIGH-RES canvas (512x512 for crisp rendering)
+        // Draw PROFESSIONAL high-resolution sprite
         const ctx = encounterCanvas.getContext('2d');
         ctx.clearRect(0, 0, 512, 512);
 
-        // Center the creature (16x16 sprite scaled 24x = 384x384, centered in 512x512)
-        // Canvas is 512x512, sprite when scaled is 384x384
-        // Center position: (512-384)/2 = 64 offset
-        ctx.save();
-        ctx.scale(24, 24);  // 4x sharper than before (was 6x, now 24x)
-        // In scaled coordinates, center is at (64/24, 64/24) ≈ (2.67, 2.67)
-        spriteLoader.drawCreature(ctx, 'lumina', 2.67, 2.67, true);  // true = enhanced/cute version!
-        ctx.restore();
+        // Draw native high-res Lumina sprite (not scaled pixel art!)
+        this.drawHighResLumina(ctx, 256, 256, 200);  // Center at 256,256 with size 200
 
         // Render name choices directly in encounter UI (works on both mobile and desktop)
         const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
@@ -1208,12 +1209,183 @@ class LighthouseGame {
         encounterUI.classList.remove('hidden');
     }
 
+    /**
+     * Draw professional high-resolution Lumina sprite
+     * Native rendering at target resolution (not scaled pixel art)
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {number} centerX - Center X position
+     * @param {number} centerY - Center Y position
+     * @param {number} size - Size of the sprite
+     */
+    drawHighResLumina(ctx, centerX, centerY, size) {
+        ctx.save();
+
+        // Enable smooth rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        const scale = size / 100;  // Base size 100, scale to requested size
+        ctx.translate(centerX, centerY);
+        ctx.scale(scale, scale);
+
+        // Glow effect (outer aura)
+        const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 60);
+        glowGradient.addColorStop(0, 'rgba(0, 255, 255, 0.4)');
+        glowGradient.addColorStop(0.5, 'rgba(0, 255, 255, 0.2)');
+        glowGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+        ctx.fillStyle = glowGradient;
+        ctx.fillRect(-60, -60, 120, 120);
+
+        // LEFT WING (magenta/purple gradient)
+        ctx.save();
+        ctx.translate(-25, -5);
+        ctx.rotate(-0.3);
+
+        const leftWingGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+        leftWingGradient.addColorStop(0, '#ff00ff');
+        leftWingGradient.addColorStop(0.6, '#cc00ff');
+        leftWingGradient.addColorStop(1, '#990099');
+
+        ctx.fillStyle = leftWingGradient;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 20, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Wing shine
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(-5, -8, 8, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Antennae tip (left)
+        ctx.fillStyle = '#ffff00';
+        ctx.beginPath();
+        ctx.arc(-8, -35, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        // RIGHT WING (magenta/purple gradient)
+        ctx.save();
+        ctx.translate(25, -5);
+        ctx.rotate(0.3);
+
+        const rightWingGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+        rightWingGradient.addColorStop(0, '#ff00ff');
+        rightWingGradient.addColorStop(0.6, '#cc00ff');
+        rightWingGradient.addColorStop(1, '#990099');
+
+        ctx.fillStyle = rightWingGradient;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 20, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Wing shine
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(5, -8, 8, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Antennae tip (right)
+        ctx.fillStyle = '#ffff00';
+        ctx.beginPath();
+        ctx.arc(8, -35, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        // BODY (cyan gradient with depth)
+        const bodyGradient = ctx.createRadialGradient(-5, -5, 0, 0, 0, 30);
+        bodyGradient.addColorStop(0, '#66ffff');
+        bodyGradient.addColorStop(0.5, '#00ffff');
+        bodyGradient.addColorStop(1, '#00cccc');
+
+        ctx.fillStyle = bodyGradient;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 24, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.beginPath();
+        ctx.ellipse(-8, -10, 10, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes (large and expressive)
+        // Left eye white
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(-8, -3, 6, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right eye white
+        ctx.beginPath();
+        ctx.ellipse(8, -3, 6, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Left pupil
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.ellipse(-8, -2, 3, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right pupil
+        ctx.beginPath();
+        ctx.ellipse(8, -2, 3, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye shine
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.beginPath();
+        ctx.arc(-9, -5, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(7, -5, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Antennae (curved lines with gradient)
+        ctx.strokeStyle = '#00cccc';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+
+        // Left antenna
+        ctx.beginPath();
+        ctx.moveTo(-10, -20);
+        ctx.quadraticCurveTo(-15, -28, -18, -32);
+        ctx.stroke();
+
+        // Right antenna
+        ctx.beginPath();
+        ctx.moveTo(10, -20);
+        ctx.quadraticCurveTo(15, -28, 18, -32);
+        ctx.stroke();
+
+        // Belly accent (brown/tan patch)
+        ctx.fillStyle = 'rgba(139, 115, 85, 0.6)';
+        ctx.beginPath();
+        ctx.ellipse(0, 8, 12, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inner glow (close to body)
+        const innerGlowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 35);
+        innerGlowGradient.addColorStop(0, 'rgba(0, 255, 255, 0)');
+        innerGlowGradient.addColorStop(0.7, 'rgba(0, 255, 255, 0.3)');
+        innerGlowGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+        ctx.fillStyle = innerGlowGradient;
+        ctx.fillRect(-35, -35, 70, 70);
+
+        ctx.restore();
+    }
+
     updateNamingSelection() {
         const choices = document.querySelectorAll('.encounter-choice');
+        console.log(`[Game] Updating naming selection - index: ${this.namingSelectedIndex}, total choices: ${choices.length}`);
+
         choices.forEach((el, index) => {
             if (index === this.namingSelectedIndex) {
                 el.classList.add('selected');
                 el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                console.log(`[Game] Selected choice: ${el.textContent}`);
             } else {
                 el.classList.remove('selected');
             }
