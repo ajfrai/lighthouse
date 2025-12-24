@@ -677,16 +677,64 @@ class DialogueQueueSystem {
             console.log(`[DialogueQueue] In WAITING_FOR_CHOICE state, handling choice input`);
             const numChoices = this.current?.choices?.length || 0;
 
-            // Arrow keys navigate choices
+            // 2-column grid navigation (like naming modal)
+            const getGridPos = (index) => {
+                return { row: Math.floor(index / 2), col: index % 2 };
+            };
+            const getIndex = (row, col) => {
+                const index = row * 2 + col;
+                return index < numChoices ? index : -1;
+            };
+
+            let pos = getGridPos(this.selectedChoiceIndex);
+            let newIndex = this.selectedChoiceIndex;
+
+            // LEFT/RIGHT: Move between columns
+            if (input.key === 'ArrowLeft') {
+                if (pos.col > 0) {
+                    newIndex = getIndex(pos.row, pos.col - 1);
+                } else if (pos.row > 0) {
+                    const prevRowLastCol = getIndex(pos.row - 1, 1) !== -1 ? 1 : 0;
+                    newIndex = getIndex(pos.row - 1, prevRowLastCol);
+                }
+                if (newIndex !== -1) this.selectedChoiceIndex = newIndex;
+                this.updateChoiceHighlight();
+                input.consume();
+                return;
+            }
+
+            if (input.key === 'ArrowRight') {
+                const nextIndex = getIndex(pos.row, pos.col + 1);
+                if (nextIndex !== -1) {
+                    newIndex = nextIndex;
+                } else if (pos.row < Math.floor((numChoices - 1) / 2)) {
+                    newIndex = getIndex(pos.row + 1, 0);
+                }
+                if (newIndex !== -1) this.selectedChoiceIndex = newIndex;
+                this.updateChoiceHighlight();
+                input.consume();
+                return;
+            }
+
+            // UP/DOWN: Move between rows
             if (input.key === 'ArrowUp') {
-                this.selectedChoiceIndex = (this.selectedChoiceIndex - 1 + numChoices) % numChoices;
+                if (pos.row > 0) {
+                    const upIndex = getIndex(pos.row - 1, pos.col);
+                    newIndex = upIndex !== -1 ? upIndex : getIndex(pos.row - 1, 0);
+                }
+                if (newIndex !== -1) this.selectedChoiceIndex = newIndex;
                 this.updateChoiceHighlight();
                 input.consume();
                 return;
             }
 
             if (input.key === 'ArrowDown') {
-                this.selectedChoiceIndex = (this.selectedChoiceIndex + 1) % numChoices;
+                const maxRow = Math.floor((numChoices - 1) / 2);
+                if (pos.row < maxRow) {
+                    const downIndex = getIndex(pos.row + 1, pos.col);
+                    newIndex = downIndex !== -1 ? downIndex : getIndex(pos.row + 1, 0);
+                }
+                if (newIndex !== -1) this.selectedChoiceIndex = newIndex;
                 this.updateChoiceHighlight();
                 input.consume();
                 return;
