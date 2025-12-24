@@ -182,104 +182,28 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_bonding_complete', () => {
-            console.log('[DialogueQueue] ★ BONDING HANDLER STARTED ★');
+            console.log('[Game] Bonding complete - queuing naming dialogue');
 
-            // CRITICAL: Ensure dialogue box is hidden
-            const dialogBox = document.getElementById('dialogBox');
-            if (dialogBox) {
-                dialogBox.classList.add('hidden');
-                console.log('[DialogueQueue] ★ Hid dialogue box');
-            }
-
-            // Clear all held keys
-            this.keys = {};
-            this.keysPressed = {};
-            this.player.moving = false;
-            console.log('[DialogueQueue] ★ Keys cleared');
-
-            const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
-            const encounterUI = document.getElementById('firstEncounterUI');
-            const encounterText = document.getElementById('encounterText');
-            const encounterChoices = document.getElementById('encounterChoices');
-            const encounterCanvas = document.getElementById('encounterCreatureCanvas');
-
-            // Defensive null checks
-            if (!encounterUI || !encounterText || !encounterChoices || !encounterCanvas) {
-                console.error('[DialogueQueue] ✗ Missing DOM elements!', {
-                    encounterUI: !!encounterUI,
-                    encounterText: !!encounterText,
-                    encounterChoices: !!encounterChoices,
-                    encounterCanvas: !!encounterCanvas
-                });
-                return;
-            }
-            console.log('[DialogueQueue] ★ Got DOM elements');
-
-            // Draw creature on canvas
-            const ctx = encounterCanvas.getContext('2d');
-            ctx.clearRect(0, 0, 128, 128);
-            ctx.save();
-            ctx.scale(6, 6);
-            spriteLoader.drawCreature(ctx, 'lumina', 16, 16);
-            ctx.restore();
-            console.log('[DialogueQueue] ★ Drew creature');
-
-            // Set text
-            encounterText.textContent = "It needs a name.";
-
-            // Create choice buttons
-            encounterChoices.innerHTML = '';
-            let selectedIndex = 0;
-
-            const updateSelection = () => {
-                const buttons = encounterChoices.querySelectorAll('.encounter-choice');
-                buttons.forEach((btn, i) => {
-                    btn.classList.toggle('selected', i === selectedIndex);
-                });
-            };
-
-            nameOptions.forEach((name, index) => {
-                const button = document.createElement('button');
-                button.className = 'encounter-choice';
-                button.textContent = name;
-                button.onclick = () => {
-                    selectedIndex = index;
-                    updateSelection();
-                    this.finalizeCreatureNaming(name);
-                    encounterUI.classList.add('hidden');
-                    this.inputRouter.pop();
-                };
-                encounterChoices.appendChild(button);
+            // Use standard dialogue choice system (dpad-compatible!)
+            this.dialogue.queue({
+                text: "It needs a name.",
+                choices: [
+                    { text: "Shimmer", trigger: 'creature_named_shimmer' },
+                    { text: "Lumina", trigger: 'creature_named_lumina' },
+                    { text: "Spark", trigger: 'creature_named_spark' },
+                    { text: "Glow", trigger: 'creature_named_glow' },
+                    { text: "Nova", trigger: 'creature_named_nova' }
+                ]
             });
-            console.log('[DialogueQueue] ★ Created buttons');
+        });
 
-            // Set up InputRouter for D-pad navigation
-            this.inputRouter.push({
-                priority: 100,
-                handleInput: (key) => {
-                    if (key === 'ArrowUp') {
-                        selectedIndex = (selectedIndex - 1 + nameOptions.length) % nameOptions.length;
-                        updateSelection();
-                        return true;
-                    } else if (key === 'ArrowDown') {
-                        selectedIndex = (selectedIndex + 1) % nameOptions.length;
-                        updateSelection();
-                        return true;
-                    } else if (key === 'Enter' || key === ' ') {
-                        this.finalizeCreatureNaming(nameOptions[selectedIndex]);
-                        encounterUI.classList.add('hidden');
-                        this.inputRouter.pop();
-                        return true;
-                    }
-                    return false;
-                }
+        // Register handlers for each name choice
+        const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
+        nameOptions.forEach(name => {
+            this.dialogue.on(`trigger:creature_named_${name.toLowerCase()}`, () => {
+                console.log(`[Game] Creature named: ${name}`);
+                this.finalizeCreatureNaming(name);
             });
-            console.log('[DialogueQueue] ★ Set up InputRouter');
-
-            // Show UI and set initial selection
-            encounterUI.classList.remove('hidden');
-            updateSelection();
-            console.log('[DialogueQueue] ★★★ BONDING HANDLER COMPLETE - UI SHOWN ★★★');
         });
         console.log('[Game] Registered creature_bonding_complete handler');
 
@@ -1169,84 +1093,6 @@ class LighthouseGame {
     finishCreatureEncounter() {
         // Queue bonding sequence (which will trigger creature_bonding_complete when done)
         this.dialogue.queueFlow(CREATURE_FLOWS.bonding);
-    }
-
-    showCreatureNaming() {
-        console.log('[Game] showCreatureNaming() called');
-        // Clear all held keys to prevent movement after naming
-        this.clearAllKeys();
-
-        // Show dedicated first encounter view with naming choices
-        const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
-
-        // Get UI elements
-        const encounterUI = document.getElementById('firstEncounterUI');
-        const encounterText = document.getElementById('encounterText');
-        const encounterChoices = document.getElementById('encounterChoices');
-        const encounterCanvas = document.getElementById('encounterCreatureCanvas');
-
-        // Draw creature on canvas (8x scale for 128x128 display)
-        const ctx = encounterCanvas.getContext('2d');
-        ctx.clearRect(0, 0, 128, 128);
-
-        // Center the creature (16x16 sprite scaled 6x = 96x96, centered in 128x128)
-        ctx.save();
-        ctx.scale(6, 6);
-        spriteLoader.drawCreature(ctx, 'lumina', 16, 16);
-        ctx.restore();
-
-        // Set text
-        encounterText.textContent = "It needs a name.";
-
-        // Create choice buttons
-        encounterChoices.innerHTML = '';
-        let selectedIndex = 0;
-
-        const updateSelection = () => {
-            const buttons = encounterChoices.querySelectorAll('.encounter-choice');
-            buttons.forEach((btn, i) => {
-                btn.classList.toggle('selected', i === selectedIndex);
-            });
-        };
-
-        nameOptions.forEach((name, index) => {
-            const button = document.createElement('button');
-            button.className = 'encounter-choice';
-            button.textContent = name;
-            button.onclick = () => {
-                selectedIndex = index;
-                updateSelection();
-                this.finalizeCreatureNaming(name);
-                encounterUI.classList.add('hidden');
-            };
-            encounterChoices.appendChild(button);
-        });
-
-        // Set up InputRouter for D-pad navigation
-        this.inputRouter.push({
-            priority: 100,
-            handleInput: (key) => {
-                if (key === 'ArrowUp') {
-                    selectedIndex = (selectedIndex - 1 + nameOptions.length) % nameOptions.length;
-                    updateSelection();
-                    return true;
-                } else if (key === 'ArrowDown') {
-                    selectedIndex = (selectedIndex + 1) % nameOptions.length;
-                    updateSelection();
-                    return true;
-                } else if (key === 'Enter' || key === ' ') {
-                    this.finalizeCreatureNaming(nameOptions[selectedIndex]);
-                    encounterUI.classList.add('hidden');
-                    this.inputRouter.pop();
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        // Show UI and set initial selection
-        encounterUI.classList.remove('hidden');
-        updateSelection();
     }
 
     finalizeCreatureNaming(name = 'Shimmer') {

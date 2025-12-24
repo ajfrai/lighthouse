@@ -16,8 +16,14 @@ jobs:
     - name: Install test dependencies
       run: npm install
 
+    - name: Run InputRouter push/pop test
+      run: node test-inputrouter-fix.js
+
     - name: Run handler execution test
       run: node test-handler-execution-real.js
+
+    - name: Run creature naming flow test
+      run: node test-creature-naming.js
 
     - name: Run encounter flow tests
       run: ./test-encounter-flow.sh
