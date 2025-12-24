@@ -336,58 +336,131 @@ class SpriteLoader {
      * @param {string} creatureId - Creature ID ('lumina', etc)
      * @param {number} dx - Destination X
      * @param {number} dy - Destination Y
+     * @param {boolean} enhanced - Draw enhanced/cute version for special moments
      */
-    drawCreature(ctx, creatureId, dx, dy) {
+    drawCreature(ctx, creatureId, dx, dy, enhanced = false) {
         ctx.save();
 
         if (creatureId === 'lumina') {
-            // Lumina - A wounded glowing moth with pixel art detail
-            // Draw as 16x16 pixel art sprite with enhanced visibility
+            if (enhanced) {
+                // CUTE ENHANCED VERSION - For naming/bonding moments
+                // Brighter, both wings healed, bigger eyes, sparkles!
 
-            // Shadow for depth (darker outline underneath)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            this.drawPixel(ctx, dx + 3, dy + 10, 11, 1);  // Shadow under creature
+                // Bigger glow aura (bright cyan/pink) - draw first so it's behind
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+                this.drawPixel(ctx, dx + 4, dy + 4, 8, 8);  // Brighter cyan glow
 
-            // Glow aura (bright cyan/teal) - draw first so it's behind
-            ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
-            this.drawPixel(ctx, dx + 5, dy + 5, 6, 6);  // Cyan glow
+                // Pink sparkle accents around the glow
+                ctx.fillStyle = 'rgba(255, 182, 193, 0.5)';
+                this.drawPixel(ctx, dx + 3, dy + 3, 2, 2);  // Top-left sparkle
+                this.drawPixel(ctx, dx + 11, dy + 3, 2, 2);  // Top-right sparkle
 
-            // Moth body (rich dark brown for contrast)
-            ctx.fillStyle = '#5D4E37';
-            this.drawPixel(ctx, dx + 7, dy + 6, 2, 4);  // Body center
+                // Moth body (warm brown)
+                ctx.fillStyle = '#8B6F47';
+                this.drawPixel(ctx, dx + 7, dy + 6, 2, 4);  // Body center
 
-            // Left wing (damaged - folded/broken) - deeper purple/violet
-            ctx.fillStyle = '#9370DB';  // Medium purple
-            this.drawPixel(ctx, dx + 3, dy + 6, 3, 3);  // Wing base
-            ctx.fillStyle = '#00CED1';  // Dark turquoise - glowing accent
-            this.drawPixel(ctx, dx + 4, dy + 7, 1, 1);  // Wing spot
+                // Left wing (HEALED - now symmetrical!) - vibrant purple with accents
+                ctx.fillStyle = '#BA55D3';  // Brighter medium orchid
+                this.drawPixel(ctx, dx + 3, dy + 5, 4, 4);  // Wing
+                ctx.fillStyle = '#00FFFF';  // Bright cyan - glowing accent
+                this.drawPixel(ctx, dx + 4, dy + 6, 2, 2);  // Wing spot (bigger)
+                ctx.fillStyle = '#FFB6C1';  // Light pink highlight
+                this.drawPixel(ctx, dx + 5, dy + 7, 1, 1);  // Cute detail
 
-            // Right wing (healthy - spread) - vibrant purple with cyan accents
-            ctx.fillStyle = '#9370DB';  // Medium purple
-            this.drawPixel(ctx, dx + 10, dy + 5, 4, 4);  // Wing
-            ctx.fillStyle = '#00CED1';  // Dark turquoise - glowing accent
-            this.drawPixel(ctx, dx + 11, dy + 6, 2, 2);  // Wing spot
-            ctx.fillStyle = '#48D1CC';  // Medium turquoise
-            this.drawPixel(ctx, dx + 12, dy + 7, 1, 1);  // Detail
+                // Right wing (healthy - spread) - vibrant purple with cyan accents
+                ctx.fillStyle = '#BA55D3';  // Brighter medium orchid
+                this.drawPixel(ctx, dx + 9, dy + 5, 4, 4);  // Wing
+                ctx.fillStyle = '#00FFFF';  // Bright cyan - glowing accent
+                this.drawPixel(ctx, dx + 10, dy + 6, 2, 2);  // Wing spot (bigger)
+                ctx.fillStyle = '#FFB6C1';  // Light pink highlight
+                this.drawPixel(ctx, dx + 10, dy + 7, 1, 1);  // Cute detail
 
-            // Wing highlights (bright cyan for glow effect)
-            ctx.fillStyle = '#00FFFF';  // Bright cyan
-            this.drawPixel(ctx, dx + 5, dy + 7, 1, 1);  // Left wing glow
-            this.drawPixel(ctx, dx + 11, dy + 7, 1, 1);  // Right wing glow
+                // Wing edge highlights (extra bright for cuteness)
+                ctx.fillStyle = '#FFFFFF';  // White sparkles
+                this.drawPixel(ctx, dx + 3, dy + 5, 1, 1);  // Left wing edge
+                this.drawPixel(ctx, dx + 12, dy + 5, 1, 1);  // Right wing edge
 
-            // Head (dark brown)
-            ctx.fillStyle = '#3E2723';
-            this.drawPixel(ctx, dx + 7, dy + 5, 2, 1);  // Head
+                // Head (warm brown)
+                ctx.fillStyle = '#6F4E37';
+                this.drawPixel(ctx, dx + 7, dy + 5, 2, 1);  // Head
 
-            // Antennae (very dark brown)
-            ctx.fillStyle = '#1A1A1A';
-            this.drawPixel(ctx, dx + 7, dy + 4, 1, 1);
-            this.drawPixel(ctx, dx + 8, dy + 4, 1, 1);
+                // Antennae (dark brown with cute curves)
+                ctx.fillStyle = '#3E2723';
+                this.drawPixel(ctx, dx + 6, dy + 4, 1, 1);  // Left antenna
+                this.drawPixel(ctx, dx + 9, dy + 4, 1, 1);  // Right antenna
+                // Antenna tips (glowing)
+                ctx.fillStyle = '#FFD700';  // Gold tips
+                this.drawPixel(ctx, dx + 6, dy + 3, 1, 1);
+                this.drawPixel(ctx, dx + 9, dy + 3, 1, 1);
 
-            // Eye spots (bright to show life)
-            ctx.fillStyle = '#FFFF00';  // Yellow eyes
-            this.drawPixel(ctx, dx + 7, dy + 5, 1, 1);
-            this.drawPixel(ctx, dx + 8, dy + 5, 1, 1);
+                // BIGGER CUTE EYES (the key to cuteness!)
+                ctx.fillStyle = '#FFD700';  // Golden eyes
+                this.drawPixel(ctx, dx + 7, dy + 5, 1, 1);
+                this.drawPixel(ctx, dx + 8, dy + 5, 1, 1);
+                // Eye highlights (sparkle effect)
+                ctx.fillStyle = '#FFFFFF';
+                this.drawPixel(ctx, dx + 7, dy + 5, 1, 1);  // Left eye sparkle
+                this.drawPixel(ctx, dx + 8, dy + 5, 1, 1);  // Right eye sparkle
+
+                // Little heart near creature (optional cute touch)
+                ctx.fillStyle = '#FF69B4';  // Hot pink heart
+                this.drawPixel(ctx, dx + 1, dy + 2, 1, 1);
+                this.drawPixel(ctx, dx + 2, dy + 1, 1, 1);
+                this.drawPixel(ctx, dx + 3, dy + 1, 1, 1);
+                this.drawPixel(ctx, dx + 4, dy + 2, 1, 1);
+                this.drawPixel(ctx, dx + 2, dy + 2, 2, 1);
+                this.drawPixel(ctx, dx + 3, dy + 3, 1, 1);
+
+            } else {
+                // ORIGINAL VERSION - Wounded moth for regular encounters
+                // Lumina - A wounded glowing moth with pixel art detail
+                // Draw as 16x16 pixel art sprite with enhanced visibility
+
+                // Shadow for depth (darker outline underneath)
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                this.drawPixel(ctx, dx + 3, dy + 10, 11, 1);  // Shadow under creature
+
+                // Glow aura (bright cyan/teal) - draw first so it's behind
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+                this.drawPixel(ctx, dx + 5, dy + 5, 6, 6);  // Cyan glow
+
+                // Moth body (rich dark brown for contrast)
+                ctx.fillStyle = '#5D4E37';
+                this.drawPixel(ctx, dx + 7, dy + 6, 2, 4);  // Body center
+
+                // Left wing (damaged - folded/broken) - deeper purple/violet
+                ctx.fillStyle = '#9370DB';  // Medium purple
+                this.drawPixel(ctx, dx + 3, dy + 6, 3, 3);  // Wing base
+                ctx.fillStyle = '#00CED1';  // Dark turquoise - glowing accent
+                this.drawPixel(ctx, dx + 4, dy + 7, 1, 1);  // Wing spot
+
+                // Right wing (healthy - spread) - vibrant purple with cyan accents
+                ctx.fillStyle = '#9370DB';  // Medium purple
+                this.drawPixel(ctx, dx + 10, dy + 5, 4, 4);  // Wing
+                ctx.fillStyle = '#00CED1';  // Dark turquoise - glowing accent
+                this.drawPixel(ctx, dx + 11, dy + 6, 2, 2);  // Wing spot
+                ctx.fillStyle = '#48D1CC';  // Medium turquoise
+                this.drawPixel(ctx, dx + 12, dy + 7, 1, 1);  // Detail
+
+                // Wing highlights (bright cyan for glow effect)
+                ctx.fillStyle = '#00FFFF';  // Bright cyan
+                this.drawPixel(ctx, dx + 5, dy + 7, 1, 1);  // Left wing glow
+                this.drawPixel(ctx, dx + 11, dy + 7, 1, 1);  // Right wing glow
+
+                // Head (dark brown)
+                ctx.fillStyle = '#3E2723';
+                this.drawPixel(ctx, dx + 7, dy + 5, 2, 1);  // Head
+
+                // Antennae (very dark brown)
+                ctx.fillStyle = '#1A1A1A';
+                this.drawPixel(ctx, dx + 7, dy + 4, 1, 1);
+                this.drawPixel(ctx, dx + 8, dy + 4, 1, 1);
+
+                // Eye spots (bright to show life)
+                ctx.fillStyle = '#FFFF00';  // Yellow eyes
+                this.drawPixel(ctx, dx + 7, dy + 5, 1, 1);
+                this.drawPixel(ctx, dx + 8, dy + 5, 1, 1);
+            }
         }
 
         ctx.restore();
