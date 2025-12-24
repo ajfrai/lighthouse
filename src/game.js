@@ -135,13 +135,22 @@ class LighthouseGame {
         this.setupInput();
         this.setupDebugMenu();
 
-        // Set version display
+        // Set version display and log it
         const versionEl = document.getElementById('version-display');
         if (versionEl) {
             fetch('VERSION.txt')
                 .then(r => r.text())
-                .then(v => versionEl.textContent = 'v' + v.trim())
-                .catch(() => versionEl.textContent = 'v???');
+                .then(v => {
+                    const version = v.trim();
+                    versionEl.textContent = 'v' + version;
+                    console.log('═══════════════════════════════════════');
+                    console.log('   LIGHTHOUSE ADVENTURE v' + version);
+                    console.log('═══════════════════════════════════════');
+                })
+                .catch(() => {
+                    versionEl.textContent = 'v???';
+                    console.log('⚠️  Version: UNKNOWN');
+                });
         }
 
         // Start game loop
