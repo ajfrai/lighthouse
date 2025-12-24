@@ -485,6 +485,19 @@ button:disabled {
         box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
     }
 
+    /* Navigation arrow for naming modal (always has 5 items = 3 rows) */
+    .encounter-choices::before {
+        content: "▼ Use ↓ to see more ▼" !important;
+        display: block !important;
+        grid-column: 1 / -1 !important;
+        text-align: center !important;
+        font-size: 13px !important;
+        color: rgba(255, 215, 0, 0.9) !important;
+        font-weight: bold !important;
+        margin-bottom: 10px !important;
+        animation: arrowPulse 1.5s ease-in-out infinite !important;
+    }
+
     /* Add confirm hint */
     .encounter-choices::after {
         content: "Press A to confirm" !important;
@@ -507,7 +520,7 @@ button:disabled {
         pointer-events: auto !important;
     }
 
-    /* DIALOGUE BOX: Full-screen with 2-column choices */
+    /* DIALOGUE BOX: Full-screen with fixed layout zones */
     #dialogBox {
         position: fixed !important;
         top: 0 !important;
@@ -517,12 +530,12 @@ button:disabled {
         transform: none !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: flex-start !important;
-        padding: 30px 20px 180px 20px !important;  /* Extra bottom padding for d-pad */
+        justify-content: space-between !important;  /* Space between top and bottom */
+        padding: 0 !important;
         margin: 0 !important;
         z-index: 10000 !important;
-        overflow-y: auto !important;
-        background: rgba(0, 0, 0, 0.98) !important;  /* Near-black backdrop */
+        overflow: hidden !important;  /* No scrolling - fixed layout */
+        background: rgba(0, 0, 0, 0.98) !important;
         border: none !important;
         border-radius: 0 !important;
         max-width: none !important;
@@ -532,16 +545,38 @@ button:disabled {
         display: none !important;
     }
 
-    /* Dialogue choices: 2-column grid like naming modal */
+    /* Dialogue content: Fixed height container */
+    #dialogContent {
+        flex: 0 0 auto !important;  /* Don't grow or shrink */
+        max-height: 40vh !important;  /* Fixed max height */
+        padding: 30px 20px 20px 20px !important;
+        overflow-y: auto !important;  /* Scroll within this area if needed */
+        font-size: 18px !important;
+        line-height: 1.6 !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* Dialogue speaker */
+    #dialogSpeaker {
+        font-size: 16px !important;
+        margin-bottom: 10px !important;
+        padding: 0 20px !important;
+        padding-top: 20px !important;
+    }
+
+    /* Dialogue choices: Fixed bottom area */
     .dialogue-choices {
         display: grid !important;
-        grid-template-columns: 1fr 1fr !important;  /* 2 columns */
+        grid-template-columns: 1fr 1fr !important;
         gap: 12px !important;
-        margin-top: 20px !important;
+        padding: 20px !important;
+        padding-bottom: 180px !important;  /* Room for d-pad */
         width: 100% !important;
         max-width: 400px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+        margin: 0 auto !important;
+        flex: 0 0 auto !important;  /* Fixed size, no grow/shrink */
+        overflow: visible !important;
+        position: relative !important;
     }
 
     .dialogue-choices .choice {
@@ -549,14 +584,32 @@ button:disabled {
         margin: 0 !important;
         font-size: 16px !important;
         text-align: center !important;
-        transform: none !important;  /* Remove slide animation on mobile */
+        transform: none !important;
     }
 
     .dialogue-choices .choice.selected {
-        transform: none !important;  /* Remove slide animation on mobile */
+        transform: none !important;
     }
 
-    /* Add confirm hint to dialogue choices */
+    /* Navigation arrows for multi-select - show when 3+ rows (5+ items) */
+    .dialogue-choices.has-scroll::before {
+        content: "▼ Use ↓ to see more ▼" !important;
+        display: block !important;
+        grid-column: 1 / -1 !important;
+        text-align: center !important;
+        font-size: 13px !important;
+        color: rgba(255, 215, 0, 0.9) !important;
+        font-weight: bold !important;
+        margin-bottom: 10px !important;
+        animation: arrowPulse 1.5s ease-in-out infinite !important;
+    }
+
+    @keyframes arrowPulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+
+    /* Confirm hint */
     .dialogue-choices::after {
         content: "Press A to confirm" !important;
         display: block !important;

@@ -611,11 +611,19 @@ class DialogueQueueSystem {
             ).join('');
             this.ui.choices.innerHTML = html;
 
+            // Add has-scroll class if 5+ choices (3+ rows in 2-column grid)
+            if (dialogue.choices.length >= 5) {
+                this.ui.choices.classList.add('has-scroll');
+            } else {
+                this.ui.choices.classList.remove('has-scroll');
+            }
+
             if (this.verboseLogging) {
                 console.log(`[DialogueQueue] Choices HTML rendered, state: ${this.state}`);
             }
         } else if (this.ui.choices) {
             this.ui.choices.innerHTML = '';
+            this.ui.choices.classList.remove('has-scroll');
         }
 
         // Show dialog box
