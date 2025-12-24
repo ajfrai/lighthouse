@@ -409,14 +409,17 @@ class DialogueQueueSystem {
                 const handler = this.listeners[event][index];
                 if (event.startsWith('trigger:')) {
                     console.log(`[DialogueQueue] → Calling handler ${index + 1}...`);
+                    console.log(`[DialogueQueue] DEBUG: handler type = ${typeof handler}, is function = ${typeof handler === 'function'}`);
                 }
                 try {
-                    handler(...args);
+                    const result = handler(...args);
                     if (event.startsWith('trigger:')) {
+                        console.log(`[DialogueQueue] DEBUG: handler returned:`, result);
                         console.log(`[DialogueQueue] ✓ Handler ${index + 1} completed`);
                     }
                 } catch (error) {
                     console.error(`[DialogueQueue] ERROR in ${event} handler ${index + 1}:`, error);
+                    console.error(`[DialogueQueue] ERROR stack:`, error.stack);
                 }
             }
             if (event.startsWith('trigger:')) {
