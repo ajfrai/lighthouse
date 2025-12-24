@@ -58,6 +58,37 @@ class InputRouter {
     }
 
     /**
+     * Push a temporary handler onto the stack (highest priority)
+     * @param {Object} handlerDef - Handler definition with handleInput method
+     * @returns {InputRouter} this for chaining
+     */
+    push(handlerDef) {
+        if (!handlerDef.handleInput) {
+            console.error('[InputRouter] push() requires handleInput method:', handlerDef);
+            return this;
+        }
+
+        const priority = handlerDef.priority || 100;
+        this.handlers.push({ handler: handlerDef, priority, enabled: true });
+        this.handlers.sort((a, b) => b.priority - a.priority);
+
+        console.log(`[InputRouter] Pushed temporary handler with priority ${priority}`);
+        return this;
+    }
+
+    /**
+     * Pop the most recently pushed handler
+     * @returns {InputRouter} this for chaining
+     */
+    pop() {
+        if (this.handlers.length > 0) {
+            const removed = this.handlers.shift();
+            console.log(`[InputRouter] Popped handler with priority ${removed.priority}`);
+        }
+        return this;
+    }
+
+    /**
      * Set up native browser event listeners
      * All keyboard events route through here
      */
