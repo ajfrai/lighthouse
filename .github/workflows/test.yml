@@ -16,6 +16,9 @@ jobs:
     - name: Install test dependencies
       run: npm install
 
+    - name: Run InputRouter push/pop test
+      run: node test-inputrouter-fix.js
+
     - name: Run handler execution test
       run: node test-handler-execution-real.js
 
