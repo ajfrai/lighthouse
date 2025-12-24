@@ -182,7 +182,10 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_bonding_complete', () => {
-            console.log('[Game] Bonding complete - queuing naming dialogue');
+            console.log('[Game] Bonding complete - showing naming UI');
+
+            // Show glowing orb UI with creature sprite
+            this.showNamingOrbUI();
 
             // Use standard dialogue choice system (dpad-compatible!)
             this.dialogue.queue({
@@ -202,6 +205,10 @@ class LighthouseGame {
         nameOptions.forEach(name => {
             this.dialogue.on(`trigger:creature_named_${name.toLowerCase()}`, () => {
                 console.log(`[Game] Creature named: ${name}`);
+
+                // Hide the orb UI now that name is selected
+                this.hideNamingOrbUI();
+
                 this.finalizeCreatureNaming(name);
             });
         });
@@ -1135,6 +1142,37 @@ class LighthouseGame {
             text: `${name} looks up at you. You should tell Marlowe what you found.`,
             trigger: 'creature_naming_complete'
         });
+    }
+
+    showNamingOrbUI() {
+        console.log('[Game] Showing naming orb UI');
+
+        // Get UI elements
+        const encounterUI = document.getElementById('firstEncounterUI');
+        const encounterText = document.getElementById('encounterText');
+        const encounterCanvas = document.getElementById('encounterCreatureCanvas');
+
+        // Draw creature on canvas (8x scale for 128x128 display)
+        const ctx = encounterCanvas.getContext('2d');
+        ctx.clearRect(0, 0, 128, 128);
+
+        // Center the creature (16x16 sprite scaled 6x = 96x96, centered in 128x128)
+        ctx.save();
+        ctx.scale(6, 6);
+        spriteLoader.drawCreature(ctx, 'lumina', 16, 16);
+        ctx.restore();
+
+        // Set text
+        encounterText.textContent = "It needs a name.";
+
+        // Show the orb UI
+        encounterUI.classList.remove('hidden');
+    }
+
+    hideNamingOrbUI() {
+        console.log('[Game] Hiding naming orb UI');
+        const encounterUI = document.getElementById('firstEncounterUI');
+        encounterUI.classList.add('hidden');
     }
 
     updateUI() {
