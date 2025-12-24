@@ -184,6 +184,9 @@ class LighthouseGame {
         this.dialogue.on('trigger:creature_bonding_complete', () => {
             console.log('[Game] Bonding complete - showing naming UI');
 
+            // CRITICAL: Set game state to DIALOGUE to prevent movement
+            this.state = GameState.DIALOGUE;
+
             // Show glowing orb UI with creature sprite
             this.showNamingOrbUI();
 
@@ -1152,14 +1155,17 @@ class LighthouseGame {
         const encounterText = document.getElementById('encounterText');
         const encounterCanvas = document.getElementById('encounterCreatureCanvas');
 
-        // Draw ENHANCED creature on canvas (8x scale for 128x128 display)
+        // Draw ENHANCED creature on canvas
         const ctx = encounterCanvas.getContext('2d');
         ctx.clearRect(0, 0, 128, 128);
 
         // Center the creature (16x16 sprite scaled 6x = 96x96, centered in 128x128)
+        // Canvas is 128x128, sprite when scaled is 96x96
+        // Center position: (128-96)/2 = 16 offset
         ctx.save();
         ctx.scale(6, 6);
-        spriteLoader.drawCreature(ctx, 'lumina', 16, 16, true);  // true = enhanced/cute version!
+        // In scaled coordinates, center is at (16/6, 16/6) ≈ (2.67, 2.67)
+        spriteLoader.drawCreature(ctx, 'lumina', 2.67, 2.67, true);  // true = enhanced/cute version!
         ctx.restore();
 
         // Clear the encounter-choices div (not used with new system)
