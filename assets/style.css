@@ -485,29 +485,51 @@ button:disabled {
         box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
     }
 
-    /* Navigation arrow for naming modal (always has 5 items = 3 rows) */
+    /* Navigation arrow for naming modal - FIXED position */
     .encounter-choices::before {
-        content: "▼ Use ↓ to see more ▼" !important;
+        content: "▼ More options below ▼" !important;
         display: block !important;
-        grid-column: 1 / -1 !important;
+        position: absolute !important;
+        top: -25px !important;  /* Above the grid */
+        left: 0 !important;
+        right: 0 !important;
         text-align: center !important;
         font-size: 13px !important;
         color: rgba(255, 215, 0, 0.9) !important;
         font-weight: bold !important;
-        margin-bottom: 10px !important;
         animation: arrowPulse 1.5s ease-in-out infinite !important;
+        grid-column: unset !important;
+        margin: 0 !important;
     }
 
-    /* Add confirm hint */
+    /* Confirm hint - FIXED position */
     .encounter-choices::after {
         content: "Press A to confirm" !important;
         display: block !important;
-        grid-column: 1 / -1 !important;  /* Span both columns */
+        position: absolute !important;
+        bottom: -30px !important;  /* Below the grid */
+        left: 0 !important;
+        right: 0 !important;
         text-align: center !important;
         font-size: 14px !important;
         color: rgba(255, 255, 255, 0.6) !important;
-        margin-top: 10px !important;
         font-family: 'Courier New', monospace !important;
+        grid-column: unset !important;
+        margin: 0 !important;
+    }
+
+    /* MIDDLE ZONE: 2-column name grid with relative positioning for arrows */
+    .encounter-choices {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;  /* 2 columns */
+        gap: 12px !important;
+        padding: 20px 30px !important;  /* More padding from borders */
+        margin: 0 auto !important;
+        max-width: 600px !important;
+        width: 100% !important;
+        flex-shrink: 0 !important;
+        overflow: visible !important;
+        position: relative !important;  /* For absolute positioned arrows */
     }
 
     /* BOTTOM ZONE: D-pad stays visible and anchored */
@@ -520,7 +542,7 @@ button:disabled {
         pointer-events: auto !important;
     }
 
-    /* DIALOGUE BOX: Full-screen with fixed layout zones */
+    /* DIALOGUE BOX: Full-screen, completely covers game */
     #dialogBox {
         position: fixed !important;
         top: 0 !important;
@@ -530,12 +552,13 @@ button:disabled {
         transform: none !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;  /* Space between top and bottom */
+        justify-content: flex-start !important;
+        align-items: center !important;
         padding: 0 !important;
         margin: 0 !important;
         z-index: 10000 !important;
-        overflow: hidden !important;  /* No scrolling - fixed layout */
-        background: rgba(0, 0, 0, 0.98) !important;
+        overflow: hidden !important;
+        background: #000 !important;  /* Solid black - completely hides game */
         border: none !important;
         border-radius: 0 !important;
         max-width: none !important;
@@ -545,42 +568,55 @@ button:disabled {
         display: none !important;
     }
 
-    /* Dialogue content: Fixed height container */
+    /* Dialogue speaker - fixed at top */
+    #dialogSpeaker {
+        width: 100% !important;
+        max-width: 600px !important;
+        font-size: 16px !important;
+        color: #ffd700 !important;
+        padding: 20px 30px 10px 30px !important;
+        flex-shrink: 0 !important;
+        text-align: left !important;
+    }
+
+    /* Dialogue content - scrollable text area */
     #dialogContent {
-        flex: 0 0 auto !important;  /* Don't grow or shrink */
-        max-height: 40vh !important;  /* Fixed max height */
-        padding: 30px 20px 20px 20px !important;
-        overflow-y: auto !important;  /* Scroll within this area if needed */
+        width: 100% !important;
+        max-width: 600px !important;
+        max-height: 35vh !important;
+        padding: 10px 30px !important;
+        overflow-y: auto !important;
+        flex-shrink: 0 !important;
         font-size: 18px !important;
         line-height: 1.6 !important;
         color: #e0e0e0 !important;
+        text-align: left !important;
+        flex-grow: 0 !important;
     }
 
-    /* Dialogue speaker */
-    #dialogSpeaker {
-        font-size: 16px !important;
-        margin-bottom: 10px !important;
-        padding: 0 20px !important;
-        padding-top: 20px !important;
+    /* Spacer to push choices down */
+    .dialogue-spacer {
+        flex-grow: 1 !important;
+        min-height: 20px !important;
     }
 
-    /* Dialogue choices: Fixed bottom area */
+    /* Dialogue choices: Fixed at bottom with proper spacing */
     .dialogue-choices {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 12px !important;
-        padding: 20px !important;
-        padding-bottom: 180px !important;  /* Room for d-pad */
+        padding: 20px 30px !important;  /* More side padding */
+        padding-bottom: 20px !important;  /* Less bottom padding */
+        margin-bottom: 180px !important;  /* Room for d-pad */
         width: 100% !important;
-        max-width: 400px !important;
-        margin: 0 auto !important;
-        flex: 0 0 auto !important;  /* Fixed size, no grow/shrink */
+        max-width: 600px !important;
+        flex-shrink: 0 !important;
         overflow: visible !important;
         position: relative !important;
     }
 
     .dialogue-choices .choice {
-        padding: 14px 16px !important;
+        padding: 16px 20px !important;  /* More padding */
         margin: 0 !important;
         font-size: 16px !important;
         text-align: center !important;
@@ -591,34 +627,43 @@ button:disabled {
         transform: none !important;
     }
 
-    /* Navigation arrows for multi-select - show when 3+ rows (5+ items) */
+    /* Navigation arrows - fixed position at top of choices */
     .dialogue-choices.has-scroll::before {
-        content: "▼ Use ↓ to see more ▼" !important;
+        content: "▼ More options below ▼" !important;
         display: block !important;
-        grid-column: 1 / -1 !important;
+        position: absolute !important;
+        top: -25px !important;  /* Above the grid */
+        left: 0 !important;
+        right: 0 !important;
         text-align: center !important;
         font-size: 13px !important;
         color: rgba(255, 215, 0, 0.9) !important;
         font-weight: bold !important;
-        margin-bottom: 10px !important;
         animation: arrowPulse 1.5s ease-in-out infinite !important;
+        grid-column: unset !important;
+        margin: 0 !important;
     }
 
-    @keyframes arrowPulse {
-        0%, 100% { opacity: 0.6; }
-        50% { opacity: 1; }
-    }
-
-    /* Confirm hint */
+    /* Confirm hint - FIXED at bottom of choices */
     .dialogue-choices::after {
         content: "Press A to confirm" !important;
         display: block !important;
-        grid-column: 1 / -1 !important;
+        position: absolute !important;
+        bottom: -30px !important;  /* Below the grid */
+        left: 0 !important;
+        right: 0 !important;
         text-align: center !important;
         font-size: 14px !important;
         color: rgba(255, 255, 255, 0.6) !important;
-        margin-top: 10px !important;
         font-family: 'Courier New', monospace !important;
+        grid-column: unset !important;
+        margin: 0 !important;
+    }
+
+    /* Arrow pulse animation */
+    @keyframes arrowPulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
     }
 }
 
