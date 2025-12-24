@@ -760,7 +760,7 @@ button:disabled {
 }
 
 #firstEncounterUI.hidden {
-    display: none;
+    display: none !important;  /* Override mobile flex display */
 }
 
 .encounter-backdrop {
