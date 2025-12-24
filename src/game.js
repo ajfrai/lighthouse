@@ -135,13 +135,22 @@ class LighthouseGame {
         this.setupInput();
         this.setupDebugMenu();
 
-        // Set version display
+        // Set version display and log it
         const versionEl = document.getElementById('version-display');
         if (versionEl) {
             fetch('VERSION.txt')
                 .then(r => r.text())
-                .then(v => versionEl.textContent = 'v' + v.trim())
-                .catch(() => versionEl.textContent = 'v???');
+                .then(v => {
+                    const version = v.trim();
+                    versionEl.textContent = 'v' + version;
+                    console.log('═══════════════════════════════════════');
+                    console.log('   LIGHTHOUSE ADVENTURE v' + version);
+                    console.log('═══════════════════════════════════════');
+                })
+                .catch(() => {
+                    versionEl.textContent = 'v???';
+                    console.log('⚠️  Version: UNKNOWN');
+                });
         }
 
         // Start game loop
@@ -173,16 +182,20 @@ class LighthouseGame {
         });
 
         this.dialogue.on('trigger:creature_bonding_complete', () => {
+            console.log('[DialogueQueue] ★ BONDING HANDLER STARTED ★');
+
             // Clear all held keys
             this.keys = {};
             this.keysPressed = {};
             this.player.moving = false;
+            console.log('[DialogueQueue] ★ Keys cleared');
 
             const nameOptions = ['Shimmer', 'Lumina', 'Spark', 'Glow', 'Nova'];
             const encounterUI = document.getElementById('firstEncounterUI');
             const encounterText = document.getElementById('encounterText');
             const encounterChoices = document.getElementById('encounterChoices');
             const encounterCanvas = document.getElementById('encounterCreatureCanvas');
+            console.log('[DialogueQueue] ★ Got DOM elements');
 
             // Draw creature on canvas
             const ctx = encounterCanvas.getContext('2d');
@@ -191,6 +204,7 @@ class LighthouseGame {
             ctx.scale(6, 6);
             spriteLoader.drawCreature(ctx, 'lumina', 16, 16);
             ctx.restore();
+            console.log('[DialogueQueue] ★ Drew creature');
 
             // Set text
             encounterText.textContent = "It needs a name.";
@@ -219,6 +233,7 @@ class LighthouseGame {
                 };
                 encounterChoices.appendChild(button);
             });
+            console.log('[DialogueQueue] ★ Created buttons');
 
             // Set up InputRouter for D-pad navigation
             this.inputRouter.push({
@@ -241,10 +256,12 @@ class LighthouseGame {
                     return false;
                 }
             });
+            console.log('[DialogueQueue] ★ Set up InputRouter');
 
             // Show UI and set initial selection
             encounterUI.classList.remove('hidden');
             updateSelection();
+            console.log('[DialogueQueue] ★★★ BONDING HANDLER COMPLETE - UI SHOWN ★★★');
         });
         console.log('[Game] Registered creature_bonding_complete handler');
 

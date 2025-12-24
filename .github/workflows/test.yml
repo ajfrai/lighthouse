@@ -1,0 +1,31 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, 'claude/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install test dependencies
+      run: npm install
+
+    - name: Run handler execution test
+      run: node test-handler-execution-real.js
+
+    - name: Run encounter flow tests
+      run: ./test-encounter-flow.sh
+
+    - name: Check for syntax errors
+      run: |
+        # Basic JavaScript syntax check
+        for file in src/*.js; do
+          node --check "$file" || exit 1
+        done
+        echo "✓ No JavaScript syntax errors"

@@ -8,7 +8,14 @@
     "prerelease": "npm test",
     "predeploy": "npm test"
   },
-  "keywords": ["game", "creatures", "narrative"],
+  "keywords": [
+    "game",
+    "creatures",
+    "narrative"
+  ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "jsdom": "^27.3.0"
+  }
 }
