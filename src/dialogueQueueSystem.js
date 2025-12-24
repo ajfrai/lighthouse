@@ -643,9 +643,9 @@ class DialogueQueueSystem {
         choiceElements.forEach((el, index) => {
             if (index === this.selectedChoiceIndex) {
                 el.classList.add('selected');
-                // Auto-scroll selected choice into view for d-pad navigation
-                // Uses 'nearest' to only scroll if needed, 'smooth' for better UX
-                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                // Auto-scroll selected choice to center (carousel style)
+                // Selected option always in middle unless at top/bottom edges
+                el.scrollIntoView({ block: 'center', behavior: 'smooth' });
             } else {
                 el.classList.remove('selected');
             }
