@@ -1145,22 +1145,25 @@ class LighthouseGame {
     }
 
     showNamingOrbUI() {
-        console.log('[Game] Showing naming orb UI');
+        console.log('[Game] Showing naming orb UI with enhanced sprite');
 
         // Get UI elements
         const encounterUI = document.getElementById('firstEncounterUI');
         const encounterText = document.getElementById('encounterText');
         const encounterCanvas = document.getElementById('encounterCreatureCanvas');
 
-        // Draw creature on canvas (8x scale for 128x128 display)
+        // Draw ENHANCED creature on canvas (8x scale for 128x128 display)
         const ctx = encounterCanvas.getContext('2d');
         ctx.clearRect(0, 0, 128, 128);
 
         // Center the creature (16x16 sprite scaled 6x = 96x96, centered in 128x128)
         ctx.save();
         ctx.scale(6, 6);
-        spriteLoader.drawCreature(ctx, 'lumina', 16, 16);
+        spriteLoader.drawCreature(ctx, 'lumina', 16, 16, true);  // true = enhanced/cute version!
         ctx.restore();
+
+        // Clear the encounter-choices div (not used with new system)
+        document.getElementById('encounterChoices').innerHTML = '';
 
         // Set text
         encounterText.textContent = "It needs a name.";
