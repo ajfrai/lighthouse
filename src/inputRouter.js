@@ -106,6 +106,8 @@ class InputRouter {
      * @param {KeyboardEvent} nativeEvent - Browser keyboard event
      */
     routeInput(nativeEvent) {
+        console.log(`[InputRouter] Routing input: key="${nativeEvent.key}" code="${nativeEvent.code}"`);
+
         // Create input object that handlers can consume
         const input = {
             key: nativeEvent.key,
@@ -114,21 +116,31 @@ class InputRouter {
             consumed: false,
             consume: function() {
                 this.consumed = true;
+                console.log(`[InputRouter] Input consumed by handler`);
             }
         };
 
         // Process handlers in priority order
         for (const {handler, priority, enabled} of this.handlers) {
-            if (!enabled) continue;
+            if (!enabled) {
+                console.log(`[InputRouter] Handler disabled, skipping (priority ${priority})`);
+                continue;
+            }
 
+            console.log(`[InputRouter] Calling handler (priority ${priority})`);
             // Call handler's handleInput method
             handler.handleInput(input);
 
             // If input was consumed, stop propagation
             if (input.consumed) {
+                console.log(`[InputRouter] Input consumed, stopping propagation`);
                 nativeEvent.preventDefault();
                 break;
             }
+        }
+
+        if (!input.consumed) {
+            console.log(`[InputRouter] Input not consumed by any handler`);
         }
     }
 
