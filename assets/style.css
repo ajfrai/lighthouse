@@ -456,19 +456,7 @@ button:disabled {
         flex-shrink: 0 !important;
     }
 
-    /* MIDDLE ZONE: 2-column name grid */
-    .encounter-choices {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;  /* 2 columns */
-        gap: 12px !important;
-        padding: 0 20px !important;
-        margin: 0 auto !important;
-        max-width: 400px !important;
-        width: 100% !important;
-        flex-shrink: 0 !important;
-        overflow: visible !important;
-    }
-
+    /* MIDDLE ZONE: 2-column name grid - choice button styling */
     .encounter-choice {
         font-size: 16px !important;
         padding: 14px 16px !important;
