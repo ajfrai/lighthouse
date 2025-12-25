@@ -412,11 +412,11 @@ button:disabled {
 
     .encounter-backdrop {
         display: block !important;
-        position: fixed !important;
+        position: absolute !important;  /* Absolute to parent, not viewport */
         top: 0 !important;
         left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
+        width: 100% !important;
+        height: 100% !important;
         background: #000 !important;  /* Solid black - hides game completely */
         opacity: 1 !important;  /* Full opacity */
         z-index: 1 !important;
